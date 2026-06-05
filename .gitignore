@@ -1,0 +1,23 @@
+# Ambiente
+.env
+*.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Hermes local config (sensível)
+# ~/.hermes/config.yaml contém API keys
+
+# Outputs temporários
+memory/*.json
+memory/*.md
+
+# Docker
+n8n_data/
+
+# OS
+.DS_Store
+Thumbs.db

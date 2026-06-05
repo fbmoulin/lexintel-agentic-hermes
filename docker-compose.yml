@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  hermes-agent:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: lex-intelligentia-agent
+    restart: unless-stopped
+    volumes:
+      - ./.env:/app/.env
+      - ./memory:/app/memory
+      - ./lex_intelligentia.db:/app/lex_intelligentia.db
+      - ~/.hermes:/root/.hermes
+    environment:
+      - TZ=America/Sao_Paulo
+    network_mode: "host" # Necessário para o Hermes acessar o n8n local, se aplicável
+
+  # Opcional: n8n local para testes de automação
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: lex-n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=America/Sao_Paulo
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:
