@@ -1,4 +1,4 @@
-# Duplicate CI manifest (deprecated)
-# The canonical GitHub Actions workflow for CI is: .github/workflows/ci.yml
-# This file was added as a duplicate. Please remove this file or keep it as a pointer.
-# Commit that consolidated CI artifacts and added SecurityAgent tests.
+# DEPRECATED: duplicate CI manifest
+# This file was intentionally removed in a subsequent commit.
+# Canonical workflow is: .github/workflows/ci.yml
+# If you still see this file, please delete it; it was retained briefly as a pointer but should be removed.
