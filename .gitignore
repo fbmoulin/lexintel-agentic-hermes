@@ -1,0 +1,9 @@
+.codex_pkg_extract/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.env
+.mypy_cache/
+.ruff_cache/
