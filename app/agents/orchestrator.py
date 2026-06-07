@@ -213,7 +213,7 @@ class CaseOrchestrator:
                 - status (str): Overall pipeline status: `"blocked"`, `"warning"`, or `"success"`.
                 - trace (list[dict]): Ordered trace entries produced by each agent.
                 - pipeline_summary (dict): Aggregated summary metadata for the executed pipeline.
-                - mock_draft (dict): The mocked draft used for validation (contains `relatorio`, `fundamentacao`, `dispositivo`, and draft flags).
+                - mock_draft (dict, optional): The mocked draft used for validation (contains 'relatorio', 'fundamentacao', 'dispositivo', and draft flags). Only present if the pipeline is not blocked early by security.
                 - requires_human_review (bool): Whether any step requires human review.
                 - external_use_allowed (bool): Whether the aggregated pipeline allows external use (always `False` for this mock pipeline).
         """
