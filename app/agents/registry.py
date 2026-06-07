@@ -82,6 +82,7 @@ AGENT_REGISTRY = [
         "skill_name": "SKILL_FIRAC_PLUS_CIVIL.md",
         "status": "implemented",
         "mocked": True,
+        "requires_human_review": True,
         "description": "Produz análise FIRAC+ mockada com revisão humana obrigatória.",
     },
     {
@@ -92,6 +93,7 @@ AGENT_REGISTRY = [
         "skill_name": "SKILL_PRECEDENT_VALIDATION.md",
         "status": "planned",
         "mocked": True,
+        "requires_human_review": True,
         "description": "Planejado para validação jurisprudencial.",
     },
     {
@@ -102,6 +104,7 @@ AGENT_REGISTRY = [
         "skill_name": "SKILL_JUDICIAL_DRAFTING_CIVIL.md",
         "status": "planned",
         "mocked": True,
+        "requires_human_review": True,
         "description": "Planejado para geração de minutas com revisão humana.",
     },
     {
@@ -131,15 +134,24 @@ def _is_importable(module_path: str | None, class_name: str | None) -> bool:
     if not module_path or not class_name:
         return False
 
-    module = import_module(module_path)
-    return hasattr(module, class_name)
+    try:
+        module = import_module(module_path)
+        return hasattr(module, class_name)
+    except (ImportError, ModuleNotFoundError, Exception):
+        return False
 
 
 def list_agent_registry() -> list[dict]:
     agents = []
     for entry in AGENT_REGISTRY:
-        skill_manifest = get_skill_manifest(entry["skill_name"])
-        agents.append({
+        try:
+            skill_manifest = get_skill_manifest(entry["skill_name"])
+            missing_skill = False
+        except (FileNotFoundError, ValueError):
+            skill_manifest = {"exists": False}
+            missing_skill = True
+
+        agent_dict = {
             **entry,
             "implemented": entry["status"] == "implemented",
             "class_importable": _is_importable(
@@ -147,7 +159,12 @@ def list_agent_registry() -> list[dict]:
                 entry["class_name"],
             ),
             "skill": skill_manifest,
-        })
+        }
+
+        if missing_skill:
+            agent_dict["missing_skill"] = True
+
+        agents.append(agent_dict)
     return agents
 
 
@@ -172,6 +189,15 @@ def validate_agent_registry() -> dict:
                 "agent_name": agent["agent_name"],
                 "skill_name": agent["skill_name"],
             })
+
+        # Validate that agents in legal-analysis/drafting phases require human review
+        if agent["phase"] in {"firac", "precedent_validation", "drafting"}:
+            if not agent.get("requires_human_review", False):
+                issues.append({
+                    "type": "missing_human_review_flag",
+                    "agent_name": agent["agent_name"],
+                    "phase": agent["phase"],
+                })
 
     unmapped_skills = sorted(skill_names - mapped_skill_names)
     for skill_name in unmapped_skills:

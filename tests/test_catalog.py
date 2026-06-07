@@ -72,9 +72,15 @@ def test_catalog_skill_detail_endpoint_returns_content():
 
 
 def test_catalog_skill_detail_rejects_invalid_name():
-    response = client.get("/catalog/skills/../AGENTS.md")
+    response = client.get("/catalog/skills/nonexistent.md")
 
-    assert response.status_code in {400, 404}
+    assert response.status_code == 400
+
+
+def test_catalog_skill_detail_missing_skill_returns_404():
+    response = client.get("/catalog/skills/SKILL_nonexistent.md")
+
+    assert response.status_code == 404
 
 
 def test_catalog_agents_endpoint_returns_registry():
