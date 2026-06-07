@@ -102,3 +102,37 @@ Resultado:
 - Execução concluída sem erro.
 
 Durante esta fase, nenhuma integração real externa foi ativada.
+
+## Validação da Fase 2 — Qualidade do pipeline mockado
+
+Data: 2026-06-07
+
+Mudanças validadas:
+
+- `AgentResult` com campos top-level de revisão humana, uso externo e metadados de trace.
+- `pipeline_summary` nas respostas de `/cases/intake` e `/cases/run-full-mock`.
+- Índice determinístico de etapas no trace.
+- Consistência de `warnings` e `errors` como listas.
+- Parada antecipada do pipeline completo quando o `SecurityAgent` bloqueia a entrada.
+
+Comandos executados:
+
+```bash
+pytest
+```
+
+Resultado:
+
+- 16 testes aprovados.
+
+```bash
+python -m app.evals.run_eval
+```
+
+Resultado:
+
+- `dataset_size`: 4
+- `average_recall`: 0.625
+- Execução concluída sem erro.
+
+Durante esta fase, nenhuma integração real externa foi ativada.

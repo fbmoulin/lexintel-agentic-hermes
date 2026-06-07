@@ -24,6 +24,19 @@ def test_intake_case():
     assert data["case_id"] == "caso_teste_001"
     assert "trace" in data
     assert data["status"] == "success"
+    assert data["pipeline_summary"]["trace_version"] == "trace-v0.2"
+    assert data["pipeline_summary"]["pipeline_name"] == "case-intake-v0.2"
+    assert data["pipeline_summary"]["agent_count"] == 2
+    assert data["pipeline_summary"]["completed_agents"] == [
+        "IntakeAgent",
+        "SecurityAgent",
+    ]
+    assert data["pipeline_summary"]["blocked_at"] is None
+    assert data["pipeline_summary"]["requires_human_review"] is False
+    assert [
+        entry["trace_metadata"]["step_index"]
+        for entry in data["trace"]
+    ] == [1, 2]
 
 
 def test_prompt_injection_blocks():
@@ -40,6 +53,8 @@ def test_prompt_injection_blocks():
     data = response.json()
     assert data["status"] == "blocked"
     assert data["requires_human_review"] is True
+    assert data["pipeline_summary"]["blocked_at"] == "SecurityAgent"
+    assert data["pipeline_summary"]["error_count"] == 1
 
 
 def test_obfuscated_prompt_injection_blocks():

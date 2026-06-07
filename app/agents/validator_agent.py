@@ -39,5 +39,7 @@ class ValidatorAgent:
                 "final_recommendation": "approve" if approved else "block",
                 "requires_human_review": True,
                 "external_use_allowed": False
-            }
+            },
+            requires_human_review=True,
+            external_use_allowed=False,
         )
