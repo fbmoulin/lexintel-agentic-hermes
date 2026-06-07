@@ -98,7 +98,7 @@ def test_agent_registry_missing_skill_manifest_is_structured(monkeypatch):
     assert agents[0]["missing_skill"] is True
     assert agents[0]["skill"] == {
         "skill_name": "SKILL_MISSING.md",
-        "title": None,
+        "title": "SKILL_MISSING",
         "sections": [],
         "line_count": 0,
         "char_count": 0,
