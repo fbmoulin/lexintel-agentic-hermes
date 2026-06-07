@@ -1,3 +1,6 @@
+import re
+import unicodedata
+
 from app.schemas.case import AgentResult
 
 
@@ -19,8 +22,6 @@ class ValidatorAgent:
         """
         blocking_errors = []
 
-import re
-import unicodedata
         text = unicodedata.normalize("NFKD", str(draft)).lower()
         text = re.sub(r"\s+", " ", text)
 
