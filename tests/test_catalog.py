@@ -57,7 +57,7 @@ def test_agent_registry_is_valid_and_links_skills():
         if agent["phase"] in agent_registry.HUMAN_REVIEW_PHASES
     ]
     assert all(
-        agent["requires_human_review"] is True
+        agent.get("requires_human_review") is True
         for agent in human_review_agents
     )
 
