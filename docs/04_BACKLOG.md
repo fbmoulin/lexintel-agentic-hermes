@@ -44,10 +44,13 @@
 
 ## P2 — Qualidade do pipeline mockado
 
-- [ ] Contrato padronizado de `AgentResult`.
-- [ ] Warnings e errors consistentes.
-- [ ] Trace documentado.
-- [ ] Testes mais completos para `/cases/run-full-mock`.
+- [x] Contrato padronizado de `AgentResult`.
+- [x] Warnings e errors consistentes.
+- [x] Trace documentado.
+- [x] Testes mais completos para `/cases/run-full-mock`.
+- [x] `pipeline_summary` determinístico nas respostas.
+- [x] Metadados `trace_metadata` por etapa.
+- [x] Teste de parada antecipada quando o SecurityAgent bloqueia.
 
 ## P3 — Avaliação RAG mockada
 

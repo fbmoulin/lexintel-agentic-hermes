@@ -32,5 +32,7 @@ class FIRACAgent:
                 "requires_human_review": True,
                 "external_use_allowed": False,
                 "output_status": "mock_analysis_not_for_external_use"
-            }
+            },
+            requires_human_review=True,
+            external_use_allowed=False,
         )

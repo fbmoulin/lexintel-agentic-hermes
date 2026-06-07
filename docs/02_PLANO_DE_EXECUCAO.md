@@ -69,7 +69,9 @@ pytest
 python -m app.evals.run_eval
 ```
 
-## Fase 2 — Skills e avaliação
+## Fase Base — Skills e avaliação
+
+Status: entregue na v0.1 inicial.
 
 Objetivo: versionar conhecimento operacional e criar métrica.
 
@@ -83,6 +85,29 @@ Entregas:
 Critério de aceite:
 
 ```bash
+python -m app.evals.run_eval
+```
+
+## Fase 2 — Qualidade do pipeline mockado
+
+Status: implementada.
+
+Objetivo: tornar o pipeline local mais auditável sem adicionar integrações reais.
+
+Entregas:
+
+- Contrato `AgentResult` ampliado com `requires_human_review`, `external_use_allowed` e `trace_metadata`.
+- Metadados determinísticos de trace por etapa.
+- Resumo `pipeline_summary` nas respostas de intake e pipeline completo mockado.
+- Contagem de agentes, warnings e errors.
+- Identificação de `blocked_at` quando o pipeline para antes do fim.
+- Teste de parada antecipada por bloqueio do SecurityAgent.
+- Documentação do contrato de trace.
+
+Critério de aceite:
+
+```bash
+pytest
 python -m app.evals.run_eval
 ```
 

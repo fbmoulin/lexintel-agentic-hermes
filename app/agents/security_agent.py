@@ -194,7 +194,9 @@ class SecurityAgent:
                     "recommended_action": "block",
                     "scan_version": self.scan_version,
                 },
-                errors=["Possível prompt injection ou instrução maliciosa detectada."]
+                errors=["Possível prompt injection ou instrução maliciosa detectada."],
+                requires_human_review=True,
+                external_use_allowed=False,
             )
 
         if risk_details:
@@ -211,7 +213,9 @@ class SecurityAgent:
                     "recommended_action": "human_review",
                     "scan_version": self.scan_version,
                 },
-                warnings=["Entrada marcada para revisão humana por risco de segurança."]
+                warnings=["Entrada marcada para revisão humana por risco de segurança."],
+                requires_human_review=True,
+                external_use_allowed=False,
             )
 
         return AgentResult(
@@ -226,5 +230,7 @@ class SecurityAgent:
                 "requires_human_review": False,
                 "recommended_action": "continue",
                 "scan_version": self.scan_version,
-            }
+            },
+            requires_human_review=False,
+            external_use_allowed=False,
         )

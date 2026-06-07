@@ -16,6 +16,9 @@ class AgentResult(BaseModel):
     output: dict[str, Any]
     warnings: list[str] = Field(default_factory=list)
     errors: list[str] = Field(default_factory=list)
+    requires_human_review: bool = False
+    external_use_allowed: bool = False
+    trace_metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class RetrievedContext(BaseModel):
