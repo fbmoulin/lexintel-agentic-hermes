@@ -52,20 +52,32 @@
 - [x] Metadados `trace_metadata` por etapa.
 - [x] Teste de parada antecipada quando o SecurityAgent bloqueia.
 
-## P3 — Avaliação RAG mockada
+## P3 — Skills e agentes locais
+
+- [x] Loader de skills robusto e independente do diretório de execução.
+- [x] Rejeição de path traversal no carregamento de skills.
+- [x] Catálogo de 12 skills versionadas.
+- [x] Registry de 12 agentes/capacidades.
+- [x] Marcação de agentes implementados e planejados.
+- [x] Endpoint `GET /catalog/skills`.
+- [x] Endpoint `GET /catalog/skills/{skill_name}`.
+- [x] Endpoint `GET /catalog/agents`.
+- [x] Testes de integridade do registry e das skills.
+
+## P4 — Avaliação RAG mockada
 
 - [ ] Expandir `golden_dataset.jsonl`.
 - [ ] Separar dataset por área.
 - [ ] Adicionar métricas além de recall médio.
 - [ ] Definir limiar mínimo de aceite.
 
-## P4 — Extração e normalização estruturadas
+## P5 — Extração e normalização estruturadas
 
 - [ ] Enriquecer contrato de extração mockada.
 - [ ] Enriquecer normalização jurídica mockada.
 - [ ] Validar outputs com Pydantic.
 
-## P5 — RAG real preparado, mas desligado por padrão
+## P6 — RAG real preparado, mas desligado por padrão
 
 - [x] QdrantService inicial.
 - [ ] Chunking jurídico.
@@ -76,14 +88,14 @@
 - [ ] Feature flag para Qdrant real.
 - [ ] MockVectorStore para testes sem container.
 
-## P6 — Jurisprudência
+## P7 — Jurisprudência
 
 - [ ] JurisprudenceAgent.
 - [ ] Validação de formato de citação.
 - [ ] Integração STJ Dados Abertos.
 - [ ] Validação de súmulas/temas.
 
-## P7 — Produção e integrações externas
+## P8 — Produção e integrações externas
 
 - [ ] n8n.
 - [ ] Logs.

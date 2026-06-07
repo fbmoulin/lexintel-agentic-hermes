@@ -111,7 +111,30 @@ pytest
 python -m app.evals.run_eval
 ```
 
-## Fase 3 — Extração e normalização
+## Fase 3 — Skills e agentes locais
+
+Status: implementada.
+
+Objetivo: tornar as skills Markdown e os agentes locais descobertos, validados e vinculados por contrato.
+
+Entregas:
+
+- Loader de skills robusto e independente do diretório de execução.
+- Rejeição de path traversal no carregamento de skills.
+- Catálogo das 12 skills em `app/skills/`.
+- Registry das 12 capacidades agenticas previstas.
+- Marcação explícita de agentes implementados e planejados.
+- Endpoints `/catalog/skills`, `/catalog/skills/{skill_name}` e `/catalog/agents`.
+- Testes de integridade do catálogo.
+
+Critério de aceite:
+
+```bash
+pytest
+python -m app.evals.run_eval
+```
+
+## Fase 4 — Extração e normalização
 
 Objetivo: transformar documentos em estrutura jurídica.
 
@@ -123,7 +146,7 @@ Entregas:
 - Quality score.
 - Warnings.
 
-## Fase 4 — Qdrant e indexação
+## Fase 5 — Qdrant e indexação
 
 Objetivo: preparar indexação de chunks sem ativar Qdrant real por padrão.
 
@@ -136,7 +159,7 @@ Entregas:
 - IndexingAgent.
 - Chunking por unidade jurídica.
 
-## Fase 5 — Retrieval híbrido
+## Fase 6 — Retrieval híbrido
 
 Objetivo: melhorar qualidade de recuperação.
 
@@ -148,7 +171,7 @@ Entregas:
 - RerankerService.
 - Métricas comparativas.
 
-## Fase 6 — FIRAC+ e minuta
+## Fase 7 — FIRAC+ e minuta
 
 Objetivo: gerar análise antes da decisão.
 
@@ -159,7 +182,7 @@ Entregas:
 - DraftingAgent.
 - ValidatorAgent.
 
-## Fase 7 — n8n
+## Fase 8 — n8n
 
 Objetivo: automatizar fluxo externo somente após aprovação explícita.
 
@@ -170,7 +193,7 @@ Entregas:
 - Registro em Google Sheets.
 - Geração opcional de Google Docs.
 
-## Fase 8 — CI de qualidade
+## Fase 9 — CI de qualidade
 
 Objetivo: evitar regressão.
 
