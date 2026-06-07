@@ -103,6 +103,41 @@ Resultado:
 
 Durante esta fase, nenhuma integração real externa foi ativada.
 
+## Validação da Fase 3 — Skills e agentes locais
+
+Data: 2026-06-07
+
+Mudanças validadas:
+
+- Catálogo local de 12 skills Markdown.
+- Registry local de 12 agentes/capacidades.
+- 7 agentes implementados e importáveis.
+- 5 agentes planejados vinculados a skills existentes.
+- Endpoints `/catalog/skills`, `/catalog/skills/{skill_name}` e `/catalog/agents`.
+- Bloqueio de path traversal no carregamento de skills.
+
+Comandos executados:
+
+```bash
+pytest
+```
+
+Resultado:
+
+- 23 testes aprovados.
+
+```bash
+python -m app.evals.run_eval
+```
+
+Resultado:
+
+- `dataset_size`: 4
+- `average_recall`: 0.625
+- Execução concluída sem erro.
+
+Durante esta fase, nenhuma integração real externa foi ativada.
+
 ## Validação da Fase 2 — Qualidade do pipeline mockado
 
 Data: 2026-06-07

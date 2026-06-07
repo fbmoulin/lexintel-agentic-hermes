@@ -71,6 +71,18 @@ Este pacote entrega um scaffold funcional com mocks. A conexão real com Qdrant,
 
 O `docker-compose.yml` atual é apoio futuro para Qdrant e não é requisito para rodar a v0.1.
 
+## Catálogo local
+
+A API expõe um catálogo auditável de skills e agentes:
+
+```text
+GET /catalog/skills
+GET /catalog/skills/{skill_name}
+GET /catalog/agents
+```
+
+Esse catálogo apenas lê arquivos locais em `app/skills/` e registra o estado dos agentes mockados ou planejados. Ele não chama LLMs nem serviços externos.
+
 ## Validação local
 
 Os comandos de aceite da v0.1 são:
