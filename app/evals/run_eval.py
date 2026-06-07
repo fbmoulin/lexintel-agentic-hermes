@@ -8,7 +8,10 @@ def load_dataset(path: str | Path):
     rows = []
     for line in Path(path).read_text(encoding="utf-8").splitlines():
         if line.strip():
-            rows.append(json.loads(line))
+            try:
+                rows.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
     return rows
 
 
