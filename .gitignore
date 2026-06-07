@@ -1,23 +1,9 @@
-# Ambiente
-.env
-*.db
-
-# Python
+.codex_pkg_extract/
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
 .venv/
 venv/
-
-# Hermes local config (sensível)
-# ~/.hermes/config.yaml contém API keys
-
-# Outputs temporários
-memory/*.json
-memory/*.md
-
-# Docker
-n8n_data/
-
-# OS
-.DS_Store
-Thumbs.db
+.env
+.mypy_cache/
+.ruff_cache/

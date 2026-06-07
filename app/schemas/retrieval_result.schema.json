@@ -1,0 +1,53 @@
+{
+  "type": "object",
+  "required": [
+    "query",
+    "results"
+  ],
+  "properties": {
+    "query": {
+      "type": "string"
+    },
+    "filters": {
+      "type": "object"
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "chunk_id": {
+            "type": "string"
+          },
+          "doc_id": {
+            "type": "string"
+          },
+          "case_id": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "rerank_score": {
+            "type": "number"
+          },
+          "source": {
+            "type": "string"
+          },
+          "page_start": {
+            "type": "integer"
+          },
+          "page_end": {
+            "type": "integer"
+          },
+          "text": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}

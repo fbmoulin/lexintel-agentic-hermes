@@ -1,0 +1,54 @@
+{
+  "type": "object",
+  "required": [
+    "approved",
+    "blocking_errors",
+    "final_recommendation"
+  ],
+  "properties": {
+    "approved": {
+      "type": "boolean"
+    },
+    "blocking_errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "missing_claim",
+              "hallucinated_precedent",
+              "unsupported_fact",
+              "contradiction",
+              "security_risk"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ]
+          },
+          "suggested_fix": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "warnings": {
+      "type": "array"
+    },
+    "final_recommendation": {
+      "enum": [
+        "approve",
+        "revise",
+        "block"
+      ]
+    }
+  }
+}

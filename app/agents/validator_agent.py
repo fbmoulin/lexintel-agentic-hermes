@@ -1,6 +1,7 @@
-from app.schemas.case import AgentResult
 import re
 import unicodedata
+
+from app.schemas.case import AgentResult
 
 
 class ValidatorAgent:
@@ -8,17 +9,10 @@ class ValidatorAgent:
 
     def run(self, case_id: str, draft: dict) -> AgentResult:
         """
-        Validate a draft for disallowed indications of a hallucinated precedent and return an AgentResult.
+        Validate a draft for disallowed indications of a hallucinated precedent.
 
-        Checks the provided draft for occurrences of the phrase "precedente inventado" and, if present,
-        records a critical blocking error indicating a possible invented precedent.
-
-        Parameters:
-            case_id (str): Identifier of the case being validated.
-            draft (dict): Draft content to validate.
-
-        Returns:
-            AgentResult: Result containing case_id, agent_name, status, and an output dict with validation details.
+        Checks the provided draft for occurrences of the phrase "precedente
+        inventado" and records a critical blocking error when found.
         """
         blocking_errors = []
 
