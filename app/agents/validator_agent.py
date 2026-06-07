@@ -36,6 +36,8 @@ class ValidatorAgent:
                 "approved": approved,
                 "blocking_errors": blocking_errors,
                 "warnings": [],
-                "final_recommendation": "approve" if approved else "block"
+                "final_recommendation": "approve" if approved else "block",
+                "requires_human_review": True,
+                "external_use_allowed": False
             }
         )

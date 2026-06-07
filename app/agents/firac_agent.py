@@ -28,6 +28,9 @@ class FIRACAgent:
                 "conclusion": [],
                 "risks": [],
                 "missing_information": [],
-                "recommended_decision_type": "analise"
+                "recommended_decision_type": "analise",
+                "requires_human_review": True,
+                "external_use_allowed": False,
+                "output_status": "mock_analysis_not_for_external_use"
             }
         )
