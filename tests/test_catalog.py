@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from app.agents import registry as agent_registry
 from app.agents.registry import list_agent_registry, validate_agent_registry
 from app.main import app
 from app.services.skill_loader import list_skills, load_skill
@@ -50,6 +51,64 @@ def test_agent_registry_is_valid_and_links_skills():
     implemented_agents = [agent for agent in agents if agent["implemented"]]
     assert all(agent["class_importable"] is True for agent in implemented_agents)
     assert all(agent["skill"]["exists"] is True for agent in agents)
+
+    human_review_agents = [
+        agent for agent in agents
+        if agent["phase"] in agent_registry.HUMAN_REVIEW_PHASES
+    ]
+    assert all(
+        agent["requires_human_review"] is True
+        for agent in human_review_agents
+    )
+
+
+def test_agent_registry_rejects_missing_human_review_for_validation(monkeypatch):
+    patched_registry = [
+        dict(entry) for entry in agent_registry.AGENT_REGISTRY
+    ]
+    validator_entry = next(
+        entry for entry in patched_registry
+        if entry["phase"] == "validation"
+    )
+    validator_entry.pop("requires_human_review", None)
+    monkeypatch.setattr(agent_registry, "AGENT_REGISTRY", patched_registry)
+
+    validation = agent_registry.validate_agent_registry()
+
+    assert validation["valid"] is False
+    assert {
+        "type": "missing_human_review_flag",
+        "agent_name": "ValidatorAgent",
+        "phase": "validation",
+    } in validation["issues"]
+
+
+def test_agent_registry_missing_skill_manifest_is_structured(monkeypatch):
+    patched_registry = [
+        {
+            **agent_registry.AGENT_REGISTRY[0],
+            "skill_name": "SKILL_MISSING.md",
+        }
+    ]
+    monkeypatch.setattr(agent_registry, "AGENT_REGISTRY", patched_registry)
+
+    agents = agent_registry.list_agent_registry()
+    validation = agent_registry.validate_agent_registry()
+
+    assert agents[0]["missing_skill"] is True
+    assert agents[0]["skill"] == {
+        "skill_name": "SKILL_MISSING.md",
+        "title": None,
+        "sections": [],
+        "line_count": 0,
+        "char_count": 0,
+        "exists": False,
+    }
+    assert {
+        "type": "missing_skill",
+        "agent_name": "IntakeAgent",
+        "skill_name": "SKILL_MISSING.md",
+    } in validation["issues"]
 
 
 def test_catalog_skills_endpoint_lists_skills():
