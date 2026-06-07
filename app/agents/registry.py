@@ -137,7 +137,7 @@ def _is_importable(module_path: str | None, class_name: str | None) -> bool:
     try:
         module = import_module(module_path)
         return hasattr(module, class_name)
-    except (ImportError, ModuleNotFoundError, Exception):
+    except (ImportError, ModuleNotFoundError):
         return False
 
 
