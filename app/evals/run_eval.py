@@ -54,7 +54,7 @@ def run(dataset_path: str | Path = DATASET_PATH):
             "recall": score
         })
 
-    average = sum(s["recall"] for s in scores) / len(scores)
+    average = sum(s["recall"] for s in scores) / len(scores) if scores else 0.0
 
     return {
         "dataset_size": len(dataset),
