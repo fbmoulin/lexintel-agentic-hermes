@@ -67,3 +67,38 @@ Durante esta validação não foram usados:
 - APIs de áudio, imagem ou publicação.
 
 O pacote `Analyzing AGENTS2.zip` foi usado apenas como referência de arquitetura/backlog e não como fonte de código.
+
+## Validação da Fase 1 — Hardening de segurança local
+
+Data: 2026-06-07
+
+Mudanças validadas:
+
+- Normalização determinística no `SecurityAgent`.
+- Severidade e detalhes estruturados de risco.
+- Bloqueio de prompt injection com acentos removidos, caixa alterada e controles invisíveis.
+- Marcação de revisão humana para risco médio.
+- Campo `requires_human_review` em saídas jurídicas mockadas.
+- Campo `external_use_allowed = false` em saídas jurídicas mockadas.
+
+Comandos executados:
+
+```bash
+pytest
+```
+
+Resultado:
+
+- 15 testes aprovados.
+
+```bash
+python -m app.evals.run_eval
+```
+
+Resultado:
+
+- `dataset_size`: 4
+- `average_recall`: 0.625
+- Execução concluída sem erro.
+
+Durante esta fase, nenhuma integração real externa foi ativada.

@@ -30,6 +30,17 @@ class CaseOrchestrator:
         self.firac_agent = FIRACAgent()
         self.validator_agent = ValidatorAgent()
 
+    @staticmethod
+    def _build_security_text(case: CaseInput, intake_output: dict) -> str:
+        parts = [
+            case.case_id,
+            case.source_type,
+            case.user_goal,
+            *case.files,
+            str(intake_output),
+        ]
+        return "\n".join(parts)
+
     def run_intake_only(self, case: CaseInput):
         """
         Run intake and security checks for a case and collect the per-step results.
@@ -50,7 +61,7 @@ class CaseOrchestrator:
 
         security_result = self.security_agent.run(
             case_id=case.case_id,
-            text=str(intake_result.output)
+            text=self._build_security_text(case, intake_result.output)
         )
         trace.append(security_result.model_dump())
 
@@ -58,13 +69,17 @@ class CaseOrchestrator:
             return {
                 "case_id": case.case_id,
                 "status": "blocked",
-                "trace": trace
+                "trace": trace,
+                "requires_human_review": True,
+                "external_use_allowed": False
             }
 
         return {
             "case_id": case.case_id,
             "status": "success",
-            "trace": trace
+            "trace": trace,
+            "requires_human_review": False,
+            "external_use_allowed": False
         }
 
     def run_full_mock(self, case: CaseInput):
@@ -88,11 +103,20 @@ class CaseOrchestrator:
         intake_result = self.intake_agent.run(case)
         trace.append(intake_result.model_dump())
 
-        security_result = self.security_agent.run(case.case_id, str(intake_result.output))
+        security_result = self.security_agent.run(
+            case.case_id,
+            self._build_security_text(case, intake_result.output)
+        )
         trace.append(security_result.model_dump())
 
         if security_result.status == "blocked":
-            return {"case_id": case.case_id, "status": "blocked", "trace": trace}
+            return {
+                "case_id": case.case_id,
+                "status": "blocked",
+                "trace": trace,
+                "requires_human_review": True,
+                "external_use_allowed": False
+            }
 
         documents = intake_result.output.get("detected_documents", [])
 
@@ -114,7 +138,10 @@ class CaseOrchestrator:
         mock_draft = {
             "relatorio": "Relatório simulado.",
             "fundamentacao": "Fundamentação simulada.",
-            "dispositivo": "Dispositivo simulado."
+            "dispositivo": "Dispositivo simulado.",
+            "requires_human_review": True,
+            "external_use_allowed": False,
+            "draft_status": "mock_not_for_external_use"
         }
 
         validator_result = self.validator_agent.run(case.case_id, mock_draft)
@@ -124,5 +151,7 @@ class CaseOrchestrator:
             "case_id": case.case_id,
             "status": "success" if validator_result.status != "blocked" else "blocked",
             "trace": trace,
-            "mock_draft": mock_draft
+            "mock_draft": mock_draft,
+            "requires_human_review": True,
+            "external_use_allowed": False
         }

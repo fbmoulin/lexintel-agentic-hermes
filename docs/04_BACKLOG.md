@@ -34,11 +34,13 @@
 
 ## P1 — Hardening de segurança local
 
-- [ ] Normalização de texto no SecurityAgent.
-- [ ] Severidade de risco.
-- [ ] Testes adversariais de prompt injection.
-- [ ] Campo padronizado `security_status`.
-- [ ] Campo `requires_human_review` nos outputs jurídicos.
+- [x] Normalização de texto no SecurityAgent.
+- [x] Severidade de risco.
+- [x] Testes adversariais de prompt injection.
+- [x] Campo padronizado `security_status`.
+- [x] Campo `requires_human_review` nos outputs jurídicos.
+- [x] Metadados estruturados `risk_details`, `max_severity` e `scan_version`.
+- [x] Marcação de `external_use_allowed = false` em saídas jurídicas mockadas.
 
 ## P2 — Qualidade do pipeline mockado
 

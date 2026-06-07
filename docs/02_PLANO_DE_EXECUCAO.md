@@ -23,7 +23,9 @@ pytest
 python -m app.evals.run_eval
 ```
 
-## Fase 1 — Trilho agentico local
+## Fase Base — Trilho agentico local
+
+Status: entregue na v0.1 inicial.
 
 Objetivo: rodar localmente o fluxo mínimo.
 
@@ -42,6 +44,29 @@ Critério de aceite:
 ```bash
 uvicorn app.main:app --reload
 pytest
+```
+
+## Fase 1 — Hardening de segurança local
+
+Status: implementada.
+
+Objetivo: reforçar a detecção determinística de prompt injection antes de qualquer integração real.
+
+Entregas:
+
+- Normalização local de texto com remoção de acentos, controles invisíveis e separadores.
+- Detecção por regras estruturadas com severidade.
+- Saídas `security_status`, `detected_risks`, `risk_details`, `max_severity`, `recommended_action` e `requires_human_review`.
+- Bloqueio para riscos `high` e `critical`.
+- Marcação de revisão humana para riscos `medium`.
+- Saídas jurídicas mockadas marcadas com `requires_human_review = true` e `external_use_allowed = false`.
+- Testes adversariais de prompt injection.
+
+Critério de aceite:
+
+```bash
+pytest
+python -m app.evals.run_eval
 ```
 
 ## Fase 2 — Skills e avaliação

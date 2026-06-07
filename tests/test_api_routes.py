@@ -57,6 +57,9 @@ def test_full_mock_pipeline_runs_all_available_agents():
     assert data["case_id"] == "caso_full_mock_001"
     assert data["status"] == "success"
     assert data["mock_draft"]["relatorio"] == "Relatório simulado."
+    assert data["requires_human_review"] is True
+    assert data["external_use_allowed"] is False
+    assert data["mock_draft"]["requires_human_review"] is True
 
     agent_names = [entry["agent_name"] for entry in data["trace"]]
     assert agent_names == [
@@ -68,6 +71,13 @@ def test_full_mock_pipeline_runs_all_available_agents():
         "FIRACAgent",
         "ValidatorAgent",
     ]
+
+    firac_trace = data["trace"][5]["output"]
+    validator_trace = data["trace"][6]["output"]
+    assert firac_trace["requires_human_review"] is True
+    assert firac_trace["external_use_allowed"] is False
+    assert validator_trace["requires_human_review"] is True
+    assert validator_trace["external_use_allowed"] is False
 
 
 def test_invalid_case_payload_is_rejected():
