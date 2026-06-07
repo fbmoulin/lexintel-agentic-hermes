@@ -1,31 +1,4 @@
-name: CI
-
-on:
-  push:
-  pull_request:
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run tests
-        run: |
-          pytest
-
-      - name: Run eval
-        run: |
-          python -m app.evals.run_eval
+# Duplicate CI manifest (deprecated)
+# The canonical GitHub Actions workflow for CI is: .github/workflows/ci.yml
+# This file was added as a duplicate. Please remove this file or keep it as a pointer.
+# Commit that consolidated CI artifacts and added SecurityAgent tests.
