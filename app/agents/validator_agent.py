@@ -9,16 +9,10 @@ class ValidatorAgent:
 
     def run(self, case_id: str, draft: dict) -> AgentResult:
         """
-        Validate a draft for disallowed indications of a hallucinated precedent and return an AgentResult.
-        
-        Checks the provided draft for occurrences of the phrase "precedente inventado" and, if present, records a critical blocking error indicating a possible invented precedent. The returned AgentResult has status "success" when no blocking errors are found, otherwise "blocked". The AgentResult.output contains: `approved` (bool), `blocking_errors` (list), `warnings` (empty list), and `final_recommendation` ("approve" or "block").
-        
-        Parameters:
-            case_id (str): Identifier of the case being validated.
-            draft (dict): Draft content to validate.
-        
-        Returns:
-            AgentResult: Result containing case_id, agent_name, status, and an output dict with validation details.
+        Validate a draft for disallowed indications of a hallucinated precedent.
+
+        Checks the provided draft for occurrences of the phrase "precedente
+        inventado" and records a critical blocking error when found.
         """
         blocking_errors = []
 
