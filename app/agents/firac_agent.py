@@ -6,15 +6,15 @@ class FIRACAgent:
 
     def run(self, case_id: str, normalized_case: dict, retrieved_contexts: list | None = None) -> AgentResult:
         """
-        Produce a fixed AgentResult for the specified case.
+        Return a fixed mock analysis AgentResult for the given case.
         
         Parameters:
-            case_id (str): Identifier for the case; included in the returned AgentResult.
+            case_id (str): Case identifier included in the returned AgentResult.
             normalized_case (dict): Accepted but not used by this implementation.
             retrieved_contexts (list | None): Optional contexts; accepted but not used.
         
         Returns:
-            AgentResult: Result with `case_id` set to `case_id`, `agent_name` set to the agent's `name`, `status` "success", and `output` containing empty lists for "facts", "issues", "rules", "application", "conclusion", "risks", and "missing_information", plus `"recommended_decision_type": "analise"`.
+            AgentResult: An AgentResult with `case_id` set to the provided `case_id`, `agent_name` set to the agent's `name`, `status` set to `"success"`, and `output` containing empty lists for `facts`, `issues`, `rules`, `application`, `conclusion`, `risks`, and `missing_information` plus `"recommended_decision_type": "analise"`. The returned object's top-level flags are `requires_human_review=True` and `external_use_allowed=False`.
         """
         return AgentResult(
             case_id=case_id,
