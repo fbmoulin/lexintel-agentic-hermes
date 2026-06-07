@@ -159,7 +159,7 @@ def list_agent_registry() -> list[dict]:
         except (FileNotFoundError, ValueError):
             skill_manifest = {
                 "skill_name": entry["skill_name"],
-                "title": None,
+                "title": entry["skill_name"].removesuffix(".md"),
                 "sections": [],
                 "line_count": 0,
                 "char_count": 0,
