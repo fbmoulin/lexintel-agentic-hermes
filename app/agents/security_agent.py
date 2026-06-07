@@ -19,6 +19,18 @@ class SecurityAgent:
     ]
 
     def run(self, case_id: str, text: str = "") -> AgentResult:
+        """
+        Detects suspicious Portuguese prompt-injection or malicious-instruction patterns in the given text.
+        
+        Performs case-insensitive substring matching against the agent's predefined suspicious patterns. If any patterns are found, returns an AgentResult indicating the case is blocked and includes the detected patterns and a recommended action; otherwise returns an AgentResult indicating the case is safe.
+        
+        Parameters:
+            case_id (str): Identifier for the case being evaluated.
+            text (str): Text to scan for suspicious patterns.
+        
+        Returns:
+            AgentResult: Result object containing `case_id`, `agent_name`, `status` ("blocked" or "success"), an `output` dict with `security_status`, `detected_risks`, and `recommended_action`, and `errors` when blocked.
+        """
         text_lower = text.lower()
         detected = [
             pattern for pattern in self.SUSPICIOUS_PATTERNS

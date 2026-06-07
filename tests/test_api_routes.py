@@ -38,6 +38,11 @@ def test_eval_endpoint_runs():
 
 
 def test_full_mock_pipeline_runs_all_available_agents():
+    """
+    Verify the full mocked case-processing pipeline runs and executes every expected agent in order.
+    
+    Sends a run-full-mock request for a sample case and asserts the response indicates success, echoes the case_id, includes the simulated draft content ("Relatório simulado."), and contains a trace whose agent_name sequence exactly matches the expected ordered list of agents from IntakeAgent through ValidatorAgent.
+    """
     payload = {
         "case_id": "caso_full_mock_001",
         "source_type": "manual",

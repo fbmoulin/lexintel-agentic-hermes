@@ -5,6 +5,25 @@ class IntakeAgent:
     name = "IntakeAgent"
 
     def run(self, case: CaseInput) -> AgentResult:
+        """
+        Classifies each file in the given case by simple keyword matching and returns a structured detection result for the next agent.
+        
+        Parameters:
+            case (CaseInput): Input case containing `case_id` and an iterable `files` of file path or name strings.
+        
+        Returns:
+            AgentResult: Result object with:
+                - case_id: echoed from `case.case_id`
+                - agent_name: this agent's name
+                - status: "success"
+                - output: dict containing:
+                    - detected_documents (list): Per-file dictionaries with keys:
+                        - doc_id (str): generated as "doc_<n>" where n is 1-based index
+                        - file_path (str): original file string
+                        - doc_type (str): one of "peticao_inicial", "contestacao", "sentenca", "acordao", or "unknown"
+                        - confidence (float): 0.80 for recognized types, 0.50 for "unknown"
+                    - next_agent (str): "SecurityAgent"
+        """
         detected_documents = []
 
         for index, file in enumerate(case.files):
