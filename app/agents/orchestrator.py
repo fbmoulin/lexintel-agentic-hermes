@@ -15,16 +15,16 @@ class CaseOrchestrator:
 
     def __init__(self):
         """
-        Initialize the orchestrator by creating and assigning its downstream agent instances.
+        Initialize the orchestrator and instantiate downstream agents.
         
         Attributes:
-            intake_agent: Processes initial case intake and extracts detected documents.
-            security_agent: Evaluates case content for security or policy blocking.
-            extraction_agent: Extracts raw text from detected documents.
+            intake_agent: Handles initial case intake and detects documents.
+            security_agent: Assesses case content for security or policy blocking.
+            extraction_agent: Extracts text from detected documents.
             normalizer_agent: Normalizes and cleans extracted legal text.
-            metadata_agent: Generates case metadata from normalized text.
-            firac_agent: Produces FIRAC-structured analysis from normalized text.
-            validator_agent: Validates (or blocks) draft outputs.
+            metadata_agent: Produces case metadata from normalized text.
+            firac_agent: Generates FIRAC-structured analysis from normalized text.
+            validator_agent: Validates draft outputs and may mark them blocked or requiring review.
         """
         self.intake_agent = IntakeAgent()
         self.security_agent = SecurityAgent()
@@ -36,6 +36,16 @@ class CaseOrchestrator:
 
     @staticmethod
     def _build_security_text(case: CaseInput, intake_output: dict) -> str:
+        """
+        Builds a newline-separated string used as input for the security agent.
+        
+        Parameters:
+            case (CaseInput): Case object whose `case_id`, `source_type`, `user_goal`, and `files` will be included in the text.
+            intake_output (dict): Intake agent output appended to the text as its string representation.
+        
+        Returns:
+            security_text (str): A single string with each of the above fields joined by newline characters.
+        """
         parts = [
             case.case_id,
             case.source_type,
@@ -46,6 +56,18 @@ class CaseOrchestrator:
         return "\n".join(parts)
 
     def _record_trace(self, trace: list[dict], result, step_index: int, phase: str):
+        """
+        Update an agent's result with propagated review/external-use flags, attach trace metadata, append its serialized form to the trace, and return the updated result.
+        
+        Parameters:
+            trace (list[dict]): Mutable list representing the pipeline trace; the function appends the agent's serialized result to this list.
+            result: Agent execution result object whose attributes are updated (`requires_human_review`, `external_use_allowed`, `trace_metadata`) and which must provide `output`, `status`, `agent_name`, `model_dump()` and existing flag attributes.
+            step_index (int): Numeric index of the agent step within the pipeline (used in trace metadata).
+            phase (str): Logical phase name for the step (used in trace metadata).
+        
+        Returns:
+            The same `result` object after mutation.
+        """
         output_requires_review = bool(result.output.get("requires_human_review", False))
         output_external_allowed = bool(result.output.get("external_use_allowed", False))
 
@@ -67,6 +89,27 @@ class CaseOrchestrator:
         return result
 
     def _summarize_trace(self, trace: list[dict], pipeline_name: str) -> dict:
+        """
+        Builds an aggregated summary of a pipeline run from a list of per-agent trace entries.
+        
+        Parameters:
+            trace (list[dict]): Ordered list of agent trace entries. Each entry is expected to include the keys
+                "agent_name", "status", "warnings" (list), "errors" (list),
+                "requires_human_review" (bool), and "external_use_allowed" (bool).
+            pipeline_name (str): Logical name of the pipeline being summarized.
+        
+        Returns:
+            dict: Summary with the following keys:
+                - trace_version (str): Trace schema/version label.
+                - pipeline_name (str): The provided pipeline_name.
+                - agent_count (int): Number of entries in the trace.
+                - completed_agents (list[str]): Agent names in trace order.
+                - blocked_at (str|None): Agent name where the first "blocked" status occurred, or None.
+                - warning_count (int): Total number of warnings across all entries.
+                - error_count (int): Total number of errors across all entries.
+                - requires_human_review (bool): True if any entry requests human review.
+                - external_use_allowed (bool): True only if all entries allow external use; False for empty traces.
+        """
         blocked_entry = next(
             (entry for entry in trace if entry["status"] == "blocked"),
             None,
@@ -90,6 +133,15 @@ class CaseOrchestrator:
 
     @staticmethod
     def _response_status(trace: list[dict]) -> str:
+        """
+        Determine the overall pipeline status from a sequence of agent trace entries.
+        
+        Parameters:
+            trace (list[dict]): Ordered list of per-agent trace dictionaries; each entry is expected to include a "status" key.
+        
+        Returns:
+            str: `"blocked"` if any trace entry has `status == "blocked"`, `"warning"` if no entries are blocked but at least one has `status == "warning"`, otherwise `"success"`.
+        """
         if any(entry["status"] == "blocked" for entry in trace):
             return "blocked"
 
@@ -100,16 +152,22 @@ class CaseOrchestrator:
 
     def run_intake_only(self, case: CaseInput):
         """
-        Run intake and security checks for a case and collect the per-step results.
+        Run intake and security steps and return their ordered trace plus an aggregated pipeline summary.
         
         Parameters:
-            case (CaseInput): Case data including `case_id` and any fields used by intake.
+            case (CaseInput): Input case data containing at minimum `case_id` and fields consumed by the intake agent.
         
         Returns:
-            dict: A summary containing:
-                - `case_id` (str): The input case's identifier.
-                - `status` (str): `"blocked"` if the security check blocked the case, otherwise `"success"`.
-                - `trace` (list): Ordered list of model-dumped results from each agent call (intake then security).
+            dict: A result dictionary with keys:
+                - case_id (str): The input case's identifier.
+                - status (str): Overall pipeline status; `"blocked"` if any step is blocked, `"warning"` if any step has warnings and none are blocked, otherwise `"success"`.
+                - trace (list[dict]): Ordered list of per-agent trace entries produced by `_record_trace`.
+                - pipeline_summary (dict): Aggregated pipeline metadata produced by `_summarize_trace`.
+                - requires_human_review (bool): `True` if any trace entry requires human review.
+                - external_use_allowed (bool): `False` for intake-only runs (external use is not permitted).
+            
+            Note:
+                If the security step blocks the case, `status` will be `"blocked"`, `requires_human_review` will be `True`, and `external_use_allowed` will be `False`.
         """
         trace = []
 
@@ -144,19 +202,20 @@ class CaseOrchestrator:
 
     def run_full_mock(self, case: CaseInput):
         """
-        Execute the full mock processing pipeline for a case and return the aggregated results and a mocked draft.
-        
-        Runs intake, security, extraction, normalization, metadata, FIRAC, and validation agents in sequence, collecting each agent's model_dump() output into a trace. If the security agent blocks the case, the pipeline stops early and returns a blocked status. Validation runs against a fixed mocked draft; the overall status is "blocked" if validation is blocked, otherwise "success".
+        Run the full mock case processing pipeline and return the resulting trace, pipeline summary, and a mocked draft.
         
         Parameters:
-            case (CaseInput): Input case object; must include `case.case_id`. If present, `case` may contain detected documents under `detected_documents` used by the extraction step.
+            case (CaseInput): Input case; must include `case.case_id`. If present, `case` may include `detected_documents` used by extraction.
         
         Returns:
-            dict: A dictionary with keys:
-                - `case_id`: the input case's ID.
-                - `status`: `"success"` if validation did not block the case, `"blocked"` otherwise (or if security blocked earlier).
-                - `trace`: a list of each agent's `model_dump()` results in execution order.
-                - `mock_draft`: the mocked draft dictionary used for validation with keys `relatorio`, `fundamentacao`, and `dispositivo`.
+            dict: Summary of pipeline execution containing:
+                - case_id (str): The input case's ID.
+                - status (str): Overall pipeline status: `"blocked"`, `"warning"`, or `"success"`.
+                - trace (list[dict]): Ordered trace entries produced by each agent.
+                - pipeline_summary (dict): Aggregated summary metadata for the executed pipeline.
+                - mock_draft (dict): The mocked draft used for validation (contains `relatorio`, `fundamentacao`, `dispositivo`, and draft flags).
+                - requires_human_review (bool): Whether any step requires human review.
+                - external_use_allowed (bool): Whether the aggregated pipeline allows external use (always `False` for this mock pipeline).
         """
         trace = []
 

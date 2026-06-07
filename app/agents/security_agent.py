@@ -170,7 +170,27 @@ class SecurityAgent:
 
     def run(self, case_id: str, text: str = "") -> AgentResult:
         """
-        Detect suspicious prompt-injection or malicious-instruction patterns.
+        Scan the provided text for prompt-injection or malicious-instruction patterns and produce a security assessment.
+        
+        Parameters:
+            case_id (str): Identifier for the case being scanned; propagated into the returned result.
+            text (str): Text to be analyzed for suspicious or malicious instruction patterns.
+        
+        Returns:
+            AgentResult: An assessment containing:
+                - status: one of `"blocked"`, `"warning"`, or `"success"`.
+                - output: a dict with keys:
+                    - `security_status`: `"blocked"`, `"review_required"`, or `"safe"`.
+                    - `detected_risks`: list of detected risk labels.
+                    - `risk_details`: list of detected risk entries (each includes `id`, `label`, `severity`, `recommended_action`).
+                    - `max_severity`: highest severity found or `"none"`.
+                    - `requires_human_review`: whether the entry requires human review.
+                    - `recommended_action`: suggested action (`"block"`, `"human_review"`, or `"continue"`).
+                    - `scan_version`: agent scan version string.
+                - errors: present when status is `"blocked"` (contains explanatory messages).
+                - warnings: present when status is `"warning"` (contains explanatory messages).
+                - requires_human_review (top-level): mirrors whether human review is required.
+                - external_use_allowed (top-level): set to `False` for all outcomes from this agent.
         """
         risk_details = self._detect(text)
         detected = [risk["label"] for risk in risk_details]
