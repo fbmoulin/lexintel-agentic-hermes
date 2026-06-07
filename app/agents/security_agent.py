@@ -19,9 +19,10 @@ class SecurityAgent:
     ]
 
     def run(self, case_id: str, text: str = "") -> AgentResult:
+        text_lower = text.lower()
         detected = [
             pattern for pattern in self.SUSPICIOUS_PATTERNS
-            if pattern.lower() in text.lower()
+            if pattern.lower() in text_lower
         ]
 
         if detected:
