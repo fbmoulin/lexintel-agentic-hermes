@@ -43,5 +43,6 @@ O registry registra 12 capacidades:
 - Agentes implementados devem ter classe importável.
 - Toda capacidade deve apontar para uma skill existente.
 - Toda skill versionada deve estar mapeada no registry.
+- Fases de análise FIRAC, validação jurisprudencial, minuta e validação judicial exigem `requires_human_review`.
 - Agentes planejados permanecem explicitamente marcados como `planned`.
 - Testes continuam locais e determinísticos.

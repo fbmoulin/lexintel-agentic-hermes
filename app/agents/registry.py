@@ -3,6 +3,14 @@ from importlib import import_module
 from app.services.skill_loader import get_skill_manifest, list_skills
 
 
+HUMAN_REVIEW_PHASES = {
+    "firac",
+    "precedent_validation",
+    "drafting",
+    "validation",
+}
+
+
 AGENT_REGISTRY = [
     {
         "agent_name": "IntakeAgent",
@@ -115,6 +123,7 @@ AGENT_REGISTRY = [
         "skill_name": "SKILL_JUDICIAL_VALIDATION.md",
         "status": "implemented",
         "mocked": True,
+        "requires_human_review": True,
         "description": "Audita saídas mockadas e bloqueia sinais de precedente inventado.",
     },
     {
@@ -148,7 +157,14 @@ def list_agent_registry() -> list[dict]:
             skill_manifest = get_skill_manifest(entry["skill_name"])
             missing_skill = False
         except (FileNotFoundError, ValueError):
-            skill_manifest = {"exists": False}
+            skill_manifest = {
+                "skill_name": entry["skill_name"],
+                "title": entry["skill_name"].removesuffix(".md"),
+                "sections": [],
+                "line_count": 0,
+                "char_count": 0,
+                "exists": False,
+            }
             missing_skill = True
 
         agent_dict = {
@@ -190,8 +206,9 @@ def validate_agent_registry() -> dict:
                 "skill_name": agent["skill_name"],
             })
 
-        # Validate that agents in legal-analysis/drafting phases require human review
-        if agent["phase"] in {"firac", "precedent_validation", "drafting"}:
+        # Legal analysis, drafting, precedent validation, and judicial validation
+        # cannot be treated as externally usable without human review.
+        if agent["phase"] in HUMAN_REVIEW_PHASES:
             if not agent.get("requires_human_review", False):
                 issues.append({
                     "type": "missing_human_review_flag",
