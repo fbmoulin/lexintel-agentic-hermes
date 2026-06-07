@@ -19,9 +19,12 @@ class ValidatorAgent:
         """
         blocking_errors = []
 
-        text = str(draft).lower()
+import re
+import unicodedata
+        text = unicodedata.normalize("NFKD", str(draft)).lower()
+        text = re.sub(r"\s+", " ", text)
 
-        if "precedente inventado" in text:
+        if re.search(r"\bprecedente\s+inventad[oa]\b", text):
             blocking_errors.append({
                 "type": "hallucinated_precedent",
                 "severity": "critical",
