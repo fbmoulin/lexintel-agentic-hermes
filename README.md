@@ -1,31 +1,87 @@
-# Lex Intelligentia: Ecossistema de Agentes de IA para Conteúdo Jurídico
+# Lex Kratos Agentic Core — v0.1
 
-Este repositório contém o ecossistema de agentes de Inteligência Artificial para a produção de conteúdo jurídico do projeto Lex Intelligentia. O objetivo é automatizar e otimizar a criação de conteúdo, garantindo alta qualidade, conformidade regulatória e relevância jurídica, com supervisão humana estratégica.
+Este repositório consolida o núcleo jurídico agentico local do Lex Kratos. A v0.1 é intencionalmente pequena: FastAPI, agentes mockados, testes automatizados, dataset de avaliação e documentação de execução.
 
-## Estrutura do Repositório
+## Fronteira de escopo
 
-*   `skills-conteudo/`: Definições das skills para cada agente (voz-marca, voz-pessoal, radar, pillar, atomizador, apresentador-video, guardiao, analista, etc.).
-*   `runbook/`: Rotinas semanais e critérios de aprovação do ciclo de conteúdo.
-*   `assets-marca/`: Identidade visual e ativos de marca.
-*   `tests/`: Testes automatizados para as skills e o fluxo de trabalho.
-*   `docs/`: Documentação técnica e especificações do projeto.
-*   `memory/`: Memória local do orquestrador Hermes (SQLite).
-*   `CLAUDE.md`: Regras de governança e padrões para o agente Claude Code.
+Este projeto não é o deploy Hermes/Conteúdo do Lex Intelligentia.
 
-## Visão Geral do Fluxo de Trabalho
+Materiais externos como `Analyzing AGENTS2.zip`, tutoriais Hermes, cron jobs, n8n, áudio, vídeo, ElevenLabs e automação de publicação podem orientar backlog futuro, mas não são fonte de código nem critério de aceite da v0.1.
 
-O projeto opera com um ciclo de produção de conteúdo otimizado, envolvendo agentes especializados e gates humanos. Este ciclo garante que o conteúdo passe por etapas de ideação, criação, validação, aprovação e análise de desempenho.
+Nesta fase não há integrações reais com Qdrant, Supabase, n8n, DataJud, STJ Dados Abertos, PJe ou LLMs.
 
-## Agentes Chave
+## Objetivo
 
-*   **Hermes:** Orquestrador central dos agentes e do ciclo de conteúdo.
-*   **Claude Code:** Construtor e mantenedor do repositório e das skills.
-*   **Agentes Especialistas:** `Radar Preditivo`, `Pillar Estruturado`, `Diretor de Arte IA`, `Monitor de Regulação`, `Refinador de Skill`, `Sombra Jurídica`, `Adaptador de Audiência`, `Extrator PJe/FIRAC`, entre outros.
+Criar uma esteira jurídica auditável, inicialmente mockada, para:
 
-## Compliance e Segurança
+- ingestão de documentos;
+- extração e normalização jurídica;
+- busca RAG simulada;
+- análise FIRAC+;
+- validação jurídica;
+- segurança contra prompt injection;
+- avaliação contínua por métricas.
 
-O projeto prioriza a conformidade com a LGPD e a Resolução CNJ 615, utilizando memória local, anonimização de dados por demanda e chaves privadas para APIs de LLMs. Gates humanos são pontos cruciais de controle para garantir a ética e a precisão jurídica.
+Indexação vetorial, busca híbrida real, pesquisa jurisprudencial real e geração de minuta ficam para fases posteriores com autorização explícita.
 
-## Como Contribuir
+## Decisão arquitetural central
 
-Consulte o `CLAUDE.md` para diretrizes de desenvolvimento e o `runbook/` para o fluxo de trabalho. Em caso de dúvidas, entre em contato com a equipe de desenvolvimento.
+Não criar um superagente monolítico.
+
+Criar um orquestrador simples com agentes especializados:
+
+1. IntakeAgent
+2. SecurityAgent
+3. ExtractionAgent
+4. LegalNormalizerAgent
+5. MetadataAgent
+6. FIRACAgent
+7. ValidatorAgent
+8. EvaluationAgent
+
+Agentes como IndexingAgent, HybridRetrievalAgent, JurisprudenceAgent e DraftingAgent permanecem planejados para fases futuras.
+
+## Como começar
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+> Use uma `.venv` dedicada. Instalar no Python global pode gerar conflitos com outros projetos que usem FastAPI, httpx, pytest ou Supabase em versões diferentes.
+
+No navegador:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Depois rode:
+
+```bash
+pytest
+python -m app.evals.run_eval
+```
+
+## Estado atual
+
+Este pacote entrega um scaffold funcional com mocks. A conexão real com Qdrant, Supabase, LLMs e automações externas deve ser ativada apenas em fases seguintes e mediante tarefa explícita.
+
+O `docker-compose.yml` atual é apoio futuro para Qdrant e não é requisito para rodar a v0.1.
+
+## Validação local
+
+Os comandos de aceite da v0.1 são:
+
+```bash
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+pytest
+python -m app.evals.run_eval
+```
+
+Também há um workflow em `.github/workflows/ci.yml` que executa testes e avaliação mockada em Python 3.12.
+
+No Windows, se o `pytest` falhar por permissão no diretório temporário padrão, rode com `TMP` e `TEMP` apontando para uma pasta controlada do workspace. Esse é um ajuste ambiental, não uma dependência do produto.

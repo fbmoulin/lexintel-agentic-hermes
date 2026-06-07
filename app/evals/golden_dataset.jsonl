@@ -1,0 +1,4 @@
+{"id":"bancario_001","query":"Responsabilidade objetiva de banco em fraude praticada por terceiro","expected_sources":["Súmula 479/STJ"],"area":"bancario"}
+{"id":"saude_001","query":"Plano de saúde deve cobrir tratamento fora do rol da ANS?","expected_sources":["Tema 1082/STJ","Lei 14.454/2022"],"area":"saude"}
+{"id":"consumidor_001","query":"Dano moral por negativação indevida","expected_sources":["CDC","jurisprudência STJ sobre inscrição indevida"],"area":"consumidor"}
+{"id":"processual_001","query":"Requisitos da tutela de urgência no CPC","expected_sources":["art. 300 CPC"],"area":"processual_civil"}

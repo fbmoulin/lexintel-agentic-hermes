@@ -1,0 +1,56 @@
+{
+  "type": "object",
+  "required": [
+    "run_id",
+    "case_id",
+    "agent_name",
+    "status",
+    "started_at"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "agent_name": {
+      "type": "string"
+    },
+    "input": {
+      "type": "object"
+    },
+    "output": {
+      "type": "object"
+    },
+    "status": {
+      "enum": [
+        "success",
+        "warning",
+        "failed",
+        "blocked"
+      ]
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "finished_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "latency_ms": {
+      "type": "number"
+    },
+    "cost_usd": {
+      "type": "number"
+    },
+    "warnings": {
+      "type": "array"
+    },
+    "errors": {
+      "type": "array"
+    }
+  }
+}
