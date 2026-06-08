@@ -15,9 +15,9 @@ class CaseOrchestrator:
 
     def __init__(self):
         """
-        Initialize the orchestrator and instantiate downstream agents.
+        Create a CaseOrchestrator and instantiate its downstream agents.
         
-        Attributes:
+        Instantiated attributes:
             intake_agent: Handles initial case intake and detects documents.
             security_agent: Assesses case content for security or policy blocking.
             extraction_agent: Extracts text from detected documents.
@@ -37,14 +37,14 @@ class CaseOrchestrator:
     @staticmethod
     def _build_security_text(case: CaseInput, intake_output: dict) -> str:
         """
-        Compose a newline-separated text representation of the case and intake output for the security agent.
+        Compose newline-separated input text for the security agent from the case's identifying fields and the intake output.
         
         Parameters:
-            case (CaseInput): Provides `case_id`, `source_type`, `user_goal`, and `files` to include.
-            intake_output (dict): Intake agent output appended as its string representation.
+            case (CaseInput): Provides `case_id`, `source_type`, `user_goal`, and `files` whose values are included in the text in that order.
+            intake_output (dict): Intake agent output appended to the text as its string representation.
         
         Returns:
-            security_text (str): A single string with the listed fields joined by newline characters.
+            str: A single string with the listed fields joined by newline characters.
         """
         parts = [
             case.case_id,
@@ -152,22 +152,22 @@ class CaseOrchestrator:
 
     def run_intake_only(self, case: CaseInput):
         """
-        Run the intake and security agents for a case and produce an ordered trace with an aggregated pipeline summary.
+        Run intake and security steps and return their ordered trace plus an aggregated pipeline summary.
         
         Parameters:
-            case (CaseInput): Input case data; must include `case_id` and any fields required by the intake agent.
+            case (CaseInput): Input case data containing at minimum `case_id` and fields consumed by the intake agent.
         
         Returns:
-            dict: Result containing:
-                - case_id (str): The input case identifier.
-                - status (str): Overall pipeline status: `"blocked"` if any step is blocked, `"warning"` if any step has warnings and none are blocked, otherwise `"success"`.
-                - trace (list[dict]): Ordered per-agent trace entries produced by `_record_trace`.
-                - pipeline_summary (dict): Aggregated metadata produced by `_summarize_trace`.
+            dict: A result dictionary with keys:
+                - case_id (str): The input case's identifier.
+                - status (str): Overall pipeline status; `"blocked"` if any step is blocked, `"warning"` if any step has warnings and none are blocked, otherwise `"success"`.
+                - trace (list[dict]): Ordered list of per-agent trace entries produced by `_record_trace`.
+                - pipeline_summary (dict): Aggregated pipeline metadata produced by `_summarize_trace`.
                 - requires_human_review (bool): `True` if any trace entry requires human review.
-                - external_use_allowed (bool): Always `False` for intake-only runs.
-        
-        Notes:
-            If the security step sets status to `"blocked"`, the returned `status` will be `"blocked"`, `requires_human_review` will be `True`, and `external_use_allowed` will be `False`.
+                - external_use_allowed (bool): `False` for intake-only runs (external use is not permitted).
+            
+            Note:
+                If the security step blocks the case, `status` will be `"blocked"`, `requires_human_review` will be `True`, and `external_use_allowed` will be `False`.
         """
         trace = []
 
@@ -202,19 +202,19 @@ class CaseOrchestrator:
 
     def run_full_mock(self, case: CaseInput):
         """
-        Run the full mock processing pipeline for a case and produce an ordered agent trace, an aggregated pipeline summary, and a mocked draft.
+        Execute the full mock case processing pipeline (intake → security → extraction → normalization → metadata → FIRAC → mock draft → validation).
         
         Parameters:
-            case (CaseInput): Input case containing at minimum `case.case_id`. If present, `case` may include `detected_documents` used by extraction.
+            case (CaseInput): Input case; must include `case.case_id`. If present, `case` may include `detected_documents` used by extraction.
         
         Returns:
-            dict: Execution result with keys:
+            dict: Pipeline execution result containing:
                 - case_id (str): The input case's ID.
-                - status (str): Overall pipeline status: `"blocked"`, `"warning"`, or `"success"`.
-                - trace (list[dict]): Ordered trace entries produced by each agent.
-                - pipeline_summary (dict): Aggregated metadata for the executed pipeline (includes `agent_count`, `completed_agents`, `warning_count`, `error_count`, `requires_human_review`, `external_use_allowed`, `blocked_at`, and `trace_version`).
-                - mock_draft (dict): The mocked draft used for validation (contains `relatorio`, `fundamentacao`, `dispositivo`, `requires_human_review`, `external_use_allowed`, and `draft_status`).
-                - requires_human_review (bool): `True` if any pipeline step requires human review.
+                - status (str): Overall pipeline status: `blocked`, `warning`, or `success`.
+                - trace (list[dict]): Ordered per-agent trace entries produced during execution.
+                - pipeline_summary (dict): Aggregated metadata about the executed pipeline.
+                - mock_draft (dict, optional): The mocked draft used for validation (contains `relatorio`, `fundamentacao`, `dispositivo`, and draft flags). Present only when the pipeline proceeds past security.
+                - requires_human_review (bool): True if any step requires human review.
                 - external_use_allowed (bool): Whether the pipeline allows external use (always `False` for this mock pipeline).
         """
         trace = []

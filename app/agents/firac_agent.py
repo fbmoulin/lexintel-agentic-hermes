@@ -6,15 +6,15 @@ class FIRACAgent:
 
     def run(self, case_id: str, normalized_case: dict, retrieved_contexts: list | None = None) -> AgentResult:
         """
-        Produce a fixed mock AgentResult for the provided case identifier.
+        Produce a fixed mock analysis AgentResult for the given case.
         
         Parameters:
-        	case_id (str): Case identifier to include in the returned AgentResult.
-        	normalized_case (dict): Accepted but not used by this implementation.
-        	retrieved_contexts (list | None): Optional contexts; accepted but not used.
+            case_id (str): Case identifier included in the returned AgentResult.
+            normalized_case (dict): Accepted but not used by this implementation.
+            retrieved_contexts (list | None): Optional contexts; accepted but not used.
         
         Returns:
-        	AgentResult: An AgentResult with `case_id` set to the provided `case_id`, `agent_name` set to the agent's `name`, `status` set to `"success"`, and `output` including empty lists for `facts`, `issues`, `rules`, `application`, `conclusion`, `risks`, and `missing_information`, plus `"recommended_decision_type": "analise"` and `"output_status": "mock_analysis_not_for_external_use"`. The returned object's top-level flags are `requires_human_review=True` and `external_use_allowed=False`.
+            AgentResult: An AgentResult with `case_id` set to the provided `case_id`, `agent_name` set to the agent's `name`, `status` set to `"success"`, `output` containing empty lists for `facts`, `issues`, `rules`, `application`, `conclusion`, `risks`, and `missing_information`, plus `"recommended_decision_type": "analise"` and `"output_status": "mock_analysis_not_for_external_use"`. The returned object's top-level flags are `requires_human_review=True` and `external_use_allowed=False`.
         """
         return AgentResult(
             case_id=case_id,
