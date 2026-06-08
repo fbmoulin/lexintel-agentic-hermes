@@ -52,6 +52,11 @@ def test_eval_dataset_validation_rejects_duplicate_ids():
         load_dataset(FIXTURES_DIR / "duplicate_ids.jsonl")
 
 
+def test_eval_dataset_validation_rejects_non_text_id_before_duplicate_lookup():
+    with pytest.raises(ValueError, match="field id must be text"):
+        load_dataset(FIXTURES_DIR / "non_text_id.jsonl")
+
+
 def test_eval_thresholds_fail_when_dataset_is_too_small():
     result = run(FIXTURES_DIR / "small_dataset.jsonl")
 
@@ -60,3 +65,27 @@ def test_eval_thresholds_fail_when_dataset_is_too_small():
         failure["metric"] == "dataset_size"
         for failure in result["threshold_failures"]
     )
+
+
+def test_eval_threshold_overrides_can_be_partial():
+    result = run(thresholds={"min_dataset_size": 1})
+
+    assert result["passed"] is True
+    assert result["thresholds"]["min_dataset_size"] == 1
+    assert result["thresholds"]["min_average_recall_at_3"] == 0.85
+    assert result["thresholds"]["min_average_mrr"] == 0.85
+    assert result["thresholds"]["required_areas"] == [
+        "bancario",
+        "consumidor",
+        "processual_civil",
+        "saude",
+    ]
+
+
+def test_eval_thresholds_do_not_reuse_default_mutable_values():
+    result = run()
+    result["thresholds"]["required_areas"].append("mutated")
+
+    next_result = run()
+
+    assert "mutated" not in next_result["thresholds"]["required_areas"]

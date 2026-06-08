@@ -145,7 +145,7 @@ Entregas:
 - `golden_dataset.jsonl` expandido para 8 casos.
 - Dataset separado por `area` com cobertura bancária, saúde, consumidor e processual civil.
 - Métricas `average_recall_at_1`, `average_recall_at_3`, `average_mrr` e resumo por área.
-- Validação rígida do JSONL com falha em CI se houver linha inválida, campo ausente ou ID duplicado.
+- Validação rígida do JSONL com falha em CI se houver linha inválida, campo ausente, campo textual inválido ou ID duplicado.
 - Limiar mínimo local: dataset com 8 casos, áreas obrigatórias, `average_recall_at_3 >= 0.85` e `average_mrr >= 0.85`.
 - CLI de avaliação encerra com erro quando os limiares não são atendidos.
 

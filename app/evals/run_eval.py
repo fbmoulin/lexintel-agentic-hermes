@@ -1,3 +1,4 @@
+from copy import deepcopy
 import json
 from pathlib import Path
 
@@ -58,6 +59,12 @@ def validate_dataset_row(row: dict, line_number: int, seen_ids: set[str]) -> Non
             f"{sorted(missing_fields)}"
         )
 
+    for field_name in ("id", "query", "area"):
+        if not isinstance(row[field_name], str) or not row[field_name].strip():
+            raise ValueError(
+                f"Dataset row {line_number} field {field_name} must be text"
+            )
+
     if row["id"] in seen_ids:
         raise ValueError(f"Duplicate dataset id at line {line_number}: {row['id']}")
 
@@ -70,12 +77,6 @@ def validate_dataset_row(row: dict, line_number: int, seen_ids: set[str]) -> Non
         raise ValueError(
             f"Dataset row {line_number} expected_sources must contain strings"
         )
-
-    for field_name in ("id", "query", "area"):
-        if not isinstance(row[field_name], str) or not row[field_name].strip():
-            raise ValueError(
-                f"Dataset row {line_number} field {field_name} must be text"
-            )
 
     seen_ids.add(row["id"])
 
@@ -177,15 +178,15 @@ def average(values: list[float]) -> float:
 def summarize_by_area(scores: list[dict]) -> dict:
     summary = {}
     for score in scores:
-        area_scores = summary.setdefault(
-            score["area"],
-            {
+        area = score["area"]
+        if area not in summary:
+            summary[area] = {
                 "dataset_size": 0,
                 "average_recall_at_3": 0.0,
                 "average_mrr": 0.0,
                 "failed_case_ids": [],
-            },
-        )
+            }
+        area_scores = summary[area]
         area_scores["dataset_size"] += 1
         area_scores["average_recall_at_3"] += score["recall_at_3"]
         area_scores["average_mrr"] += score["mrr"]
@@ -241,7 +242,9 @@ def run(dataset_path: str | Path = DATASET_PATH, thresholds: dict | None = None)
     """
     Evaluate deterministic mock retrieval over the golden dataset.
     """
-    active_thresholds = thresholds or DEFAULT_THRESHOLDS
+    active_thresholds = deepcopy(DEFAULT_THRESHOLDS)
+    if thresholds:
+        active_thresholds.update(deepcopy(thresholds))
     dataset = load_dataset(dataset_path)
     scores = [evaluate_item(item) for item in dataset]
     threshold_failures = evaluate_thresholds(scores, active_thresholds)

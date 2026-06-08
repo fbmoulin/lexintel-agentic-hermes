@@ -182,7 +182,7 @@ Mudanças validadas:
 - Agrupamento por área: bancário, saúde, consumidor e processual civil.
 - Métricas `average_recall_at_1`, `average_recall_at_3` e `average_mrr`.
 - Resumo `area_summary` com casos abaixo de `recall@3`.
-- Validação rígida de JSONL inválido, campos obrigatórios e dataset pequeno.
+- Validação rígida de JSONL inválido, campos obrigatórios, `id` não textual e dataset pequeno.
 - Limiar local de aceite via `passed` e `threshold_failures`.
 
 Comandos executados:
@@ -193,7 +193,7 @@ pytest
 
 Resultado:
 
-- 31 testes aprovados.
+- 34 testes aprovados.
 
 ```bash
 python -m app.evals.run_eval

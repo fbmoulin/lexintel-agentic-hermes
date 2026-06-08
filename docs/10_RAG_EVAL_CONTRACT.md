@@ -22,7 +22,7 @@ Campos obrigatórios por linha:
 - `processual_civil`
 - `saude`
 
-O loader falha com `ValueError` quando encontra JSON inválido, campo ausente, `expected_sources` vazio ou ID duplicado.
+O loader falha com `ValueError` quando encontra JSON inválido, linha que não seja objeto, campo ausente, `id`, `query` ou `area` não textual, `expected_sources` vazio ou ID duplicado.
 
 ## Métricas
 
