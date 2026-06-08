@@ -73,9 +73,9 @@
 
 ## P5 — Extração e normalização estruturadas
 
-- [ ] Enriquecer contrato de extração mockada.
-- [ ] Enriquecer normalização jurídica mockada.
-- [ ] Validar outputs com Pydantic.
+- [x] Enriquecer contrato de extração mockada.
+- [x] Enriquecer normalização jurídica mockada.
+- [x] Validar outputs com Pydantic.
 
 ## P6 — RAG real preparado, mas desligado por padrão
 

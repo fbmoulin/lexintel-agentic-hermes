@@ -1,40 +1,103 @@
-from app.schemas.case import AgentResult
+from app.schemas.case import (
+    AgentResult,
+    ExtractedText,
+    ExtractionQualitySummary,
+)
+
+
+MOCK_TEXT_BY_DOC_TYPE = {
+    "peticao_inicial": (
+        "Petição inicial mockada. Autor: Consumidor Alfa. Réu: Banco Beta. "
+        "Fatos: fraude bancária via pix. Pedido: indenização por dano moral "
+        "e material. Provas: comprovante de transferência e boletim de ocorrência."
+    ),
+    "contestacao": (
+        "Contestação mockada. Réu Banco Beta apresenta defesa de culpa "
+        "exclusiva de terceiro e ausência de falha do serviço. Provas: logs "
+        "de autenticação e termos de uso."
+    ),
+    "sentenca": (
+        "Sentença mockada. Juízo de primeiro grau julga parcialmente "
+        "procedentes os pedidos e reconhece falha na prestação do serviço. "
+        "Evento processual: sentença publicada."
+    ),
+    "acordao": (
+        "Acórdão mockado. Tribunal mantém a sentença e reforça a aplicação "
+        "da responsabilidade objetiva em fraude bancária. Evento processual: "
+        "julgamento colegiado."
+    ),
+    "unknown": (
+        "Documento mockado não classificado. Conteúdo insuficiente para "
+        "extração jurídica confiável."
+    ),
+}
 
 
 class ExtractionAgent:
     name = "ExtractionAgent"
 
     def run(self, case_id: str, documents: list[dict]) -> AgentResult:
-        """
-        Extracts simulated text records from a list of document metadata for a case.
-        
-        Parameters:
-            case_id (str): Identifier of the case the documents belong to.
-            documents (list[dict]): List of document metadata dictionaries. Each dictionary is expected to contain keys like `doc_id` and `file_path`; missing keys result in `None` values in the extracted records.
-        
-        Returns:
-            AgentResult: Result object with `case_id`, `agent_name`, `status` set to `"success"`, `output` containing `{"extracted_text": [...]}` where each extracted record is a dict with keys:
-                - `doc_id`: original document id or `None`
-                - `page`: page number (always `1`)
-                - `text`: simulated extracted text constructed from `file_path`
-                - `quality_score`: extraction quality score (always `0.90`)
-            and `warnings` as a list (empty by default).
-        """
         extracted = []
         warnings = []
 
+        if not documents:
+            warnings.append(
+                "Nenhum documento detectado para extração mockada; revisão humana obrigatória."
+            )
+
         for doc in documents:
-            extracted.append({
-                "doc_id": doc.get("doc_id"),
-                "page": 1,
-                "text": f"Texto simulado extraído de {doc.get('file_path')}.",
-                "quality_score": 0.90
-            })
+            doc_type = doc.get("doc_type", "unknown")
+            if doc_type not in MOCK_TEXT_BY_DOC_TYPE:
+                doc_type = "unknown"
+
+            quality_score = 0.92 if doc_type != "unknown" else 0.68
+            page_warnings = []
+            if quality_score < 0.70:
+                warning = (
+                    f"Baixa qualidade de extração mockada em {doc.get('doc_id')}; "
+                    "revisão humana obrigatória."
+                )
+                page_warnings.append(warning)
+                warnings.append(warning)
+
+            extracted_item = ExtractedText(
+                doc_id=doc.get("doc_id") or "doc_unknown",
+                file_path=doc.get("file_path") or "",
+                doc_type=doc_type,
+                page=1,
+                text=MOCK_TEXT_BY_DOC_TYPE[doc_type],
+                quality_score=quality_score,
+                warnings=page_warnings,
+            )
+            extracted.append(extracted_item.model_dump())
+
+        quality_scores = [item["quality_score"] for item in extracted] or [0.0]
+        low_quality_pages = [
+            f"{item['doc_id']}:p{item['page']}"
+            for item in extracted
+            if item["quality_score"] < 0.70
+        ]
+        quality_summary = ExtractionQualitySummary(
+            document_count=len(documents),
+            page_count=len(extracted),
+            min_quality_score=min(quality_scores),
+            average_quality_score=sum(quality_scores) / len(quality_scores),
+            low_quality_pages=low_quality_pages,
+            automation_allowed=bool(extracted) and not low_quality_pages,
+        )
 
         return AgentResult(
             case_id=case_id,
             agent_name=self.name,
-            status="success",
-            output={"extracted_text": extracted},
-            warnings=warnings
+            status="warning" if warnings else "success",
+            output={
+                "extraction_schema_version": "extraction-mock-v0.1",
+                "extracted_text": extracted,
+                "quality_summary": quality_summary.model_dump(),
+                "requires_human_review": bool(warnings),
+                "external_use_allowed": False,
+            },
+            warnings=warnings,
+            requires_human_review=bool(warnings),
+            external_use_allowed=False,
         )

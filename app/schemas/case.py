@@ -21,6 +21,110 @@ class AgentResult(BaseModel):
     trace_metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+DocumentType = Literal[
+    "peticao_inicial",
+    "contestacao",
+    "sentenca",
+    "acordao",
+    "unknown",
+]
+
+
+class ExtractedText(BaseModel):
+    doc_id: str
+    file_path: str
+    doc_type: DocumentType
+    page: int = Field(ge=1)
+    text: str = Field(min_length=1)
+    quality_score: float = Field(ge=0.0, le=1.0)
+    extraction_method: Literal["mock_filename_template"] = "mock_filename_template"
+    warnings: list[str] = Field(default_factory=list)
+
+
+class ExtractionQualitySummary(BaseModel):
+    document_count: int = Field(ge=0)
+    page_count: int = Field(ge=0)
+    min_quality_score: float = Field(ge=0.0, le=1.0)
+    average_quality_score: float = Field(ge=0.0, le=1.0)
+    low_quality_pages: list[str] = Field(default_factory=list)
+    automation_allowed: bool = False
+
+
+class LegalParty(BaseModel):
+    role: Literal["author", "defendant", "court", "appellant", "appellee", "unknown"]
+    name: str
+    source_doc_ids: list[str] = Field(default_factory=list)
+
+
+class LegalClaim(BaseModel):
+    claim_type: str
+    summary: str
+    source_doc_ids: list[str] = Field(default_factory=list)
+
+
+class LegalDefense(BaseModel):
+    defense_type: str
+    summary: str
+    source_doc_ids: list[str] = Field(default_factory=list)
+
+
+class LegalEvidence(BaseModel):
+    evidence_type: str
+    summary: str
+    source_doc_ids: list[str] = Field(default_factory=list)
+
+
+class ProceduralEvent(BaseModel):
+    event_type: str
+    summary: str
+    source_doc_ids: list[str] = Field(default_factory=list)
+
+
+class LegalIssue(BaseModel):
+    issue_type: str
+    summary: str
+    source_doc_ids: list[str] = Field(default_factory=list)
+
+
+class NormalizedCase(BaseModel):
+    case_id: str
+    normalization_schema_version: str = "normalization-mock-v0.1"
+    source_doc_ids: list[str] = Field(default_factory=list)
+    document_types: list[DocumentType] = Field(default_factory=list)
+    parties: list[LegalParty] = Field(default_factory=list)
+    facts: list[dict[str, Any]] = Field(default_factory=list)
+    claims: list[LegalClaim] = Field(default_factory=list)
+    cause_of_action: list[dict[str, Any]] = Field(default_factory=list)
+    preliminary_issues: list[dict[str, Any]] = Field(default_factory=list)
+    merit_prejudicials: list[dict[str, Any]] = Field(default_factory=list)
+    defenses: list[LegalDefense] = Field(default_factory=list)
+    evidence: list[LegalEvidence] = Field(default_factory=list)
+    procedural_events: list[ProceduralEvent] = Field(default_factory=list)
+    legal_issues: list[LegalIssue] = Field(default_factory=list)
+    normalization_warnings: list[str] = Field(default_factory=list)
+
+
+class CaseMetadata(BaseModel):
+    metadata_schema_version: str = "metadata-mock-v0.1"
+    tribunal: Optional[str] = None
+    classe: Optional[str] = None
+    assunto: Optional[str] = None
+    relator: Optional[str] = None
+    orgao_julgador: Optional[str] = None
+    data_julgamento: Optional[str] = None
+    data_publicacao: Optional[str] = None
+    ramo_direito: Optional[str] = None
+    tipo_documento: Optional[str] = None
+    tese_juridica: Optional[str] = None
+    resultado: Optional[str] = None
+    document_types: list[DocumentType] = Field(default_factory=list)
+    document_count: int = Field(default=0, ge=0)
+    has_petition: bool = False
+    has_defense: bool = False
+    has_decision: bool = False
+    has_appeal_decision: bool = False
+
+
 class RetrievedContext(BaseModel):
     chunk_id: str
     doc_id: str

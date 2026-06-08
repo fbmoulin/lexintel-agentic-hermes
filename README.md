@@ -89,6 +89,12 @@ O runner local em `app/evals/run_eval.py` avalia o dataset dourado sem rede e se
 
 Ele valida o JSONL, agrupa casos por área e retorna métricas como `average_recall_at_1`, `average_recall_at_3`, `average_mrr`, `area_summary` e `passed`. O limiar mínimo atual exige 8 casos, quatro áreas obrigatórias e médias globais `>= 0.85` para `recall@3` e MRR. O CLI encerra com erro quando `passed` é `false`.
 
+## Extração e normalização mockadas
+
+O pipeline completo usa `ExtractionAgent`, `LegalNormalizerAgent` e `MetadataAgent` com contratos Pydantic locais. Eles simulam petição inicial, contestação, sentença e acórdão sem ler PDF real, sem OCR e sem serviço externo.
+
+Documento não classificado recebe baixa qualidade mockada, bloqueia automação e exige revisão humana.
+
 ## Validação local
 
 Os comandos de aceite da v0.1 são:
