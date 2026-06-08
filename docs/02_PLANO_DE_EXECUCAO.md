@@ -158,15 +158,24 @@ python -m app.evals.run_eval
 
 ## Fase 5 — Extração e normalização
 
+Status: implementada.
+
 Objetivo: transformar documentos em estrutura jurídica.
 
 Entregas:
 
-- ExtractionAgent.
-- LegalNormalizerAgent.
-- MetadataAgent.
-- Quality score.
-- Warnings.
+- Contratos Pydantic `ExtractedText`, `ExtractionQualitySummary`, `NormalizedCase` e `CaseMetadata`.
+- `ExtractionAgent` com texto mockado por tipo documental, `quality_score`, `quality_summary` e warning para baixa qualidade.
+- `LegalNormalizerAgent` com partes, fatos, pedidos, causa de pedir, defesas, provas, eventos processuais e questões jurídicas.
+- `MetadataAgent` com metadados mockados derivados de tipos documentais e questões jurídicas normalizadas.
+- Testes para petição inicial, contestação, sentença, acórdão e documento desconhecido.
+
+Critério de aceite:
+
+```bash
+pytest
+python -m app.evals.run_eval
+```
 
 ## Fase 6 — Qdrant e indexação
 

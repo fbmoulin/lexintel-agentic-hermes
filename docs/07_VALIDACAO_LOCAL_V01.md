@@ -208,3 +208,40 @@ Resultado:
 - Execução concluída sem erro.
 
 Durante esta fase, nenhuma integração real externa foi ativada.
+
+## Validação da Fase 5 — Extração e normalização estruturadas
+
+Data: 2026-06-08
+
+Mudanças validadas:
+
+- Contratos Pydantic para extração, resumo de qualidade, normalização e metadados.
+- `ExtractionAgent` com texto mockado por tipo documental e `quality_score`.
+- Documento `unknown` ou lista vazia com automação bloqueada e revisão humana.
+- `LegalNormalizerAgent` com partes, fatos, pedidos, causa de pedir, defesas, provas, eventos e questões jurídicas.
+- `MetadataAgent` com metadados derivados de tipos documentais mockados.
+- Pipeline completo expondo extração, normalização e metadados estruturados no trace.
+
+Comandos executados:
+
+```bash
+pytest
+```
+
+Resultado:
+
+- 39 testes aprovados.
+
+```bash
+python -m app.evals.run_eval
+```
+
+Resultado:
+
+- `dataset_size`: 8
+- `average_recall_at_3`: 0.9166666666666666
+- `average_mrr`: 0.9166666666666666
+- `passed`: true
+- Execução concluída sem erro.
+
+Durante esta fase, nenhuma integração real externa foi ativada.
