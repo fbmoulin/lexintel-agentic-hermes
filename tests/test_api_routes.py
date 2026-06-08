@@ -33,8 +33,11 @@ def test_eval_endpoint_runs():
 
     assert response.status_code == 200
     data = response.json()
-    assert data["dataset_size"] == 4
+    assert data["dataset_size"] == 8
     assert "average_recall" in data
+    assert "average_recall_at_3" in data
+    assert "average_mrr" in data
+    assert data["passed"] is True
 
 
 def test_full_mock_pipeline_runs_all_available_agents():

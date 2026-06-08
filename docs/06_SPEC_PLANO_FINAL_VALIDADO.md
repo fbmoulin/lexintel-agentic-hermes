@@ -200,6 +200,8 @@ Executa o dataset dourado local.
 Regra:
 
 - Deve retornar `dataset_size`, `average_recall` e resultados por item.
+- Evolução aceita: também retornar `average_recall_at_1`, `average_recall_at_3`, `average_mrr`, `area_summary`, `thresholds`, `passed` e `threshold_failures`.
+- O dataset dourado deve falhar em validação local/CI quando tiver JSONL inválido, campo obrigatório ausente, `expected_sources` vazio, ID duplicado ou limiar global não atendido.
 
 ## 7. Guardrails de Seguranca e Compliance
 
