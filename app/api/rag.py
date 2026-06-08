@@ -1,7 +1,14 @@
+import logging
+
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
+from app.agents.security_agent import SecurityAgent
+from app.services.qdrant_service import is_qdrant_enabled
+from app.services.vector_store import get_vector_store
+
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 class SearchRequest(BaseModel):
@@ -11,29 +18,55 @@ class SearchRequest(BaseModel):
 
 @router.post("/search")
 def search(request: SearchRequest):
-    # Mock inicial. Substituir por HybridRetrievalAgent + QdrantService.
-    """
-    Handle a search request and return a mocked search response.
-    
-    Parameters:
-        request (SearchRequest): Input containing the search `query` and `top_k` number of results to return.
-    
-    Returns:
-        response (dict): A dictionary echoing the input `query` and `top_k`, and a `results` list with mocked result objects. Each result object contains:
-            - `chunk_id` (str): Identifier of the matched chunk.
-            - `score` (float): Relevance score for the chunk.
-            - `text` (str): Snippet or content of the chunk.
-            - `retrieval_method` (str): Source or method used for retrieval (set to `"mock"` in this implementation).
-    """
+    security_result = SecurityAgent().run("rag_search", request.query)
+    if security_result.status in {"blocked", "warning"}:
+        return {
+            "query": request.query,
+            "top_k": request.top_k,
+            "status": security_result.status,
+            "suspicious_query": True,
+            "requires_human_review": True,
+            "security": security_result.output,
+            "warnings": security_result.warnings,
+            "errors": security_result.errors,
+            "vector_backend": None,
+            "qdrant_enabled": is_qdrant_enabled(),
+            "results": [],
+        }
+
+    try:
+        vector_store = get_vector_store()
+        results = []
+        for result in vector_store.search(request.query, request.top_k):
+            metadata = result.get("metadata", {})
+            results.append({
+                **result,
+                "retrieval_method": metadata.get("retrieval_method", "mock"),
+            })
+    except Exception as exc:
+        logger.exception("RAG search failed")
+        return {
+            "query": request.query,
+            "top_k": request.top_k,
+            "status": "failed",
+            "suspicious_query": False,
+            "requires_human_review": True,
+            "warnings": [],
+            "errors": [str(exc)],
+            "vector_backend": "unknown",
+            "qdrant_enabled": is_qdrant_enabled(),
+            "results": [],
+        }
+
     return {
         "query": request.query,
         "top_k": request.top_k,
-        "results": [
-            {
-                "chunk_id": "mock_chunk_001",
-                "score": 0.85,
-                "text": "Resultado simulado. Conectar Qdrant na próxima fase.",
-                "retrieval_method": "mock"
-            }
-        ]
+        "status": "success",
+        "suspicious_query": False,
+        "requires_human_review": False,
+        "warnings": [],
+        "errors": [],
+        "vector_backend": vector_store.backend_name,
+        "qdrant_enabled": is_qdrant_enabled(),
+        "results": results,
     }

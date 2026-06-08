@@ -179,16 +179,25 @@ python -m app.evals.run_eval
 
 ## Fase 6 — Qdrant e indexação
 
+Status: implementada.
+
 Objetivo: preparar indexação de chunks sem ativar Qdrant real por padrão.
 
 Entregas:
 
 - Docker Compose Qdrant opcional.
-- QdrantService.
-- MockVectorStore para testes.
-- Feature flag para Qdrant real.
-- IndexingAgent.
-- Chunking por unidade jurídica.
+- `QdrantService` protegido por `LEX_KRATOS_ENABLE_QDRANT`.
+- `MockVectorStore` para testes sem container.
+- `IndexingAgent` implementado e registrado no catálogo.
+- Chunking por unidade jurídica com `chunk_id` determinístico.
+- Endpoint `/rag/search` usando store mockado por padrão.
+
+Critério de aceite:
+
+```bash
+pytest
+python -m app.evals.run_eval
+```
 
 ## Fase 7 — Retrieval híbrido
 

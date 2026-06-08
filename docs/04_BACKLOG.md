@@ -80,13 +80,13 @@
 ## P6 — RAG real preparado, mas desligado por padrão
 
 - [x] QdrantService inicial.
-- [ ] Chunking jurídico.
-- [ ] IndexingAgent.
+- [x] Chunking jurídico.
+- [x] IndexingAgent.
 - [ ] HybridRetrievalAgent.
 - [ ] RerankerService.
 - [ ] Métricas retrieval.
-- [ ] Feature flag para Qdrant real.
-- [ ] MockVectorStore para testes sem container.
+- [x] Feature flag para Qdrant real.
+- [x] MockVectorStore para testes sem container.
 
 ## P7 — Jurisprudência
 

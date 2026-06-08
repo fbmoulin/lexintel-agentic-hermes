@@ -30,7 +30,7 @@ O registry registra 12 capacidades:
 - `ExtractionAgent` — implementado.
 - `LegalNormalizerAgent` — implementado.
 - `MetadataAgent` — implementado.
-- `IndexingAgent` — planejado.
+- `IndexingAgent` — implementado.
 - `HybridRetrievalAgent` — planejado.
 - `FIRACAgent` — implementado.
 - `JurisprudenceAgent` — planejado.

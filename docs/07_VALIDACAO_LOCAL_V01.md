@@ -245,3 +245,40 @@ Resultado:
 - Execução concluída sem erro.
 
 Durante esta fase, nenhuma integração real externa foi ativada.
+
+## Validação da Fase 6 — Qdrant e indexação mockada
+
+Data: 2026-06-08
+
+Mudanças validadas:
+
+- `QdrantService` protegido por feature flag.
+- `MockVectorStore` determinístico em memória.
+- `IndexingAgent` implementado e incluído no pipeline completo.
+- Chunking jurídico por unidade mockada com `chunk_id` determinístico.
+- `/rag/search` usando store mockado por padrão.
+- Catálogo de agentes atualizado para `IndexingAgent` implementado.
+
+Comandos executados:
+
+```bash
+pytest
+```
+
+Resultado:
+
+- 53 testes aprovados.
+
+```bash
+python -m app.evals.run_eval
+```
+
+Resultado:
+
+- `dataset_size`: 8
+- `average_recall_at_3`: 0.9166666666666666
+- `average_mrr`: 0.9166666666666666
+- `passed`: true
+- Execução concluída sem erro.
+
+Durante esta fase, nenhuma integração real externa foi ativada.

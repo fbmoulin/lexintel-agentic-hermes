@@ -4,6 +4,7 @@ from app.agents.security_agent import SecurityAgent
 from app.agents.extraction_agent import ExtractionAgent
 from app.agents.normalizer_agent import LegalNormalizerAgent
 from app.agents.metadata_agent import MetadataAgent
+from app.agents.indexing_agent import IndexingAgent
 from app.agents.firac_agent import FIRACAgent
 from app.agents.validator_agent import ValidatorAgent
 
@@ -23,6 +24,7 @@ class CaseOrchestrator:
             extraction_agent: Extracts text from detected documents.
             normalizer_agent: Normalizes and cleans extracted legal text.
             metadata_agent: Produces case metadata from normalized text.
+            indexing_agent: Chunks and indexes extracted text in a mock vector store.
             firac_agent: Generates FIRAC-structured analysis from normalized text.
             validator_agent: Validates draft outputs and may mark them blocked or requiring review.
         """
@@ -31,6 +33,7 @@ class CaseOrchestrator:
         self.extraction_agent = ExtractionAgent()
         self.normalizer_agent = LegalNormalizerAgent()
         self.metadata_agent = MetadataAgent()
+        self.indexing_agent = IndexingAgent()
         self.firac_agent = FIRACAgent()
         self.validator_agent = ValidatorAgent()
 
@@ -145,6 +148,9 @@ class CaseOrchestrator:
         if any(entry["status"] == "blocked" for entry in trace):
             return "blocked"
 
+        if any(entry["status"] == "failed" for entry in trace):
+            return "failed"
+
         if any(entry["status"] == "warning" for entry in trace):
             return "warning"
 
@@ -202,7 +208,7 @@ class CaseOrchestrator:
 
     def run_full_mock(self, case: CaseInput):
         """
-        Execute the full mock case processing pipeline (intake → security → extraction → normalization → metadata → FIRAC → mock draft → validation).
+        Execute the full mock case processing pipeline (intake → security → extraction → normalization → metadata → indexing → FIRAC → mock draft → validation).
         
         Parameters:
             case (CaseInput): Input case; must include `case.case_id`. If present, `case` may include `detected_documents` used by extraction.
@@ -253,8 +259,14 @@ class CaseOrchestrator:
         metadata_result = self.metadata_agent.run(case.case_id, normalizer_result.output)
         self._record_trace(trace, metadata_result, 5, "metadata")
 
+        indexing_result = self.indexing_agent.run(
+            case.case_id,
+            extraction_result.output.get("extracted_text", []),
+        )
+        self._record_trace(trace, indexing_result, 6, "indexing")
+
         firac_result = self.firac_agent.run(case.case_id, normalizer_result.output)
-        self._record_trace(trace, firac_result, 6, "firac")
+        self._record_trace(trace, firac_result, 7, "firac")
 
         mock_draft = {
             "relatorio": "Relatório simulado.",
@@ -266,7 +278,7 @@ class CaseOrchestrator:
         }
 
         validator_result = self.validator_agent.run(case.case_id, mock_draft)
-        self._record_trace(trace, validator_result, 7, "validation")
+        self._record_trace(trace, validator_result, 8, "validation")
         pipeline_summary = self._summarize_trace(trace, self.FULL_MOCK_PIPELINE)
 
         return {

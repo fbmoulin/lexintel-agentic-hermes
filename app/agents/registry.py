@@ -65,12 +65,12 @@ AGENT_REGISTRY = [
     {
         "agent_name": "IndexingAgent",
         "phase": "indexing",
-        "module_path": None,
-        "class_name": None,
+        "module_path": "app.agents.indexing_agent",
+        "class_name": "IndexingAgent",
         "skill_name": "SKILL_LEGAL_CHUNKING_AND_INDEXING.md",
-        "status": "planned",
+        "status": "implemented",
         "mocked": True,
-        "description": "Planejado para chunking e indexação jurídica.",
+        "description": "Gera chunks jurídicos mockados e indexa em MockVectorStore.",
     },
     {
         "agent_name": "HybridRetrievalAgent",

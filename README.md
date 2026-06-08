@@ -35,11 +35,11 @@ Criar um orquestrador simples com agentes especializados:
 3. ExtractionAgent
 4. LegalNormalizerAgent
 5. MetadataAgent
-6. FIRACAgent
-7. ValidatorAgent
-8. EvaluationAgent
+6. IndexingAgent
+7. FIRACAgent
+8. ValidatorAgent
 
-Agentes como IndexingAgent, HybridRetrievalAgent, JurisprudenceAgent e DraftingAgent permanecem planejados para fases futuras.
+Agentes como HybridRetrievalAgent, JurisprudenceAgent, DraftingAgent e EvaluationAgent permanecem planejados para fases futuras.
 
 ## Como começar
 
@@ -94,6 +94,12 @@ Ele valida o JSONL, agrupa casos por área e retorna métricas como `average_rec
 O pipeline completo usa `ExtractionAgent`, `LegalNormalizerAgent` e `MetadataAgent` com contratos Pydantic locais. Eles simulam petição inicial, contestação, sentença e acórdão sem ler PDF real, sem OCR e sem serviço externo.
 
 Documento não classificado recebe baixa qualidade mockada, bloqueia automação e exige revisão humana.
+
+## Indexação e busca mockadas
+
+O `IndexingAgent` gera chunks jurídicos determinísticos e indexa em `MockVectorStore`. O endpoint `/rag/search` usa esse store mockado por padrão, reutilizando a instância em memória para que chunks indexados no pipeline possam ser buscados em chamadas seguintes.
+
+Qdrant real permanece desligado. `get_qdrant_client()` só cria cliente quando `LEX_KRATOS_ENABLE_QDRANT=true`, e essa ativação deve ocorrer apenas em tarefa explícita de integração.
 
 ## Validação local
 
