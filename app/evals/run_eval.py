@@ -1,114 +1,421 @@
+from copy import deepcopy
 import json
 from pathlib import Path
 
 DATASET_PATH = Path(__file__).with_name("golden_dataset.jsonl")
+DEFAULT_K = 3
+DEFAULT_THRESHOLDS = {
+    "min_dataset_size": 8,
+    "min_average_recall_at_3": 0.85,
+    "min_average_mrr": 0.85,
+    "required_areas": [
+        "bancario",
+        "consumidor",
+        "processual_civil",
+        "saude",
+    ],
+}
+REQUIRED_FIELDS = {"id", "query", "expected_sources", "area"}
 
 
 def load_dataset(path: str | Path):
     """
-    Load a JSON Lines (JSONL) file and return the parsed JSON objects.
+    Load and validate JSONL evaluation rows in file order.
     
-    Empty lines and lines that fail JSON parsing are skipped silently.
+    Each non-empty line of the file at `path` is parsed as JSON and validated; validated rows are returned in the same order they appear in the file.
     
     Parameters:
-        path (str | Path): Filesystem path to the JSONL file to read.
+        path (str | Path): Path to a UTF-8 encoded JSONL file containing dataset rows.
     
     Returns:
-        list: A list of parsed JSON objects (Python dicts/lists/values) in file order.
+        list[dict]: A list of validated dataset rows (one dict per JSONL line).
+    
+    Raises:
+        ValueError: If a line contains malformed JSON (message includes line number)
+                    or if a row fails schema/validation checks.
     """
     rows = []
-    for line in Path(path).read_text(encoding="utf-8").splitlines():
-        if line.strip():
-            try:
-                rows.append(json.loads(line))
-            except json.JSONDecodeError:
-                continue
+    seen_ids = set()
+
+    for line_number, line in enumerate(
+        Path(path).read_text(encoding="utf-8").splitlines(),
+        start=1,
+    ):
+        if not line.strip():
+            continue
+
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"Invalid JSONL row at line {line_number}: {exc.msg}"
+            ) from exc
+
+        validate_dataset_row(row, line_number, seen_ids)
+        rows.append(row)
+
     return rows
+
+
+def validate_dataset_row(row: dict, line_number: int, seen_ids: set[str]) -> None:
+    """
+    Validate a single dataset row for required schema and value constraints.
+    
+    Checks that the row is a mapping containing the required fields, that `id`,
+    `query`, and `area` are non-empty strings, and that `expected_sources` is a
+    non-empty list of strings. Detects duplicate `id` values using `seen_ids`.
+    
+    Parameters:
+        row (dict): Parsed JSON object for a single dataset row.
+        line_number (int): Line number in the source file used for error messages.
+        seen_ids (set[str]): Set of previously seen `id` values; this set is mutated
+            to include `row["id"]` on successful validation.
+    
+    Raises:
+        ValueError: If `row` is not a dict; if any required fields are missing; if
+            `id`, `query`, or `area` are empty or not strings; if `id` is a duplicate;
+            if `expected_sources` is missing, empty, not a list, or contains
+            non-string elements.
+    """
+    if not isinstance(row, dict):
+        raise ValueError(f"Dataset row {line_number} must be a JSON object")
+
+    missing_fields = REQUIRED_FIELDS - set(row)
+    if missing_fields:
+        raise ValueError(
+            f"Dataset row {line_number} missing fields: "
+            f"{sorted(missing_fields)}"
+        )
+
+    for field_name in ("id", "query", "area"):
+        if not isinstance(row[field_name], str) or not row[field_name].strip():
+            raise ValueError(
+                f"Dataset row {line_number} field {field_name} must be text"
+            )
+
+    if row["id"] in seen_ids:
+        raise ValueError(f"Duplicate dataset id at line {line_number}: {row['id']}")
+
+    if not isinstance(row["expected_sources"], list) or not row["expected_sources"]:
+        raise ValueError(
+            f"Dataset row {line_number} must define non-empty expected_sources"
+        )
+
+    if not all(isinstance(source, str) for source in row["expected_sources"]):
+        raise ValueError(
+            f"Dataset row {line_number} expected_sources must contain strings"
+        )
+
+    seen_ids.add(row["id"])
+
+
+def _dedupe(items: list[str]) -> list[str]:
+    """
+    Produce a list of the input items with duplicates removed while preserving the original order.
+    
+    Parameters:
+        items (list[str]): Sequence of items to deduplicate.
+    
+    Returns:
+        list[str]: Items from `items` with duplicates removed, in their first-seen order.
+    """
+    deduped = []
+    for item in items:
+        if item not in deduped:
+            deduped.append(item)
+    return deduped
 
 
 def fake_retrieve(query: str):
     """
-    Map a user query to a deterministic list of predefined legal source identifiers based on keyword matching.
+    Produce a deterministic list of predefined legal source identifiers that match keywords in the provided query.
     
     Parameters:
-        query (str): The input query (typically in Portuguese) used to determine relevant source identifiers.
+        query (str): The user query text to inspect for keyword matches.
     
     Returns:
-        list[str]: A list of matched source identifier strings (e.g., "Súmula 479/STJ", "Tema 1082/STJ", "art. 300 CPC"); an empty list if no predefined keywords match.
+        list[str]: A de-duplicated list of legal source identifiers selected based on keyword presence in `query`.
     """
     lowered = query.lower()
+    retrieved = []
 
-    if "fraude" in lowered or "banco" in lowered:
-        return ["Súmula 479/STJ"]
+    if "fraude" in lowered or "banco" in lowered or "pix" in lowered:
+        retrieved.extend(["Súmula 479/STJ", "CDC art. 14"])
 
     if "plano de saúde" in lowered or "rol da ans" in lowered:
-        return ["Tema 1082/STJ"]
+        retrieved.extend(["Tema 1082/STJ", "Lei 14.454/2022", "Lei 9.656/1998"])
+
+    if "reajuste" in lowered and "idoso" in lowered:
+        retrieved.extend(["Estatuto do Idoso", "CDC", "Lei 9.656/1998"])
+
+    if "negativação" in lowered or "inscrição indevida" in lowered:
+        retrieved.extend(["CDC", "jurisprudência STJ sobre inscrição indevida"])
+
+    if "vício" in lowered or "produto defeituoso" in lowered:
+        retrieved.extend(["CDC art. 18", "CDC"])
 
     if "tutela de urgência" in lowered:
-        return ["art. 300 CPC"]
+        retrieved.extend(["art. 300 CPC", "tutela provisória"])
 
-    return []
+    if "agravo" in lowered and "tutela" in lowered:
+        retrieved.extend(["art. 1.015 CPC", "tutela provisória"])
+
+    return _dedupe(retrieved)
 
 
-def recall_at_k(expected, retrieved):
+def recall_at_k(expected, retrieved, k: int | None = None):
     """
-    Compute the fraction of expected items that appear in the retrieved results.
+    Compute recall of expected items within the top-k retrieved results.
     
     Parameters:
-        expected (Iterable): Collection of expected source identifiers.
-        retrieved (Iterable): Collection of retrieved source identifiers to compare against `expected`.
+        expected (Iterable): Expected items (e.g., list of identifiers) to be found.
+        retrieved (Iterable): Retrieved items ordered by rank.
+        k (int | None): If provided, consider only the top `k` retrieved items; if `None`, consider all retrieved items.
     
     Returns:
-        float: Proportion of items in `expected` that are present in `retrieved` (value between 0.0 and 1.0). Returns 1.0 when `expected` is empty.
+        float: Fraction of `expected` items present among the considered retrieved items. Returns 1.0 when `expected` is empty.
     """
     if not expected:
         return 1.0
 
-    hits = sum(1 for item in expected if item in retrieved)
+    candidates = retrieved[:k] if k is not None else retrieved
+    hits = sum(1 for item in expected if item in candidates)
     return hits / len(expected)
 
 
-def run(dataset_path: str | Path = DATASET_PATH):
+def reciprocal_rank(expected, retrieved) -> float:
     """
-    Evaluate deterministic retrieval over a JSONL dataset and return aggregated recall results.
+    Compute the reciprocal rank of the first expected item that appears in the retrieved list.
     
     Parameters:
-        dataset_path (str | Path): Path to a JSON Lines file containing dataset items. Each row must be a JSON object with at least the keys `"id"`, `"query"`, and `"expected_sources"`.
+        expected (Iterable): Collection of expected item identifiers.
+        retrieved (Sequence): Ranked sequence of retrieved item identifiers (first item is rank 1).
     
     Returns:
-        dict: Aggregated evaluation containing:
-            - `dataset_size` (int): Number of parsed dataset rows.
-            - `average_recall` (float): Mean recall across all items (0.0 if dataset is empty).
-            - `results` (list[dict]): Per-item records with keys:
-                - `id`: item identifier from the dataset.
-                - `query`: the original query string.
-                - `expected` (list): expected source identifiers from the dataset.
-                - `retrieved` (list): sources returned by the retrieval stub.
-                - `recall` (float): recall score for the item (hits / len(expected), or 1.0 when `expected` is empty).
+        float: `1 / rank` for the first retrieved item that is present in `expected`, or `0.0` if none match.
     """
-    dataset = load_dataset(dataset_path)
-    scores = []
+    for rank, item in enumerate(retrieved, start=1):
+        if item in expected:
+            return 1 / rank
+    return 0.0
 
-    for item in dataset:
-        retrieved = fake_retrieve(item["query"])
-        score = recall_at_k(item["expected_sources"], retrieved)
 
-        scores.append({
-            "id": item["id"],
-            "query": item["query"],
-            "expected": item["expected_sources"],
-            "retrieved": retrieved,
-            "recall": score
-        })
-
-    average = sum(s["recall"] for s in scores) / len(scores) if scores else 0.0
+def evaluate_item(item: dict) -> dict:
+    """
+    Evaluate a single dataset item by retrieving sources for its query and computing match diagnostics and metrics.
+    
+    Parameters:
+        item (dict): A dataset row containing at least the keys:
+            - "id" (str): Unique identifier for the item.
+            - "query" (str): The text query to retrieve sources for.
+            - "expected_sources" (list[str]): List of expected source identifiers.
+            - "area" (str): The legal area/category for the item.
+    
+    Returns:
+        dict: A dictionary with per-item results and diagnostics:
+            - "id": item id.
+            - "area": item area.
+            - "query": original query string.
+            - "expected": the expected_sources list from the item.
+            - "retrieved": list of retrieved source identifiers for the query.
+            - "matched_expected": expected sources present in the retrieved list.
+            - "missed_expected": expected sources not present in the retrieved list.
+            - "matched_expected_at_3": expected sources present within the top-DEFAULT_K retrieved.
+            - "missed_expected_at_3": expected sources not present within the top-DEFAULT_K retrieved.
+            - "recall": recall over the full retrieved list.
+            - "recall_at_1": recall considering only the top-1 retrieved.
+            - "recall_at_3": recall considering only the top-DEFAULT_K retrieved.
+            - "mrr": mean reciprocal rank (reciprocal of the rank of the first retrieved expected source, or 0.0 if none).
+    """
+    retrieved = fake_retrieve(item["query"])
+    expected = item["expected_sources"]
+    retrieved_at_3 = retrieved[:DEFAULT_K]
+    matched_expected = [source for source in expected if source in retrieved]
+    missed_expected = [source for source in expected if source not in retrieved]
+    matched_expected_at_3 = [
+        source for source in expected
+        if source in retrieved_at_3
+    ]
+    missed_expected_at_3 = [
+        source for source in expected
+        if source not in retrieved_at_3
+    ]
 
     return {
-        "dataset_size": len(dataset),
-        "average_recall": average,
-        "results": scores
+        "id": item["id"],
+        "area": item["area"],
+        "query": item["query"],
+        "expected": expected,
+        "retrieved": retrieved,
+        "matched_expected": matched_expected,
+        "missed_expected": missed_expected,
+        "matched_expected_at_3": matched_expected_at_3,
+        "missed_expected_at_3": missed_expected_at_3,
+        "recall": recall_at_k(expected, retrieved),
+        "recall_at_1": recall_at_k(expected, retrieved, 1),
+        "recall_at_3": recall_at_k(expected, retrieved, DEFAULT_K),
+        "mrr": reciprocal_rank(expected, retrieved),
     }
 
 
+def average(values: list[float]) -> float:
+    """
+    Compute the arithmetic mean of the given list of numbers.
+    
+    Returns:
+        The arithmetic mean of `values`, or 0.0 if `values` is empty.
+    """
+    return sum(values) / len(values) if values else 0.0
+
+
+def summarize_by_area(scores: list[dict]) -> dict:
+    """
+    Aggregate per-area metrics from a list of per-item score dictionaries.
+    
+    Parameters:
+        scores (list[dict]): List of score dictionaries (one per dataset item). Each score must include the keys
+            "area", "recall_at_3", "mrr", "missed_expected_at_3", and "id".
+    
+    Returns:
+        dict: Mapping from area name to a summary dictionary with keys:
+            - "dataset_size" (int): Number of items in that area.
+            - "average_recall_at_3" (float): Mean of `recall_at_3` across the area's items.
+            - "average_mrr" (float): Mean of `mrr` across the area's items.
+            - "failed_case_ids" (list[str]): List of item IDs that missed any expected source within the top-3.
+    """
+    summary = {}
+    for score in scores:
+        area = score["area"]
+        if area not in summary:
+            summary[area] = {
+                "dataset_size": 0,
+                "average_recall_at_3": 0.0,
+                "average_mrr": 0.0,
+                "failed_case_ids": [],
+            }
+        area_scores = summary[area]
+        area_scores["dataset_size"] += 1
+        area_scores["average_recall_at_3"] += score["recall_at_3"]
+        area_scores["average_mrr"] += score["mrr"]
+        if score["missed_expected_at_3"]:
+            area_scores["failed_case_ids"].append(score["id"])
+
+    for area_scores in summary.values():
+        size = area_scores["dataset_size"]
+        area_scores["average_recall_at_3"] = area_scores["average_recall_at_3"] / size
+        area_scores["average_mrr"] = area_scores["average_mrr"] / size
+
+    return dict(sorted(summary.items()))
+
+
+def evaluate_thresholds(scores: list[dict], thresholds: dict) -> list[dict]:
+    """
+    Evaluate scores against configured thresholds and return any threshold violations.
+    
+    Parameters:
+        scores (list[dict]): Per-item evaluation dictionaries. Each dict must include at least the keys
+            `"area"`, `"recall_at_3"`, and `"mrr"`.
+        thresholds (dict): Threshold configuration with keys:
+            - `min_dataset_size` (int): Minimum required number of scored items.
+            - `required_areas` (iterable[str]): Areas that must be present in `scores`.
+            - `min_average_recall_at_3` (float): Minimum required average recall@3.
+            - `min_average_mrr` (float): Minimum required average MRR.
+    
+    Returns:
+        list[dict]: A list of failure records. Each record describes a violated threshold and may take one of:
+            - `{"metric": "dataset_size", "expected_minimum": int, "actual": int}`
+            - `{"metric": "required_areas", "missing": list[str]}`
+            - `{"metric": "average_recall_at_3", "expected_minimum": float, "actual": float}`
+            - `{"metric": "average_mrr", "expected_minimum": float, "actual": float}`
+    """
+    failures = []
+    areas = {score["area"] for score in scores}
+    average_recall_at_3 = average([score["recall_at_3"] for score in scores])
+    average_mrr = average([score["mrr"] for score in scores])
+
+    if len(scores) < thresholds["min_dataset_size"]:
+        failures.append({
+            "metric": "dataset_size",
+            "expected_minimum": thresholds["min_dataset_size"],
+            "actual": len(scores),
+        })
+
+    missing_areas = sorted(set(thresholds["required_areas"]) - areas)
+    if missing_areas:
+        failures.append({
+            "metric": "required_areas",
+            "missing": missing_areas,
+        })
+
+    if average_recall_at_3 < thresholds["min_average_recall_at_3"]:
+        failures.append({
+            "metric": "average_recall_at_3",
+            "expected_minimum": thresholds["min_average_recall_at_3"],
+            "actual": average_recall_at_3,
+        })
+
+    if average_mrr < thresholds["min_average_mrr"]:
+        failures.append({
+            "metric": "average_mrr",
+            "expected_minimum": thresholds["min_average_mrr"],
+            "actual": average_mrr,
+        })
+
+    return failures
+
+
+def run(dataset_path: str | Path = DATASET_PATH, thresholds: dict | None = None):
+    """
+    Run the evaluation pipeline for the deterministic mock retriever against a golden dataset.
+    
+    Loads and validates the dataset, scores each item using the deterministic retriever and scoring helpers, evaluates configured thresholds, and aggregates overall and per-area metrics.
+    
+    Parameters:
+        dataset_path (str | Path): Path to the JSONL golden dataset to load and evaluate.
+        thresholds (dict | None): Optional overrides for evaluation thresholds (merged onto defaults).
+    
+    Returns:
+        result (dict): A dictionary containing:
+            - dataset_size: number of evaluated items
+            - areas: sorted list of areas present in the dataset
+            - average_recall: average recall@3
+            - average_recall_at_1: average recall@1
+            - average_recall_at_3: average recall@3 (same as `average_recall`)
+            - average_mrr: mean reciprocal rank across items
+            - thresholds: the thresholds used for evaluation
+            - passed: `True` if no threshold failures were found, `False` otherwise
+            - threshold_failures: list of threshold failure records
+            - area_summary: per-area aggregated metrics and failed case ids
+            - results: list of per-item score dictionaries
+    """
+    active_thresholds = deepcopy(DEFAULT_THRESHOLDS)
+    if thresholds:
+        active_thresholds.update(deepcopy(thresholds))
+    dataset = load_dataset(dataset_path)
+    scores = [evaluate_item(item) for item in dataset]
+    threshold_failures = evaluate_thresholds(scores, active_thresholds)
+    average_recall_at_3 = average([score["recall_at_3"] for score in scores])
+    average_mrr = average([score["mrr"] for score in scores])
+
+    result = {
+        "dataset_size": len(dataset),
+        "areas": sorted({score["area"] for score in scores}),
+        "average_recall": average_recall_at_3,
+        "average_recall_at_1": average([score["recall_at_1"] for score in scores]),
+        "average_recall_at_3": average_recall_at_3,
+        "average_mrr": average_mrr,
+        "thresholds": active_thresholds,
+        "passed": not threshold_failures,
+        "threshold_failures": threshold_failures,
+        "area_summary": summarize_by_area(scores),
+        "results": scores,
+    }
+
+    return result
+
+
 if __name__ == "__main__":
-    print(json.dumps(run(), ensure_ascii=False, indent=2))
+    evaluation_result = run()
+    print(json.dumps(evaluation_result, ensure_ascii=False, indent=2))
+    if not evaluation_result["passed"]:
+        raise SystemExit(1)

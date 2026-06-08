@@ -29,12 +29,20 @@ def test_rag_search_rejects_invalid_top_k():
 
 
 def test_eval_endpoint_runs():
+    """
+    Validate the /eval/run endpoint returns expected evaluation metrics and a passing result.
+    
+    Asserts that the endpoint responds with HTTP 200, `dataset_size` equal to 8, presence of the keys `average_recall`, `average_recall_at_3`, and `average_mrr`, and that `passed` is `True`.
+    """
     response = client.get("/eval/run")
 
     assert response.status_code == 200
     data = response.json()
-    assert data["dataset_size"] == 4
+    assert data["dataset_size"] == 8
     assert "average_recall" in data
+    assert "average_recall_at_3" in data
+    assert "average_mrr" in data
+    assert data["passed"] is True
 
 
 def test_full_mock_pipeline_runs_all_available_agents():

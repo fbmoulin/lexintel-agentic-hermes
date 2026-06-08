@@ -134,7 +134,29 @@ pytest
 python -m app.evals.run_eval
 ```
 
-## Fase 4 — Extração e normalização
+## Fase 4 — Avaliação RAG mockada
+
+Status: implementada.
+
+Objetivo: melhorar o dataset e as métricas antes de integrar busca real.
+
+Entregas:
+
+- `golden_dataset.jsonl` expandido para 8 casos.
+- Dataset separado por `area` com cobertura bancária, saúde, consumidor e processual civil.
+- Métricas `average_recall_at_1`, `average_recall_at_3`, `average_mrr` e resumo por área.
+- Validação rígida do JSONL com falha em CI se houver linha inválida, campo ausente, campo textual inválido ou ID duplicado.
+- Limiar mínimo local: dataset com 8 casos, áreas obrigatórias, `average_recall_at_3 >= 0.85` e `average_mrr >= 0.85`.
+- CLI de avaliação encerra com erro quando os limiares não são atendidos.
+
+Critério de aceite:
+
+```bash
+pytest
+python -m app.evals.run_eval
+```
+
+## Fase 5 — Extração e normalização
 
 Objetivo: transformar documentos em estrutura jurídica.
 
@@ -146,7 +168,7 @@ Entregas:
 - Quality score.
 - Warnings.
 
-## Fase 5 — Qdrant e indexação
+## Fase 6 — Qdrant e indexação
 
 Objetivo: preparar indexação de chunks sem ativar Qdrant real por padrão.
 
@@ -159,7 +181,7 @@ Entregas:
 - IndexingAgent.
 - Chunking por unidade jurídica.
 
-## Fase 6 — Retrieval híbrido
+## Fase 7 — Retrieval híbrido
 
 Objetivo: melhorar qualidade de recuperação.
 
@@ -171,7 +193,7 @@ Entregas:
 - RerankerService.
 - Métricas comparativas.
 
-## Fase 7 — FIRAC+ e minuta
+## Fase 8 — FIRAC+ e minuta
 
 Objetivo: gerar análise antes da decisão.
 
@@ -182,7 +204,7 @@ Entregas:
 - DraftingAgent.
 - ValidatorAgent.
 
-## Fase 8 — n8n
+## Fase 9 — n8n
 
 Objetivo: automatizar fluxo externo somente após aprovação explícita.
 
@@ -193,7 +215,7 @@ Entregas:
 - Registro em Google Sheets.
 - Geração opcional de Google Docs.
 
-## Fase 9 — CI de qualidade
+## Fase 10 — CI de qualidade
 
 Objetivo: evitar regressão.
 

@@ -103,6 +103,40 @@ Resultado:
 
 Durante esta fase, nenhuma integração real externa foi ativada.
 
+## Validação da Fase 2 — Qualidade do pipeline mockado
+
+Data: 2026-06-07
+
+Mudanças validadas:
+
+- `AgentResult` com campos top-level de revisão humana, uso externo e metadados de trace.
+- `pipeline_summary` nas respostas de `/cases/intake` e `/cases/run-full-mock`.
+- Índice determinístico de etapas no trace.
+- Consistência de `warnings` e `errors` como listas.
+- Parada antecipada do pipeline completo quando o `SecurityAgent` bloqueia a entrada.
+
+Comandos executados:
+
+```bash
+pytest
+```
+
+Resultado:
+
+- 16 testes aprovados.
+
+```bash
+python -m app.evals.run_eval
+```
+
+Resultado:
+
+- `dataset_size`: 4
+- `average_recall`: 0.625
+- Execução concluída sem erro.
+
+Durante esta fase, nenhuma integração real externa foi ativada.
+
 ## Validação da Fase 3 — Skills e agentes locais
 
 Data: 2026-06-07
@@ -138,17 +172,18 @@ Resultado:
 
 Durante esta fase, nenhuma integração real externa foi ativada.
 
-## Validação da Fase 2 — Qualidade do pipeline mockado
+## Validação da Fase 4 — Avaliação RAG mockada
 
-Data: 2026-06-07
+Data: 2026-06-08
 
 Mudanças validadas:
 
-- `AgentResult` com campos top-level de revisão humana, uso externo e metadados de trace.
-- `pipeline_summary` nas respostas de `/cases/intake` e `/cases/run-full-mock`.
-- Índice determinístico de etapas no trace.
-- Consistência de `warnings` e `errors` como listas.
-- Parada antecipada do pipeline completo quando o `SecurityAgent` bloqueia a entrada.
+- Dataset dourado expandido para 8 casos.
+- Agrupamento por área: bancário, saúde, consumidor e processual civil.
+- Métricas `average_recall_at_1`, `average_recall_at_3` e `average_mrr`.
+- Resumo `area_summary` com casos abaixo de `recall@3`.
+- Validação rígida de JSONL inválido, campos obrigatórios, `id` não textual e dataset pequeno.
+- Limiar local de aceite via `passed` e `threshold_failures`.
 
 Comandos executados:
 
@@ -158,7 +193,7 @@ pytest
 
 Resultado:
 
-- 16 testes aprovados.
+- 34 testes aprovados.
 
 ```bash
 python -m app.evals.run_eval
@@ -166,8 +201,10 @@ python -m app.evals.run_eval
 
 Resultado:
 
-- `dataset_size`: 4
-- `average_recall`: 0.625
+- `dataset_size`: 8
+- `average_recall_at_3`: 0.9166666666666666
+- `average_mrr`: 0.9166666666666666
+- `passed`: true
 - Execução concluída sem erro.
 
 Durante esta fase, nenhuma integração real externa foi ativada.

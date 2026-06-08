@@ -66,10 +66,10 @@
 
 ## P4 — Avaliação RAG mockada
 
-- [ ] Expandir `golden_dataset.jsonl`.
-- [ ] Separar dataset por área.
-- [ ] Adicionar métricas além de recall médio.
-- [ ] Definir limiar mínimo de aceite.
+- [x] Expandir `golden_dataset.jsonl`.
+- [x] Separar dataset por área.
+- [x] Adicionar métricas além de recall médio.
+- [x] Definir limiar mínimo de aceite.
 
 ## P5 — Extração e normalização estruturadas
 

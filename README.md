@@ -83,6 +83,12 @@ GET /catalog/agents
 
 Esse catálogo apenas lê arquivos locais em `app/skills/` e registra o estado dos agentes mockados ou planejados. Ele não chama LLMs nem serviços externos.
 
+## Avaliação RAG mockada
+
+O runner local em `app/evals/run_eval.py` avalia o dataset dourado sem rede e sem Qdrant real.
+
+Ele valida o JSONL, agrupa casos por área e retorna métricas como `average_recall_at_1`, `average_recall_at_3`, `average_mrr`, `area_summary` e `passed`. O limiar mínimo atual exige 8 casos, quatro áreas obrigatórias e médias globais `>= 0.85` para `recall@3` e MRR. O CLI encerra com erro quando `passed` é `false`.
+
 ## Validação local
 
 Os comandos de aceite da v0.1 são:

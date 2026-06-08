@@ -1,4 +1,8 @@
 {"id":"bancario_001","query":"Responsabilidade objetiva de banco em fraude praticada por terceiro","expected_sources":["Súmula 479/STJ"],"area":"bancario"}
+{"id":"bancario_002","query":"Banco responde por golpe do pix com falha de segurança?","expected_sources":["Súmula 479/STJ","CDC art. 14"],"area":"bancario"}
 {"id":"saude_001","query":"Plano de saúde deve cobrir tratamento fora do rol da ANS?","expected_sources":["Tema 1082/STJ","Lei 14.454/2022"],"area":"saude"}
+{"id":"saude_002","query":"Reajuste abusivo de plano de saúde para consumidor idoso","expected_sources":["Estatuto do Idoso","CDC","Lei 9.656/1998"],"area":"saude"}
 {"id":"consumidor_001","query":"Dano moral por negativação indevida","expected_sources":["CDC","jurisprudência STJ sobre inscrição indevida"],"area":"consumidor"}
+{"id":"consumidor_002","query":"Produto com vício não reparado no prazo legal","expected_sources":["CDC art. 18","CDC"],"area":"consumidor"}
 {"id":"processual_001","query":"Requisitos da tutela de urgência no CPC","expected_sources":["art. 300 CPC"],"area":"processual_civil"}
+{"id":"processual_002","query":"Cabimento de agravo de instrumento contra decisão de tutela provisória","expected_sources":["art. 1.015 CPC","tutela provisória"],"area":"processual_civil"}
