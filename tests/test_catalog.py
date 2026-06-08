@@ -44,8 +44,8 @@ def test_agent_registry_is_valid_and_links_skills():
     assert validation["valid"] is True
     assert validation["issues"] == []
     assert validation["agent_count"] == 12
-    assert validation["implemented_count"] == 7
-    assert validation["planned_count"] == 5
+    assert validation["implemented_count"] == 8
+    assert validation["planned_count"] == 4
     assert validation["skill_count"] == 12
 
     implemented_agents = [agent for agent in agents if agent["implemented"]]
@@ -149,8 +149,8 @@ def test_catalog_agents_endpoint_returns_registry():
     data = response.json()
     assert data["valid"] is True
     assert data["count"] == 12
-    assert data["implemented_count"] == 7
-    assert data["planned_count"] == 5
+    assert data["implemented_count"] == 8
+    assert data["planned_count"] == 4
     assert data["issues"] == []
 
     intake = next(

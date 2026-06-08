@@ -337,13 +337,15 @@ Entregas:
 
 - Interface `VectorStore` abstrata.
 - Implementacao `MockVectorStore`.
-- `QdrantService` isolado e nao usado em testes padrao.
+- `QdrantService` isolado e protegido por feature flag.
+- `IndexingAgent` com chunking juridico mockado.
 - Plano de colecao, payload e IDs.
 
 Criterio de aceite:
 
 - Testes continuam sem container.
 - Qdrant real so roda quando explicitamente habilitado.
+- `/rag/search` continua usando mock por padrao.
 
 ### Fase 6 — Integracoes Reais Futuras
 

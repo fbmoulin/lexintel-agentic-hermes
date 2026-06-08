@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import Literal, Optional, Any
 
 
@@ -123,6 +123,50 @@ class CaseMetadata(BaseModel):
     has_defense: bool = False
     has_decision: bool = False
     has_appeal_decision: bool = False
+
+
+ChunkUnitType = Literal[
+    "ementa",
+    "relatorio",
+    "voto",
+    "fundamentos",
+    "dispositivo",
+    "pedido",
+    "contestacao",
+    "prova",
+    "tese",
+    "precedente_citado",
+    "documento",
+]
+
+
+class LegalChunk(BaseModel):
+    chunk_id: str
+    case_id: str
+    doc_id: str
+    unit_type: ChunkUnitType
+    text: str = Field(min_length=1)
+    page_start: int = Field(ge=1)
+    page_end: int = Field(ge=1)
+    source: Optional[str] = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_page_range(self):
+        if self.page_end < self.page_start:
+            raise ValueError("page_end must be greater than or equal to page_start")
+        return self
+
+
+class IndexingSummary(BaseModel):
+    indexing_schema_version: str = "indexing-mock-v0.1"
+    vector_backend: str
+    qdrant_enabled: bool = False
+    chunk_count: int = Field(ge=0)
+    indexed_count: int = Field(ge=0)
+    skipped_count: int = Field(ge=0)
+    chunk_unit_types: list[ChunkUnitType] = Field(default_factory=list)
+    external_use_allowed: bool = False
 
 
 class RetrievedContext(BaseModel):

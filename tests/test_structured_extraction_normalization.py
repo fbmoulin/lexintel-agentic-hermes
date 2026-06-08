@@ -161,6 +161,7 @@ def test_full_mock_pipeline_exposes_structured_extraction_and_metadata():
     extraction_output = data["trace"][2]["output"]
     normalization_output = data["trace"][3]["output"]
     metadata_output = data["trace"][4]["output"]
+    indexing_output = data["trace"][5]["output"]
 
     assert extraction_output["quality_summary"]["automation_allowed"] is True
     assert len(extraction_output["extracted_text"]) == 4
@@ -173,3 +174,6 @@ def test_full_mock_pipeline_exposes_structured_extraction_and_metadata():
     assert metadata_output["has_defense"] is True
     assert metadata_output["has_decision"] is True
     assert metadata_output["has_appeal_decision"] is True
+    assert indexing_output["vector_backend"] == "mock"
+    assert indexing_output["chunk_count"] == 4
+    assert indexing_output["indexed_count"] == 4
