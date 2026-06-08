@@ -53,6 +53,11 @@ def test_eval_dataset_validation_rejects_duplicate_ids():
 
 
 def test_eval_dataset_validation_rejects_non_text_id_before_duplicate_lookup():
+    """
+    Verify that loading a dataset with a non-text `id` raises a `ValueError` and that the loader validates the `id` type before checking for duplicate IDs.
+    
+    Calls `load_dataset` with the `non_text_id.jsonl` fixture and expects a `ValueError` whose message matches "field id must be text".
+    """
     with pytest.raises(ValueError, match="field id must be text"):
         load_dataset(FIXTURES_DIR / "non_text_id.jsonl")
 

@@ -29,6 +29,11 @@ def test_rag_search_rejects_invalid_top_k():
 
 
 def test_eval_endpoint_runs():
+    """
+    Validate the /eval/run endpoint returns expected evaluation metrics and a passing result.
+    
+    Asserts that the endpoint responds with HTTP 200, `dataset_size` equal to 8, presence of the keys `average_recall`, `average_recall_at_3`, and `average_mrr`, and that `passed` is `True`.
+    """
     response = client.get("/eval/run")
 
     assert response.status_code == 200
