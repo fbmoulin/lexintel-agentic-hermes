@@ -1,3 +1,6 @@
 # Optional extra: only needed when LEX_KRATOS_ENABLE_QDRANT=true (real vector backend).
 # The mocked v0.1 pipeline runs without this.
 qdrant-client==1.14.3
+# Local multilingual embeddings (paraphrase-multilingual-MiniLM-L12-v2, 384-dim).
+# Symmetric model — no query/passage prefixes. ~0.22 GB weights download on first use.
+fastembed==0.7.4

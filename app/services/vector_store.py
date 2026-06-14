@@ -1,10 +1,13 @@
+import os
 import re
 import unicodedata
+import uuid
 from copy import deepcopy
 from typing import Protocol
 
 from app.schemas.case import LegalChunk, RetrievedContext
-from app.services.qdrant_service import is_qdrant_enabled
+from app.services.embeddings import Embedder, get_embedder
+from app.services.qdrant_service import get_qdrant_client, is_qdrant_enabled
 
 DEFAULT_MOCK_CHUNKS = [
     {
@@ -157,12 +160,75 @@ class MockVectorStore:
 
 
 class QdrantVectorStore:
+    """Real vector retrieval backed by Qdrant + local fastembed embeddings.
+
+    Client and embedder are injectable (mirrors IndexingAgent(vector_store=...)),
+    so the mapping/id logic is unit-testable without a live server or model.
+    Emits the SAME RetrievedContext dict shape as MockVectorStore -> rag.py and
+    downstream agents need no change.
+    """
+
     backend_name = "qdrant"
 
-    def upsert(self, chunks: list[dict]) -> dict:
-        raise RuntimeError(
-            "Qdrant real está protegido por feature flag e não é implementado na v0.1."
+    def __init__(
+        self,
+        client=None,
+        embedder: Embedder | None = None,
+        collection_name: str | None = None,
+    ):
+        self._client = client if client is not None else get_qdrant_client()
+        self._embedder = embedder if embedder is not None else get_embedder()
+        self._collection = (
+            collection_name or os.getenv("QDRANT_COLLECTION") or "lex_kratos_chunks"
         )
+        self._ensure_collection()
+
+    def _ensure_collection(self) -> None:
+        from qdrant_client import models
+
+        dim = self._embedder.dimension
+        if not self._client.collection_exists(self._collection):
+            self._client.create_collection(
+                collection_name=self._collection,
+                vectors_config=models.VectorParams(
+                    size=dim, distance=models.Distance.COSINE
+                ),
+            )
+            return
+        existing = self._client.get_collection(self._collection)
+        existing_dim = existing.config.params.vectors.size  # type: ignore[union-attr]
+        if existing_dim != dim:
+            raise RuntimeError(
+                f"Coleção Qdrant '{self._collection}' tem dim={existing_dim}, "
+                f"mas o modelo de embedding produz dim={dim}. Recrie a coleção."
+            )
+
+    @staticmethod
+    def _point_id(chunk_id: str) -> str:
+        # Deterministic id => re-indexing the same chunk upserts (replaces),
+        # mirroring MockVectorStore's existing_ids de-dup.
+        return str(uuid.uuid5(uuid.NAMESPACE_URL, chunk_id))
+
+    def upsert(self, chunks: list[dict]) -> dict:
+        from qdrant_client import models
+
+        validated = [LegalChunk.model_validate(chunk).model_dump() for chunk in chunks]
+        if validated:
+            vectors = self._embedder.embed_texts([c["text"] for c in validated])
+            points = [
+                models.PointStruct(
+                    id=self._point_id(chunk["chunk_id"]),
+                    vector=vector,
+                    payload=chunk,
+                )
+                for chunk, vector in zip(validated, vectors)
+            ]
+            self._client.upsert(collection_name=self._collection, points=points)
+        return {
+            "vector_backend": self.backend_name,
+            "indexed_count": len(validated),
+            "stored_count": self._client.count(self._collection, exact=True).count,
+        }
 
     def search(
         self,
@@ -170,12 +236,59 @@ class QdrantVectorStore:
         top_k: int = 5,
         filters: dict | None = None,
     ) -> list[dict]:
-        raise RuntimeError(
-            "Qdrant real está protegido por feature flag e não é implementado na v0.1."
+        query_vector = self._embedder.embed_query(query)
+        response = self._client.query_points(
+            collection_name=self._collection,
+            query=query_vector,
+            limit=top_k,
+            query_filter=self._build_filter(filters),
+            with_payload=True,
         )
+        return [self._point_to_context(point) for point in response.points]
+
+    @staticmethod
+    def _build_filter(filters: dict | None):
+        if not filters:
+            return None
+        from qdrant_client import models
+
+        # Filters target chunk metadata (mirrors MockVectorStore._matches_filters);
+        # payload stores the full chunk, so metadata is nested under "metadata.*".
+        return models.Filter(
+            must=[
+                models.FieldCondition(
+                    key=f"metadata.{key}", match=models.MatchValue(value=value)
+                )
+                for key, value in filters.items()
+            ]
+        )
+
+    @staticmethod
+    def _point_to_context(point) -> dict:
+        payload = point.payload or {}
+        metadata = dict(payload.get("metadata", {}))
+        metadata.update(
+            {
+                "case_id": payload.get("case_id"),
+                "unit_type": payload.get("unit_type"),
+                "retrieval_method": "qdrant",
+            }
+        )
+        context = RetrievedContext(
+            chunk_id=payload["chunk_id"],
+            doc_id=payload["doc_id"],
+            score=round(point.score, 4),
+            text=payload["text"],
+            source=payload.get("source"),
+            page_start=payload.get("page_start"),
+            page_end=payload.get("page_end"),
+            metadata=metadata,
+        )
+        return context.model_dump()
 
 
 _MOCK_STORE_INSTANCE: MockVectorStore | None = None
+_QDRANT_STORE_INSTANCE: "QdrantVectorStore | None" = None
 
 
 def reset_mock_vector_store() -> MockVectorStore:
@@ -185,9 +298,14 @@ def reset_mock_vector_store() -> MockVectorStore:
 
 
 def get_vector_store() -> VectorStore:
-    global _MOCK_STORE_INSTANCE
+    global _MOCK_STORE_INSTANCE, _QDRANT_STORE_INSTANCE
     if is_qdrant_enabled():
-        return QdrantVectorStore()
+        # Cache the real store: reuse one Qdrant client and run _ensure_collection
+        # once, rather than a network round-trip on every RAG request (mirrors the
+        # mock singleton below).
+        if _QDRANT_STORE_INSTANCE is None:
+            _QDRANT_STORE_INSTANCE = QdrantVectorStore()
+        return _QDRANT_STORE_INSTANCE
     if _MOCK_STORE_INSTANCE is None:
         _MOCK_STORE_INSTANCE = MockVectorStore.seeded()
     return _MOCK_STORE_INSTANCE

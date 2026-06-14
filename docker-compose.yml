@@ -2,11 +2,16 @@ services:
   # Apoio futuro para a fase de RAG real.
   # A v0.1 do Lex Kratos Agentic Core não depende deste container.
   qdrant:
-    # Pinned for reproducibility (aligns with qdrant-client 1.14.x). Avoid :latest.
-    image: qdrant/qdrant:v1.14.3
+    # Pinned for reproducibility. Avoid :latest. v1.14.1 is the latest server image
+    # published in the 1.14 line (no v1.14.3 server image exists — that is the
+    # qdrant-client/PyPI version; client 1.14.3 is wire-compatible with server 1.14.x).
+    image: qdrant/qdrant:v1.14.1
+    # Host port defaults to 6533 (not 6333) to avoid colliding with any other
+    # Qdrant already bound to :6333. Container stays 6333 internally.
+    # QDRANT_HOST_PORT must match the client's QDRANT_PORT (see .env.example).
     ports:
-      - "6333:6333"
-      - "6334:6334"
+      - "${QDRANT_HOST_PORT:-6533}:6333"
+      - "${QDRANT_GRPC_HOST_PORT:-6534}:6334"
     volumes:
       - qdrant_storage:/qdrant/storage
 

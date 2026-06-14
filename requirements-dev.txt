@@ -2,3 +2,7 @@
 ruff==0.15.17
 mypy==1.18.2
 jsonschema==4.25.1
+# qdrant-client (NOT fastembed) so the OFFLINE QdrantVectorStore unit tests
+# (fake client + fake embedder) run in CI without pulling model weights.
+# The mocked app still runs without it; test_qdrant_optional.py asserts that.
+qdrant-client==1.14.3
