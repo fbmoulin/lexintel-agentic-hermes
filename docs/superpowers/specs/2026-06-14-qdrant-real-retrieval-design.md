@@ -23,7 +23,7 @@ The scaffold's retrieval is deliberately mocked: `MockVectorStore` scores by tok
 ### In scope
 - New `app/services/embeddings.py`: a lazy, local multilingual embedder (fastembed) with e5 asymmetric query/passage prefixes; the vector dim is **read from the model**, never hardcoded.
 - Fill `QdrantVectorStore.upsert` / `.search` in `app/services/vector_store.py`: ensure-collection (create-if-absent; raise on dim mismatch), deterministic `uuid5(chunk_id)` point ids (idempotent re-index), full-chunk payload, COSINE search → the **same `RetrievedContext` dict shape the mock emits** (so `rag.py` is untouched).
-- Config: add pinned `fastembed` to `requirements-qdrant.txt`; add `LEX_KRATOS_ENABLE_QDRANT=false` + optional `LEX_KRATOS_EMBEDDING_MODEL` to `.env.example`; parameterize the compose host port (`${QDRANT_HOST_PORT:-6333}:6333`).
+- Config: add pinned `fastembed` to `requirements-qdrant.txt` (alongside the existing `qdrant-client==1.14.3` pin); add `LEX_KRATOS_ENABLE_QDRANT=false`, `QDRANT_PORT=6533`, `QDRANT_HOST_PORT=6533`, and optional `LEX_KRATOS_EMBEDDING_MODEL` to `.env.example`; parameterize the compose host bind as `"${QDRANT_HOST_PORT:-6533}:6333"` (see D6).
 - Integration tests under `tests/integration/`, skipped by default; one server-free unit test for id/payload mapping.
 - Live verification of both options; brief docs touch (`CHANGELOG.md`, README run-note).
 
@@ -38,9 +38,12 @@ The scaffold's retrieval is deliberately mocked: `MockVectorStore` scores by tok
 - **D1 — Embedding model: local multilingual e5 via fastembed.** No API key, offline, free; multilingual e5 handles Portuguese legal text. The exact supported id is confirmed against the installed fastembed's `TextEmbedding.list_supported_models()` at impl time (primary: `intfloat/multilingual-e5-small`, 384-dim; fallback: a supported multilingual MiniLM/e5 variant). The store reads `dim` from the embedder so D1 and the collection config are a single coupled decision.
 - **D2 — e5 prefixes encoded once.** `embed_documents` → `"passage: "`, `embed_query` → `"query: "`. Omitting these silently degrades recall; the embeddings module is the only place that knows this.
 - **D3 — Idempotent point ids.** `uuid5(NAMESPACE, chunk_id)` so re-running the pipeline upserts (replaces) rather than duplicates — mirrors the mock's `existing_ids` de-dup semantics.
-- **D4 — Payload carries the full chunk.** Search reconstructs `RetrievedContext` from payload (`chunk_id`, `doc_id`, `page_start/end`, `source`, `unit_type`, `case_id`, `metadata` incl. `source_ref`) + cosine `score`. Identical dict shape to the mock → `rag.py` and downstream agents need no change.
+- **D4 — Payload carries the full chunk.** Search reconstructs `RetrievedContext` from payload (`chunk_id`, `doc_id`, `page_start/end`, `source`, `unit_type`, `case_id`, `metadata` incl. `source_ref`) + cosine `score`. Identical dict shape to the mock → `rag.py` and downstream agents need no change. **`search` injects `metadata["retrieval_method"]="qdrant"` into every returned result unconditionally** (not relying on what was stored): `rag.py:45` reads `metadata.get("retrieval_method", "mock")` and *defaults absent values to `"mock"`*, so without this stamp the qdrant backend would mislabel its own hits as `"mock"` and fail acceptance. This mirrors how the mock surfaces `"mock"` (baked into seed-chunk metadata + read back in `_to_retrieved_context`).
 - **D5 — Ensure-collection is loud.** Create-if-absent with model dim + COSINE; if the collection exists with a different dim, raise (don't silently write into an incompatible space). Surfaces through `rag.py`'s existing PII-safe error path.
-- **D6 — Non-destructive ops.** A foreign Qdrant 1.7.4 squats on :6333; the project pins v1.14.3 to match `qdrant-client==1.14.3`. Parameterize the compose host port and run the pinned instance on **6533** (`QDRANT_PORT=6533`), leaving the other project's container alone.
+- **D6 — Non-destructive ops, two ports kept distinct.** A foreign Qdrant 1.7.4 squats on :6333; the project pins v1.14.3 to match `qdrant-client==1.14.3`. There are **two** distinct variables and both must be set to run on 6533:
+  - `QDRANT_HOST_PORT` — the **compose host bind** (`"${QDRANT_HOST_PORT}:6333"`, container stays 6333 internally).
+  - `QDRANT_PORT` — the **client connect port** read by `qdrant_service.py:32`.
+  Live verification sets **both** to `6533`. The compose default is set to `6533` too (`${QDRANT_HOST_PORT:-6533}`), *not* 6333 — defaulting to 6333 would re-create the exact collision with the foreign instance that this decision exists to avoid. `.env.example` documents `QDRANT_PORT=6533` with a note that it must match `QDRANT_HOST_PORT`.
 
 ## 5. Dependencies & ordering
 
@@ -65,8 +68,8 @@ The scaffold's retrieval is deliberately mocked: `MockVectorStore` scores by tok
 
 ## 8. Acceptance criteria ("done")
 
-- `LEX_KRATOS_ENABLE_QDRANT=true` + pinned Qdrant up → pipeline via the `lex_kratos` plugin indexes into Qdrant without error.
-- `POST /rag/search` returns `vector_backend=qdrant`, `status=success`, and real hits whose dict shape matches the mock's `RetrievedContext`.
+- With pinned Qdrant up (`QDRANT_HOST_PORT=6533 docker compose up -d qdrant`) and `LEX_KRATOS_ENABLE_QDRANT=true` + `QDRANT_PORT=6533` set → pipeline via the `lex_kratos` plugin indexes into Qdrant without error.
+- `POST /rag/search` returns `vector_backend=qdrant`, `status=success`, each hit's `retrieval_method=qdrant`, and real hits whose dict shape matches the mock's `RetrievedContext`.
 - A paraphrased query (no token overlap) returns the semantically-correct chunk — demonstrating real embeddings vs. the mock.
 - Default `pytest` passes unchanged, offline; integration tests skip cleanly when Qdrant/fastembed absent.
 - `ruff check` + `ruff format` clean; mypy clean on touched files.
