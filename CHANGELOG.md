@@ -2,6 +2,30 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Não lançado]
+
+### Adicionado
+
+- **Recuperação real com Qdrant (MVP), atrás de `LEX_KRATOS_ENABLE_QDRANT`.**
+  `QdrantVectorStore` deixou de ser stub: indexa e busca com embeddings reais
+  (modelo multilíngue local `paraphrase-multilingual-MiniLM-L12-v2`, 384 dim, via
+  `fastembed`), recuperando por significado e não por sobreposição de tokens.
+  Coleção criada com a dimensão lida do próprio modelo (sem drift); ids `uuid5`
+  determinísticos (reindexação idempotente); payload carrega o chunk completo e a
+  busca emite o mesmo formato `RetrievedContext` do mock (carimba
+  `retrieval_method=qdrant`), então `rag.py` não muda. Roda na porta **6533**
+  (flag desligada por padrão).
+- Testes unitários offline (cliente/embedder fake, sem rede) + teste de
+  integração ponta-a-ponta em `tests/integration/` pulado por padrão.
+- `fastembed==0.7.4` em `requirements-qdrant.txt`; `docker-compose.yml` com porta
+  de host parametrizável (`QDRANT_HOST_PORT`, default 6533).
+
+### Inalterado
+
+- `MockVectorStore`, `run_eval` (continua mock-only) e o comportamento com a flag
+  desligada. Escopo MVP: recuperação real alcançável via `/rag/search`, sem
+  religar a avaliação.
+
 ## [0.2.0] — 2026-06-14
 
 Otimização pós-revisão (PRs #13 Strand A + #15 Strand B). 53 → **71 testes**.

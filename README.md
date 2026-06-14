@@ -99,7 +99,25 @@ Documento não classificado recebe baixa qualidade mockada, bloqueia automação
 
 O `IndexingAgent` gera chunks jurídicos determinísticos e indexa em `MockVectorStore`. O endpoint `/rag/search` usa esse store mockado por padrão, reutilizando a instância em memória para que chunks indexados no pipeline possam ser buscados em chamadas seguintes.
 
-Qdrant real permanece desligado. `get_qdrant_client()` só cria cliente quando `LEX_KRATOS_ENABLE_QDRANT=true`, e essa ativação deve ocorrer apenas em tarefa explícita de integração.
+Por padrão o Qdrant real permanece desligado (`LEX_KRATOS_ENABLE_QDRANT=false`). Para ligar a recuperação semântica real, veja a seção abaixo.
+
+## Recuperação real com Qdrant (opcional)
+
+Quando ligada, a busca passa a usar embeddings reais (modelo multilíngue local `paraphrase-multilingual-MiniLM-L12-v2`, 384 dim, via `fastembed`) sobre um Qdrant local — recuperando por significado, não por sobreposição de tokens. A `MockVectorStore`, a avaliação `run_eval` e o comportamento com a flag desligada permanecem inalterados.
+
+```bash
+# 1. Instale o extra opcional (baixa ~0.22 GB de pesos do modelo no 1º uso).
+.venv/bin/pip install -r requirements-qdrant.txt
+
+# 2. Suba o Qdrant pinado (v1.14.3) na porta 6533 — evita colidir com um
+#    Qdrant que já ocupe :6333.
+QDRANT_HOST_PORT=6533 docker compose up -d qdrant
+
+# 3. Suba a API com a flag ligada (QDRANT_PORT deve casar com QDRANT_HOST_PORT).
+LEX_KRATOS_ENABLE_QDRANT=true QDRANT_PORT=6533 uvicorn app.main:app --reload
+```
+
+Rode o pipeline (indexa no Qdrant) e então `POST /rag/search` retorna `vector_backend=qdrant` e cada hit com `retrieval_method=qdrant`. Os testes de integração ficam em `tests/integration/` e são pulados por padrão; rode-os contra o servidor vivo com `LEX_KRATOS_ENABLE_QDRANT=true QDRANT_PORT=6533 pytest tests/integration`.
 
 ## Validação local
 
