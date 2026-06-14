@@ -167,7 +167,10 @@ Somente execute esta etapa quando houver tarefa explícita para integração rea
 1. Criar coleção.
 2. Criar embeddings.
 3. Salvar chunks.
-4. Substituir `fake_retrieve` por `qdrant_service.search`.
+4. Implementar `QdrantVectorStore` (hoje protegido por feature flag) atrás de
+   `get_vector_store()`. A avaliação já pontua o store servido via
+   `build_eval_store`/`retrieve_sources` — então apontá-la ao backend real é
+   trocar o store semeado pelo Qdrant (o stub `_smoke_retrieve` é só fumaça).
 5. Rodar avaliação comparativa.
 
 ## 14. Como avançar para LLM real

@@ -1,6 +1,6 @@
 # PLAN — Optimization of `lexintel-agentic-hermes`
 
-> Status: DRAFT for approval · 2026-06-13 · Spec: `../specs/2026-06-13-lexintel-optimization.md`
+> Status: **EXECUTED & MERGED** (2026-06-14) — todas as tasks A5–A9 (PR #13) e B9/B1/B2/B3 (PR #15) em `master`; 71 testes. Ver `CHANGELOG.md`. · 2026-06-13 · Spec: `../specs/2026-06-13-lexintel-optimization.md`
 > Branch (when approved): `feat/optimization-strand-a` then `feat/hermes-integration-strand-b` (branch from master; never commit to master directly).
 > Baseline: master `e5a0c05`, 53 tests passing, eval recall@3 = 0.917 (tautological). Stack: Python 3.12 · `pytest` · `ruff` (to add).
 > Each task = single responsibility, independently testable, atomic commit, < 30 min. Execute one at a time, validate before advancing.

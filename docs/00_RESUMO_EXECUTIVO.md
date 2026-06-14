@@ -1,5 +1,12 @@
 # Resumo Executivo
 
+> **Status v0.2 (2026-06-14):** otimização pós-revisão concluída e mergeada
+> (`master`): avaliação RAG religada ao recuperador servido (com distratores),
+> `blocked` interrompe o pipeline, validator vivo, contrato Pydantic único,
+> CI com ruff/mypy/drift, plugin Hermes `lex_kratos` e mapa CNJ 615/2025.
+> **71 testes.** Detalhes em `CHANGELOG.md`, `docs/audits/2026-06-13-deep-review.md`
+> e `docs/superpowers/`.
+
 O objetivo do projeto é transformar o Lex Intelligentia/Kratos em um app jurídico auditável, modular e mensurável.
 
 A prioridade não é migrar imediatamente banco vetorial ou criar um sistema altamente complexo. A prioridade é construir um trilho confiável:

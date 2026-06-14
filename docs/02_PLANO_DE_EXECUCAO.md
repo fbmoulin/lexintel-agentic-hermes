@@ -142,11 +142,12 @@ Objetivo: melhorar o dataset e as métricas antes de integrar busca real.
 
 Entregas:
 
-- `golden_dataset.jsonl` expandido para 8 casos.
+- `golden_dataset.jsonl` expandido para **24 casos** (6 por área) — atualizado na v0.2.
 - Dataset separado por `area` com cobertura bancária, saúde, consumidor e processual civil.
 - Métricas `average_recall_at_1`, `average_recall_at_3`, `average_mrr` e resumo por área.
 - Validação rígida do JSONL com falha em CI se houver linha inválida, campo ausente, campo textual inválido ou ID duplicado.
-- Limiar mínimo local: dataset com 8 casos, áreas obrigatórias, `average_recall_at_3 >= 0.85` e `average_mrr >= 0.85`.
+- A avaliação pontua o `MockVectorStore` servido (corpus `golden_corpus.jsonl` com distratores), não um stub. Ver `docs/10_RAG_EVAL_CONTRACT.md`.
+- Limiar mínimo local: dataset com **24 casos**, áreas obrigatórias, `average_recall_at_3 >= 0.85` e `average_mrr >= 0.85`.
 - CLI de avaliação encerra com erro quando os limiares não são atendidos.
 
 Critério de aceite:

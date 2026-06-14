@@ -1,6 +1,6 @@
 # SPEC — Optimization of `lexintel-agentic-hermes` (Lex Kratos Agentic Core)
 
-> Status: DRAFT for approval · 2026-06-13 · Author: Felipe
+> Status: **EXECUTED & MERGED** (2026-06-14) — Strand A = PR #13, Strand B = PR #15 (ambos em `master`). Ver `CHANGELOG.md`. · 2026-06-13 · Author: Felipe
 > Inputs: `REVIEW_ANALYSIS.md` (deep review), `~/hermes-agent-research-brief.md` (Hermes framework research), inspection of the live Hermes v0.16.0 install (97 skills incl. `mlops/ai-legal-development`, Telegram gateway connected).
 > Complexity: **Alta** (architectural decisions, judicial-compliance domain, two strands, >5 files). Executed under `dev-workflow`.
 
