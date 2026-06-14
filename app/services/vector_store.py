@@ -288,6 +288,7 @@ class QdrantVectorStore:
 
 
 _MOCK_STORE_INSTANCE: MockVectorStore | None = None
+_QDRANT_STORE_INSTANCE: "QdrantVectorStore | None" = None
 
 
 def reset_mock_vector_store() -> MockVectorStore:
@@ -297,9 +298,14 @@ def reset_mock_vector_store() -> MockVectorStore:
 
 
 def get_vector_store() -> VectorStore:
-    global _MOCK_STORE_INSTANCE
+    global _MOCK_STORE_INSTANCE, _QDRANT_STORE_INSTANCE
     if is_qdrant_enabled():
-        return QdrantVectorStore()
+        # Cache the real store: reuse one Qdrant client and run _ensure_collection
+        # once, rather than a network round-trip on every RAG request (mirrors the
+        # mock singleton below).
+        if _QDRANT_STORE_INSTANCE is None:
+            _QDRANT_STORE_INSTANCE = QdrantVectorStore()
+        return _QDRANT_STORE_INSTANCE
     if _MOCK_STORE_INSTANCE is None:
         _MOCK_STORE_INSTANCE = MockVectorStore.seeded()
     return _MOCK_STORE_INSTANCE

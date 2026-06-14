@@ -30,6 +30,7 @@ class _FakeClient:
         self.created = None
         self.upserted = []
         self.query_response = SimpleNamespace(points=[])
+        self.last_query_filter = None
 
     def collection_exists(self, collection_name):
         return self._exists
@@ -50,6 +51,7 @@ class _FakeClient:
         return SimpleNamespace(count=len(self.upserted))
 
     def query_points(self, **kwargs):
+        self.last_query_filter = kwargs.get("query_filter")
         return self.query_response
 
 
@@ -99,8 +101,9 @@ def test_upsert_uses_deterministic_uuid5_id_and_full_payload():
 
 def test_search_maps_hit_to_retrieved_context_and_stamps_method():
     client = _FakeClient(exists=True, existing_dim=4)
+    stored = {**CHUNK, "metadata": {**CHUNK["metadata"], "retrieval_method": "mock"}}
     client.query_response = SimpleNamespace(
-        points=[SimpleNamespace(id="x", score=0.87654, payload=CHUNK)]
+        points=[SimpleNamespace(id="x", score=0.87654, payload=stored)]
     )
     results = _store(client).search("fraude", top_k=3)
     assert len(results) == 1
@@ -112,3 +115,19 @@ def test_search_maps_hit_to_retrieved_context_and_stamps_method():
     assert hit["metadata"]["case_id"] == "caso_1"
     assert hit["metadata"]["unit_type"] == "pedido"
     assert hit["metadata"]["source_ref"] == "CDC art. 14"
+
+
+def test_search_translates_filters_to_metadata_namespaced_qdrant_filter():
+    client = _FakeClient(exists=True, existing_dim=4)
+    _store(client).search("fraude", top_k=2, filters={"doc_type": "peticao_inicial"})
+    query_filter = client.last_query_filter
+    assert query_filter is not None
+    condition = query_filter.must[0]
+    assert condition.key == "metadata.doc_type"
+    assert condition.match.value == "peticao_inicial"
+
+
+def test_search_without_filters_passes_none_filter():
+    client = _FakeClient(exists=True, existing_dim=4)
+    _store(client).search("fraude", top_k=2)
+    assert client.last_query_filter is None
