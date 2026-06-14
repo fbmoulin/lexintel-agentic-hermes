@@ -1,4 +1,4 @@
-from app.schemas.case import CaseInput, AgentResult
+from app.schemas.case import AgentResult, CaseInput
 
 
 class IntakeAgent:
@@ -7,10 +7,10 @@ class IntakeAgent:
     def run(self, case: CaseInput) -> AgentResult:
         """
         Classifies each file in the given case by simple keyword matching and returns a structured detection result for the next agent.
-        
+
         Parameters:
             case (CaseInput): Input case containing `case_id` and an iterable `files` of file path or name strings.
-        
+
         Returns:
             AgentResult: Result object with:
                 - case_id: echoed from `case.case_id`
@@ -44,12 +44,14 @@ class IntakeAgent:
                 doc_type = "unknown"
                 confidence = 0.50
 
-            detected_documents.append({
-                "doc_id": f"doc_{index + 1}",
-                "file_path": file,
-                "doc_type": doc_type,
-                "confidence": confidence
-            })
+            detected_documents.append(
+                {
+                    "doc_id": f"doc_{index + 1}",
+                    "file_path": file,
+                    "doc_type": doc_type,
+                    "confidence": confidence,
+                }
+            )
 
         return AgentResult(
             case_id=case.case_id,
@@ -57,6 +59,6 @@ class IntakeAgent:
             status="success",
             output={
                 "detected_documents": detected_documents,
-                "next_agent": "SecurityAgent"
-            }
+                "next_agent": "SecurityAgent",
+            },
         )

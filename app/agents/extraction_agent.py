@@ -4,7 +4,6 @@ from app.schemas.case import (
     ExtractionQualitySummary,
 )
 
-
 MOCK_TEXT_BY_DOC_TYPE = {
     "peticao_inicial": (
         "Petição inicial mockada. Autor: Consumidor Alfa. Réu: Banco Beta. "

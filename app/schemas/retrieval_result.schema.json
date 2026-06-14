@@ -1,4 +1,5 @@
 {
+  "$comment": "Hand-authored /rag/search response ENVELOPE contract. `results` items are aligned with retrieved_context.schema.json (generated from RetrievedContext) plus envelope-specific fields; this envelope may constrain optional fields more tightly.",
   "type": "object",
   "required": [
     "query",

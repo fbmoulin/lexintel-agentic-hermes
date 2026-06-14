@@ -1,9 +1,8 @@
 import re
 
-from app.schemas.case import LegalChunk
+from app.schemas.case import ChunkUnitType, LegalChunk
 
-
-UNIT_TYPE_BY_DOC_TYPE = {
+UNIT_TYPE_BY_DOC_TYPE: dict[str, ChunkUnitType] = {
     "peticao_inicial": "pedido",
     "contestacao": "contestacao",
     "sentenca": "dispositivo",

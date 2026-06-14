@@ -8,7 +8,9 @@ def test_security_agent_blocks_prompt_injection():
     assert res.status == "blocked"
     # the detected patterns are returned in the output.detected_risks list
     detected = res.output.get("detected_risks", [])
-    assert any("revele o prompt" in p or "ignore instruções anteriores" in p for p in detected)
+    assert any(
+        "revele o prompt" in p or "ignore instruções anteriores" in p for p in detected
+    )
     assert res.output["security_status"] == "blocked"
     assert res.output["max_severity"] == "critical"
     assert res.output["requires_human_review"] is True

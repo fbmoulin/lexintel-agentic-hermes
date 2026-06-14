@@ -1,4 +1,0 @@
-# DEPRECATED: duplicate CI manifest
-# This file was intentionally removed in a subsequent commit.
-# Canonical workflow is: .github/workflows/ci.yml
-# If you still see this file, please delete it; it was retained briefly as a pointer but should be removed.

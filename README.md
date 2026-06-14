@@ -87,7 +87,7 @@ Esse catálogo apenas lê arquivos locais em `app/skills/` e registra o estado d
 
 O runner local em `app/evals/run_eval.py` avalia o dataset dourado sem rede e sem Qdrant real.
 
-Ele valida o JSONL, agrupa casos por área e retorna métricas como `average_recall_at_1`, `average_recall_at_3`, `average_mrr`, `area_summary` e `passed`. O limiar mínimo atual exige 8 casos, quatro áreas obrigatórias e médias globais `>= 0.85` para `recall@3` e MRR. O CLI encerra com erro quando `passed` é `false`.
+Ele pontua o **mesmo `MockVectorStore` que o endpoint `/rag/search` serve** (semeado com `golden_corpus.jsonl`, que inclui chunks distratores), valida o JSONL, agrupa casos por área e retorna `average_recall_at_1`, `average_recall_at_3`, `average_mrr`, `area_summary` e `passed`. O limiar mínimo atual exige 24 casos (6 por área), quatro áreas obrigatórias e médias globais `>= 0.85` para `recall@3` e MRR. O CLI encerra com erro quando `passed` é `false`.
 
 ## Extração e normalização mockadas
 
@@ -107,11 +107,16 @@ Os comandos de aceite da v0.1 são:
 
 ```bash
 pip install -r requirements.txt
+pip install -r requirements-dev.txt   # ruff, mypy, jsonschema — necessários para testes/lint
 uvicorn app.main:app --reload
+ruff check app tests scripts && ruff format --check app tests scripts
+mypy app
 pytest
 python -m app.evals.run_eval
 ```
 
-Também há um workflow em `.github/workflows/ci.yml` que executa testes e avaliação mockada em Python 3.12.
+> `requirements-dev.txt` é obrigatório para rodar `pytest` (alguns testes importam `jsonschema`), `ruff` e `mypy`. Rodar a API em si só precisa de `requirements.txt`.
+
+Também há um workflow em `.github/workflows/ci.yml` que executa lint (ruff), type-check (mypy), checagem de drift de schema, testes e avaliação mockada em Python 3.12.
 
 No Windows, se o `pytest` falhar por permissão no diretório temporário padrão, rode com `TMP` e `TEMP` apontando para uma pasta controlada do workspace. Esse é um ajuste ambiental, não uma dependência do produto.

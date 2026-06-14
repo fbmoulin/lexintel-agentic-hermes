@@ -42,7 +42,19 @@ Cada resposta de pipeline inclui:
 
 ## Regras
 
-- Se uma etapa retorna `blocked`, o pipeline deve parar antes de etapas juridicas posteriores.
+- Se uma etapa retorna `blocked`, o pipeline para antes de etapas juridicas posteriores (aplicado em `run_full_mock` via `_blocked_response`).
 - Saidas juridicas mockadas devem manter `requires_human_review = true`.
 - Saidas juridicas mockadas devem manter `external_use_allowed = false`.
 - Testes devem permanecer locais e deterministicos.
+
+## Contratos JSON Schema
+
+Fonte unica de verdade = modelos Pydantic. Schemas derivados por `python -m scripts.gen_schemas` (CI reprova em drift):
+
+- `app/schemas/validation_result.schema.json` — gerado de `ValidationResult`.
+- `app/schemas/retrieved_context.schema.json` — gerado de `RetrievedContext`.
+
+Schemas NAO gerados:
+
+- `app/schemas/agent_run.schema.json` — **FUTURE-SPEC**: contrato aspiracional de uma camada de run-ledger / custo ainda nao implementada (`run_id`, `started_at`, `latency_ms`, `cost_usd`). Nenhum agente emite isso hoje; o contrato vivo por etapa e `AgentResult`.
+- `app/schemas/retrieval_result.schema.json` — envelope da resposta de `/rag/search` (hand-authored); cada item espelha `retrieved_context.schema.json`.

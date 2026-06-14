@@ -1,0 +1,3 @@
+# Optional extra: only needed when LEX_KRATOS_ENABLE_QDRANT=true (real vector backend).
+# The mocked v0.1 pipeline runs without this.
+qdrant-client==1.14.3

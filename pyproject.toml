@@ -2,3 +2,21 @@
 addopts = "-p no:cacheprovider"
 pythonpath = ["."]
 testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+# Baseline gate: pycodestyle errors, pyflakes, import sorting.
+# Ratchet up later (UP=pyupgrade, B=flake8-bugbear) once the team opts in.
+select = ["E", "F", "I"]
+# Line length is owned by the formatter; E501 on long legal string literals is noise.
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+# Non-strict baseline: ratchet up (disallow_untyped_defs, strict) in a later phase.
+warn_unused_ignores = true
+files = ["app"]

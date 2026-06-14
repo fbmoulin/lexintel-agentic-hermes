@@ -1,46 +1,71 @@
 {
-  "type": "object",
-  "required": [
-    "approved",
-    "blocking_errors",
-    "final_recommendation"
-  ],
+  "$defs": {
+    "BlockingError": {
+      "properties": {
+        "type": {
+          "enum": [
+            "missing_claim",
+            "hallucinated_precedent",
+            "unsupported_fact",
+            "contradiction",
+            "security_risk"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "suggested_fix": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Suggested Fix"
+        }
+      },
+      "required": [
+        "type",
+        "description",
+        "severity"
+      ],
+      "title": "BlockingError",
+      "type": "object"
+    }
+  },
   "properties": {
     "approved": {
+      "title": "Approved",
       "type": "boolean"
     },
     "blocking_errors": {
-      "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "enum": [
-              "missing_claim",
-              "hallucinated_precedent",
-              "unsupported_fact",
-              "contradiction",
-              "security_risk"
-            ]
-          },
-          "description": {
-            "type": "string"
-          },
-          "severity": {
-            "enum": [
-              "low",
-              "medium",
-              "high",
-              "critical"
-            ]
-          },
-          "suggested_fix": {
-            "type": "string"
-          }
-        }
-      }
+        "$ref": "#/$defs/BlockingError"
+      },
+      "title": "Blocking Errors",
+      "type": "array"
     },
     "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
       "type": "array"
     },
     "final_recommendation": {
@@ -48,7 +73,15 @@
         "approve",
         "revise",
         "block"
-      ]
+      ],
+      "title": "Final Recommendation",
+      "type": "string"
     }
-  }
+  },
+  "required": [
+    "approved",
+    "final_recommendation"
+  ],
+  "title": "ValidationResult",
+  "type": "object"
 }

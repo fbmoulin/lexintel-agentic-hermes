@@ -11,7 +11,6 @@ from app.services.vector_store import (
     reset_mock_vector_store,
 )
 
-
 EXTRACTED_TEXT = [
     {
         "doc_id": "doc_1",
@@ -47,7 +46,10 @@ def test_chunk_extracted_text_generates_deterministic_legal_chunks():
         "pedido",
         "contestacao",
     ]
-    assert all(chunk["metadata"]["chunking_strategy"] == "legal_unit_mock_v0.1" for chunk in chunks)
+    assert all(
+        chunk["metadata"]["chunking_strategy"] == "legal_unit_mock_v0.1"
+        for chunk in chunks
+    )
 
 
 def test_chunk_extracted_text_skips_empty_text_and_normalizes_page():
@@ -156,7 +158,8 @@ def test_indexing_agent_returns_failed_result_on_upsert_error():
     assert result.status == "failed"
     assert result.output["indexed_count"] == 0
     assert result.output["skipped_count"] == 2
-    assert result.errors == ["falha simulada de upsert"]
+    # Generic, client-safe message — raw exception text must not leak.
+    assert result.errors == ["Erro interno na indexação."]
 
 
 def test_get_vector_store_defaults_to_mock(monkeypatch):

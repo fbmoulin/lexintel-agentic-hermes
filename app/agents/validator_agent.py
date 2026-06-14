@@ -10,13 +10,13 @@ class ValidatorAgent:
     def run(self, case_id: str, draft: dict) -> AgentResult:
         """
         Validate a draft for disallowed wording that indicates a hallucinated precedent.
-        
+
         Scans the provided draft (converted to string and normalized) for the Portuguese phrase "precedente inventado" (including gender variants) and records a critical blocking error if found.
-        
+
         Parameters:
             case_id (str): Identifier for the case being validated.
             draft (dict): Draft content to inspect; it will be converted to a string and normalized before scanning.
-        
+
         Returns:
             AgentResult: Result object whose `status` is "success" when approved or "blocked" when a blocking error is found.
             The `output` payload includes:
@@ -32,11 +32,13 @@ class ValidatorAgent:
         text = re.sub(r"\s+", " ", text)
 
         if re.search(r"\bprecedente\s+inventad[oa]\b", text):
-            blocking_errors.append({
-                "type": "hallucinated_precedent",
-                "severity": "critical",
-                "description": "Possível precedente inventado."
-            })
+            blocking_errors.append(
+                {
+                    "type": "hallucinated_precedent",
+                    "severity": "critical",
+                    "description": "Possível precedente inventado.",
+                }
+            )
 
         approved = len(blocking_errors) == 0
 
@@ -50,7 +52,7 @@ class ValidatorAgent:
                 "warnings": [],
                 "final_recommendation": "approve" if approved else "block",
                 "requires_human_review": True,
-                "external_use_allowed": False
+                "external_use_allowed": False,
             },
             requires_human_review=True,
             external_use_allowed=False,

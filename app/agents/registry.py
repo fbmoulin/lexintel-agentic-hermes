@@ -1,7 +1,7 @@
 from importlib import import_module
+from typing import Any
 
 from app.services.skill_loader import get_skill_manifest, list_skills
-
 
 HUMAN_REVIEW_PHASES = {
     "firac",
@@ -11,7 +11,7 @@ HUMAN_REVIEW_PHASES = {
 }
 
 
-AGENT_REGISTRY = [
+AGENT_REGISTRY: list[dict[str, Any]] = [
     {
         "agent_name": "IntakeAgent",
         "phase": "intake",
@@ -192,36 +192,44 @@ def validate_agent_registry() -> dict:
 
     for agent in agents:
         if agent["implemented"] and not agent["class_importable"]:
-            issues.append({
-                "type": "missing_agent_class",
-                "agent_name": agent["agent_name"],
-                "module_path": agent["module_path"],
-                "class_name": agent["class_name"],
-            })
+            issues.append(
+                {
+                    "type": "missing_agent_class",
+                    "agent_name": agent["agent_name"],
+                    "module_path": agent["module_path"],
+                    "class_name": agent["class_name"],
+                }
+            )
 
         if not agent["skill"]["exists"]:
-            issues.append({
-                "type": "missing_skill",
-                "agent_name": agent["agent_name"],
-                "skill_name": agent["skill_name"],
-            })
+            issues.append(
+                {
+                    "type": "missing_skill",
+                    "agent_name": agent["agent_name"],
+                    "skill_name": agent["skill_name"],
+                }
+            )
 
         # Legal analysis, drafting, precedent validation, and judicial validation
         # cannot be treated as externally usable without human review.
         if agent["phase"] in HUMAN_REVIEW_PHASES:
             if not agent.get("requires_human_review", False):
-                issues.append({
-                    "type": "missing_human_review_flag",
-                    "agent_name": agent["agent_name"],
-                    "phase": agent["phase"],
-                })
+                issues.append(
+                    {
+                        "type": "missing_human_review_flag",
+                        "agent_name": agent["agent_name"],
+                        "phase": agent["phase"],
+                    }
+                )
 
     unmapped_skills = sorted(skill_names - mapped_skill_names)
     for skill_name in unmapped_skills:
-        issues.append({
-            "type": "unmapped_skill",
-            "skill_name": skill_name,
-        })
+        issues.append(
+            {
+                "type": "unmapped_skill",
+                "skill_name": skill_name,
+            }
+        )
 
     return {
         "valid": len(issues) == 0,

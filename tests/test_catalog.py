@@ -6,7 +6,6 @@ from app.agents.registry import list_agent_registry, validate_agent_registry
 from app.main import app
 from app.services.skill_loader import list_skills, load_skill
 
-
 client = TestClient(app)
 
 
@@ -53,22 +52,19 @@ def test_agent_registry_is_valid_and_links_skills():
     assert all(agent["skill"]["exists"] is True for agent in agents)
 
     human_review_agents = [
-        agent for agent in agents
+        agent
+        for agent in agents
         if agent["phase"] in agent_registry.HUMAN_REVIEW_PHASES
     ]
     assert all(
-        agent.get("requires_human_review") is True
-        for agent in human_review_agents
+        agent.get("requires_human_review") is True for agent in human_review_agents
     )
 
 
 def test_agent_registry_rejects_missing_human_review_for_validation(monkeypatch):
-    patched_registry = [
-        dict(entry) for entry in agent_registry.AGENT_REGISTRY
-    ]
+    patched_registry = [dict(entry) for entry in agent_registry.AGENT_REGISTRY]
     validator_entry = next(
-        entry for entry in patched_registry
-        if entry["phase"] == "validation"
+        entry for entry in patched_registry if entry["phase"] == "validation"
     )
     validator_entry.pop("requires_human_review", None)
     monkeypatch.setattr(agent_registry, "AGENT_REGISTRY", patched_registry)
@@ -154,8 +150,7 @@ def test_catalog_agents_endpoint_returns_registry():
     assert data["issues"] == []
 
     intake = next(
-        agent for agent in data["agents"]
-        if agent["agent_name"] == "IntakeAgent"
+        agent for agent in data["agents"] if agent["agent_name"] == "IntakeAgent"
     )
     assert intake["phase"] == "intake"
     assert intake["skill"]["skill_name"] == "SKILL_DOCUMENT_INTAKE.md"

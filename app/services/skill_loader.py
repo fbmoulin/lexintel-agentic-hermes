@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 SKILLS_DIR = Path(__file__).resolve().parents[1] / "skills"
 
 
@@ -29,9 +28,7 @@ def parse_skill_document(skill_name: str, content: str) -> dict:
         Path(skill_name).stem,
     )
     sections = [
-        line.removeprefix("##").strip()
-        for line in lines
-        if line.startswith("## ")
+        line.removeprefix("##").strip() for line in lines if line.startswith("## ")
     ]
 
     return {
@@ -46,13 +43,13 @@ def parse_skill_document(skill_name: str, content: str) -> dict:
 def load_skill(skill_name: str) -> str:
     """
     Load and return the text contents of a skill file located under app/skills.
-    
+
     Parameters:
         skill_name (str): File name or relative path of the skill under app/skills.
-    
+
     Returns:
         str: The UTF-8 decoded contents of the skill file.
-    
+
     Raises:
         FileNotFoundError: If no file exists at app/skills/{skill_name}.
     """

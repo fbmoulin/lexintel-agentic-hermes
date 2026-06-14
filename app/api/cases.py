@@ -1,6 +1,7 @@
 from fastapi import APIRouter
-from app.schemas.case import CaseInput
+
 from app.agents.orchestrator import CaseOrchestrator
+from app.schemas.case import CaseInput
 
 router = APIRouter()
 
@@ -9,10 +10,10 @@ router = APIRouter()
 def intake_case(case: CaseInput):
     """
     Trigger intake processing for the given case and return the orchestrator's intake result.
-    
+
     Parameters:
         case (CaseInput): The case data submitted in the request body.
-    
+
     Returns:
         The intake processing result produced by the orchestrator (structure depends on the orchestrator's implementation).
     """
@@ -24,10 +25,10 @@ def intake_case(case: CaseInput):
 def run_full_mock(case: CaseInput):
     """
     Run the full mock workflow for the given case.
-    
+
     Parameters:
         case (CaseInput): Case data to process.
-    
+
     Returns:
         The result produced by the full mock orchestration (typically a dict or model representing the workflow output).
     """

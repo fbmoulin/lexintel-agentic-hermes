@@ -1,7 +1,9 @@
-import pytest
+from copy import deepcopy
 from pathlib import Path
 
-from app.evals.run_eval import load_dataset, run
+import pytest
+
+from app.evals.run_eval import _smoke_retrieve, load_corpus, load_dataset, run
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures" / "evals"
 
@@ -10,7 +12,7 @@ def test_eval_runs():
     result = run()
 
     assert "average_recall" in result
-    assert result["dataset_size"] == 8
+    assert result["dataset_size"] == 24
     assert result["areas"] == [
         "bancario",
         "consumidor",
@@ -22,6 +24,36 @@ def test_eval_runs():
     assert result["passed"] is True
     assert result["threshold_failures"] == []
     assert set(result["area_summary"]) == set(result["areas"])
+    # The eval exercises the served retriever: retrieved sources are populated.
+    assert any(score["retrieved"] for score in result["results"])
+
+
+def test_smoke_retrieve_is_an_isolated_keyword_stub():
+    # The smoke stub is a labeled keyword map kept for sanity only; run() does
+    # NOT use it (see test_eval_runs / test_eval_discriminates for the real path).
+    assert _smoke_retrieve("fraude no banco") == ["Súmula 479/STJ", "CDC art. 14"]
+
+
+def test_eval_discriminates_on_retrieval_quality():
+    """Mis-seeding a gold chunk must measurably lower recall — proves the gate
+    tracks the served retriever's ranking, not a hardcoded answer."""
+    good = run()
+
+    broken_corpus = deepcopy(load_corpus())
+    for chunk in broken_corpus:
+        if chunk["metadata"].get("source_ref") == "Súmula 479/STJ":
+            chunk["text"] = "conteudo irrelevante sem relacao com a consulta"
+
+    degraded = run(corpus=broken_corpus)
+
+    assert degraded["average_recall_at_3"] < good["average_recall_at_3"]
+
+
+def test_eval_fails_with_empty_corpus():
+    result = run(corpus=[])
+
+    assert result["average_recall_at_3"] == 0.0
+    assert result["passed"] is False
 
 
 def test_eval_runs_outside_project_root(monkeypatch):
@@ -29,7 +61,7 @@ def test_eval_runs_outside_project_root(monkeypatch):
 
     result = run()
 
-    assert result["dataset_size"] == 8
+    assert result["dataset_size"] == 24
 
 
 def test_eval_dataset_validation_rejects_invalid_jsonl():
@@ -55,7 +87,7 @@ def test_eval_dataset_validation_rejects_duplicate_ids():
 def test_eval_dataset_validation_rejects_non_text_id_before_duplicate_lookup():
     """
     Verify that loading a dataset with a non-text `id` raises a `ValueError` and that the loader validates the `id` type before checking for duplicate IDs.
-    
+
     Calls `load_dataset` with the `non_text_id.jsonl` fixture and expects a `ValueError` whose message matches "field id must be text".
     """
     with pytest.raises(ValueError, match="field id must be text"):
@@ -67,8 +99,7 @@ def test_eval_thresholds_fail_when_dataset_is_too_small():
 
     assert result["passed"] is False
     assert any(
-        failure["metric"] == "dataset_size"
-        for failure in result["threshold_failures"]
+        failure["metric"] == "dataset_size" for failure in result["threshold_failures"]
     )
 
 

@@ -4,7 +4,6 @@ from app.api import rag as rag_api
 from app.main import app
 from app.services.vector_store import reset_mock_vector_store
 
-
 client = TestClient(app)
 
 
@@ -94,7 +93,8 @@ def test_rag_search_returns_controlled_failure(monkeypatch):
     data = response.json()
     assert data["status"] == "failed"
     assert data["requires_human_review"] is True
-    assert data["errors"] == ["falha simulada de busca"]
+    # Generic, client-safe message — raw exception text must not leak.
+    assert data["errors"] == ["Erro interno ao executar a busca."]
     assert data["results"] == []
 
 
@@ -137,14 +137,14 @@ def test_rag_search_defaults_retrieval_method_without_metadata(monkeypatch):
 def test_eval_endpoint_runs():
     """
     Validate the /eval/run endpoint returns expected evaluation metrics and a passing result.
-    
-    Asserts that the endpoint responds with HTTP 200, `dataset_size` equal to 8, presence of the keys `average_recall`, `average_recall_at_3`, and `average_mrr`, and that `passed` is `True`.
+
+    Asserts that the endpoint responds with HTTP 200, `dataset_size` equal to 24, presence of the keys `average_recall`, `average_recall_at_3`, and `average_mrr`, and that `passed` is `True`.
     """
     response = client.get("/eval/run")
 
     assert response.status_code == 200
     data = response.json()
-    assert data["dataset_size"] == 8
+    assert data["dataset_size"] == 24
     assert "average_recall" in data
     assert "average_recall_at_3" in data
     assert "average_mrr" in data
@@ -154,7 +154,7 @@ def test_eval_endpoint_runs():
 def test_full_mock_pipeline_runs_all_available_agents():
     """
     Verify the full mocked case-processing pipeline runs and executes every expected agent in order.
-    
+
     Sends a run-full-mock request for a sample case and asserts the response indicates success, echoes the case_id, includes the simulated draft content ("Relatório simulado."), and contains a trace whose agent_name sequence exactly matches the expected ordered list of agents from IntakeAgent through ValidatorAgent.
     """
     payload = {
@@ -219,10 +219,7 @@ def test_full_mock_pipeline_runs_all_available_agents():
     assert validator_trace["requires_human_review"] is True
     assert validator_trace["external_use_allowed"] is False
 
-    step_indexes = [
-        entry["trace_metadata"]["step_index"]
-        for entry in data["trace"]
-    ]
+    step_indexes = [entry["trace_metadata"]["step_index"] for entry in data["trace"]]
     assert step_indexes == [1, 2, 3, 4, 5, 6, 7, 8]
 
     assert all(
