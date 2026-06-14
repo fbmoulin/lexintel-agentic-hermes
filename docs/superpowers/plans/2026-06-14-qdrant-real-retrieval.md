@@ -33,6 +33,8 @@
 
 ---
 
+> **⚠️ Supersedes spec D1/D2:** the spec named `intfloat/multilingual-e5-small` with `"query:"/"passage:"` prefixes. That model is **not** in fastembed 0.7.4 (spec D1's pre-authorized fallback applies). This plan uses the **symmetric** `paraphrase-multilingual-MiniLM-L12-v2` — **do NOT add e5 prefixes**; queries and documents are embedded identically. (Empirically verified: PT paraphrase cosine 0.585 vs distractor 0.179.)
+
 ## Task 1: Embedding module
 
 **Files:**
@@ -252,18 +254,19 @@ Expected: FAIL — current `QdrantVectorStore.__init__` takes no args / `upsert`
 
 - [ ] **Step 3: Replace the `QdrantVectorStore` class in `app/services/vector_store.py`**
 
-At the top of the file, add imports (next to the existing `import re` / `from copy import deepcopy`):
+First, replace the **entire existing import block** (lines 1-7) with this already-sorted block (ruff `I` / isort-clean — `os`/`uuid` grouped with stdlib, the `qdrant_service` line *merged* not duplicated, so it won't trip `I001`):
 
 ```python
 import os
+import re
+import unicodedata
 import uuid
-```
+from copy import deepcopy
+from typing import Protocol
 
-And below the existing `from app.services.qdrant_service import is_qdrant_enabled`:
-
-```python
+from app.schemas.case import LegalChunk, RetrievedContext
 from app.services.embeddings import Embedder, get_embedder
-from app.services.qdrant_service import get_qdrant_client
+from app.services.qdrant_service import get_qdrant_client, is_qdrant_enabled
 ```
 
 Replace the entire stub class (the `class QdrantVectorStore:` block that currently raises) with:
@@ -413,8 +416,8 @@ Expected: PASS, same count as before + 4 new. No network. (`test_qdrant_optional
 
 - [ ] **Step 6: Lint + type-check touched files**
 
-Run: `.venv/bin/ruff check app/services/vector_store.py tests/test_qdrant_vector_store_unit.py && .venv/bin/ruff format app/services/vector_store.py tests/test_qdrant_vector_store_unit.py && .venv/bin/mypy app/services/vector_store.py`
-Expected: clean.
+Run: `.venv/bin/ruff check --fix app/services/vector_store.py tests/test_qdrant_vector_store_unit.py && .venv/bin/ruff format app/services/vector_store.py tests/test_qdrant_vector_store_unit.py && .venv/bin/mypy app/services/vector_store.py`
+Expected: clean (the `--fix` auto-sorts imports if Step 3's block was pasted out of order).
 
 - [ ] **Step 7: Commit**
 
