@@ -179,7 +179,7 @@ class CaseOrchestrator:
             Note:
                 If the security step blocks the case, `status` will be `"blocked"`, `requires_human_review` will be `True`, and `external_use_allowed` will be `False`.
         """
-        trace = []
+        trace: list[dict] = []
 
         intake_result = self.intake_agent.run(case)
         self._record_trace(trace, intake_result, 1, "intake")
@@ -227,7 +227,7 @@ class CaseOrchestrator:
                 - requires_human_review (bool): True if any step requires human review.
                 - external_use_allowed (bool): Whether the pipeline allows external use (always `False` for this mock pipeline).
         """
-        trace = []
+        trace: list[dict] = []
 
         intake_result = self.intake_agent.run(case)
         self._record_trace(trace, intake_result, 1, "intake")

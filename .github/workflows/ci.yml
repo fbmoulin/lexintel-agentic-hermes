@@ -21,6 +21,16 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: |
+          ruff check app tests scripts
+          ruff format --check app tests scripts
+
+      - name: Type check (mypy)
+        run: |
+          mypy app
 
       - name: Run tests
         run: |

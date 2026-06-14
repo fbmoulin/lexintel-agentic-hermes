@@ -1,4 +1,6 @@
-from app.schemas.case import AgentResult, IndexingSummary
+from typing import cast
+
+from app.schemas.case import AgentResult, ChunkUnitType, IndexingSummary
 from app.services.chunking import chunk_extracted_text
 from app.services.qdrant_service import is_qdrant_enabled
 from app.services.vector_store import VectorStore, get_vector_store
@@ -11,8 +13,11 @@ class IndexingAgent:
         self.vector_store = vector_store or get_vector_store()
 
     @staticmethod
-    def _chunk_unit_types(chunks: list[dict]) -> list[str]:
-        return sorted({chunk.get("unit_type", "documento") for chunk in chunks})
+    def _chunk_unit_types(chunks: list[dict]) -> list[ChunkUnitType]:
+        return cast(
+            list[ChunkUnitType],
+            sorted({chunk.get("unit_type", "documento") for chunk in chunks}),
+        )
 
     def run(self, case_id: str, extracted_text: list[dict]) -> AgentResult:
         chunks = chunk_extracted_text(case_id, extracted_text)

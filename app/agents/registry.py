@@ -1,4 +1,5 @@
 from importlib import import_module
+from typing import Any
 
 from app.services.skill_loader import get_skill_manifest, list_skills
 
@@ -10,7 +11,7 @@ HUMAN_REVIEW_PHASES = {
 }
 
 
-AGENT_REGISTRY = [
+AGENT_REGISTRY: list[dict[str, Any]] = [
     {
         "agent_name": "IntakeAgent",
         "phase": "intake",

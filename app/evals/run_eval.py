@@ -1,6 +1,7 @@
 import json
 from copy import deepcopy
 from pathlib import Path
+from typing import Any
 
 DATASET_PATH = Path(__file__).with_name("golden_dataset.jsonl")
 DEFAULT_K = 3
@@ -35,7 +36,7 @@ def load_dataset(path: str | Path):
                     or if a row fails schema/validation checks.
     """
     rows = []
-    seen_ids = set()
+    seen_ids: set[str] = set()
 
     for line_number, line in enumerate(
         Path(path).read_text(encoding="utf-8").splitlines(),
@@ -278,7 +279,7 @@ def summarize_by_area(scores: list[dict]) -> dict:
             - "average_mrr" (float): Mean of `mrr` across the area's items.
             - "failed_case_ids" (list[str]): List of item IDs that missed any expected source within the top-3.
     """
-    summary = {}
+    summary: dict[str, dict[str, Any]] = {}
     for score in scores:
         area = score["area"]
         if area not in summary:
