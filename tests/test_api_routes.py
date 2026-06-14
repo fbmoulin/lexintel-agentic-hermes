@@ -93,7 +93,8 @@ def test_rag_search_returns_controlled_failure(monkeypatch):
     data = response.json()
     assert data["status"] == "failed"
     assert data["requires_human_review"] is True
-    assert data["errors"] == ["falha simulada de busca"]
+    # Generic, client-safe message — raw exception text must not leak.
+    assert data["errors"] == ["Erro interno ao executar a busca."]
     assert data["results"] == []
 
 

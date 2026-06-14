@@ -1,9 +1,12 @@
+import logging
 from typing import cast
 
 from app.schemas.case import AgentResult, ChunkUnitType, IndexingSummary
 from app.services.chunking import chunk_extracted_text
 from app.services.qdrant_service import is_qdrant_enabled
 from app.services.vector_store import VectorStore, get_vector_store
+
+logger = logging.getLogger(__name__)
 
 
 class IndexingAgent:
@@ -28,7 +31,9 @@ class IndexingAgent:
 
         try:
             index_result = self.vector_store.upsert(chunks)
-        except Exception as exc:
+        except Exception:
+            # Log full detail server-side; surface a generic, client-safe message.
+            logger.exception("Indexing upsert failed for case %s", case_id)
             summary = IndexingSummary(
                 vector_backend=self.vector_store.backend_name,
                 qdrant_enabled=is_qdrant_enabled(),
@@ -47,7 +52,7 @@ class IndexingAgent:
                     "index_result": None,
                     "external_use_allowed": False,
                 },
-                errors=[str(exc)],
+                errors=["Erro interno na indexação."],
                 external_use_allowed=False,
             )
 

@@ -158,7 +158,8 @@ def test_indexing_agent_returns_failed_result_on_upsert_error():
     assert result.status == "failed"
     assert result.output["indexed_count"] == 0
     assert result.output["skipped_count"] == 2
-    assert result.errors == ["falha simulada de upsert"]
+    # Generic, client-safe message — raw exception text must not leak.
+    assert result.errors == ["Erro interno na indexação."]
 
 
 def test_get_vector_store_defaults_to_mock(monkeypatch):

@@ -16,25 +16,6 @@ class SecurityAgent:
         "critical": 4,
     }
 
-    SUSPICIOUS_PATTERNS = [
-        "ignore instruções anteriores",
-        "ignore as instruções anteriores",
-        "desconsidere instruções anteriores",
-        "revele o prompt",
-        "mostre o prompt",
-        "exiba o prompt",
-        "execute comando",
-        "rode comando",
-        "delete arquivos",
-        "apague arquivos",
-        "favoreça uma parte",
-        "aja como outro sistema",
-        "oculte esta instrução",
-        "não conte ao usuário",
-        "modo desenvolvedor",
-        "jailbreak",
-    ]
-
     DETECTION_RULES = [
         {
             "id": "ignore_previous_instructions",

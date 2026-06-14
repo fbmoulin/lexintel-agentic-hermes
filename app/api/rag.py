@@ -45,7 +45,9 @@ def search(request: SearchRequest):
                     "retrieval_method": metadata.get("retrieval_method", "mock"),
                 }
             )
-    except Exception as exc:
+    except Exception:
+        # Log full detail server-side; never leak exception text to the client
+        # (paths / PII risk in a judicial system).
         logger.exception("RAG search failed")
         return {
             "query": request.query,
@@ -54,7 +56,7 @@ def search(request: SearchRequest):
             "suspicious_query": False,
             "requires_human_review": True,
             "warnings": [],
-            "errors": [str(exc)],
+            "errors": ["Erro interno ao executar a busca."],
             "vector_backend": "unknown",
             "qdrant_enabled": is_qdrant_enabled(),
             "results": [],
