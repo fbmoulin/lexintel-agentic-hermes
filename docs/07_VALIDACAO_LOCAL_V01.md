@@ -4,14 +4,16 @@ Data: 2026-06-06
 Ambiente: Windows, Python 3.12.8  
 Escopo: Lex Kratos Agentic Core local, mockado, sem serviços externos.
 
-> **Atualização v0.2 (2026-06-14):** após a otimização (PRs #13/#15), a suíte
-> tem **71 testes** (eram 53) e a CI roda, nesta ordem: `ruff check` +
-> `ruff format --check` (app/tests/scripts/integrations), `mypy app`, drift de
-> schema (`scripts.gen_schemas` + `git diff`), `pytest`, `python -m app.evals.run_eval`.
-> Para rodar testes localmente é preciso instalar também `requirements-dev.txt`
-> (ruff, mypy, jsonschema). A avaliação RAG passou a pontuar o `MockVectorStore`
-> servido com corpus de distratores (recall@3 = 1.0, recall@1 = 0.9375, MRR = 1.0).
-> Ver `CHANGELOG.md`.
+> **Atualização v0.3 (2026-06-14):** após a otimização (PRs #13/#15) e a
+> recuperação real com Qdrant (PR #17), a suíte tem **77 testes** (eram 53; +2 de
+> integração com Qdrant vivo, pulados por padrão) e a CI roda, nesta ordem:
+> `ruff check` + `ruff format --check` (app/tests/scripts/integrations),
+> `mypy app`, drift de schema (`scripts.gen_schemas` + `git diff`), `pytest`,
+> `python -m app.evals.run_eval`. Para rodar testes localmente é preciso instalar
+> também `requirements-dev.txt` (ruff, mypy, jsonschema, qdrant-client). A
+> avaliação RAG passou a pontuar o `MockVectorStore` servido com corpus de
+> distratores (recall@3 = 1.0, recall@1 = 0.9375, MRR = 1.0) e permanece
+> mock-only. Ver `CHANGELOG.md`.
 
 ## Comandos executados
 

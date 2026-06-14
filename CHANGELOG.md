@@ -4,6 +4,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ## [Não lançado]
 
+## [0.3.0] — 2026-06-14
+
+Recuperação semântica real opcional (PR #17, merge `6d06566`). 71 → **77 testes**
+(+2 de integração pulados por padrão). Base: spec/plan em `docs/superpowers/`.
+
 ### Adicionado
 
 - **Recuperação real com Qdrant (MVP), atrás de `LEX_KRATOS_ENABLE_QDRANT`.**

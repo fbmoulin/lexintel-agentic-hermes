@@ -8,7 +8,7 @@ Este projeto não é o deploy Hermes/Conteúdo do Lex Intelligentia.
 
 Materiais externos como `Analyzing AGENTS2.zip`, tutoriais Hermes, cron jobs, n8n, áudio, vídeo, ElevenLabs e automação de publicação podem orientar backlog futuro, mas não são fonte de código nem critério de aceite da v0.1.
 
-Nesta fase não há integrações reais com Qdrant, Supabase, n8n, DataJud, STJ Dados Abertos, PJe ou LLMs.
+Não há integrações reais com Supabase, n8n, DataJud, STJ Dados Abertos, PJe ou LLMs. A única exceção é a **recuperação semântica real com Qdrant** (PR #17), que é opcional e desligada por padrão — ver a seção "Recuperação real com Qdrant (opcional)" abaixo.
 
 ## Objetivo
 
@@ -67,7 +67,7 @@ python -m app.evals.run_eval
 
 ## Estado atual
 
-Este pacote entrega um scaffold funcional com mocks. A conexão real com Qdrant, Supabase, LLMs e automações externas deve ser ativada apenas em fases seguintes e mediante tarefa explícita.
+Este pacote entrega um scaffold funcional com mocks. A conexão real com Supabase, LLMs e automações externas deve ser ativada apenas em fases seguintes e mediante tarefa explícita. A recuperação real com Qdrant já existe como opção (PR #17), desligada por padrão — ver seção própria abaixo.
 
 O `docker-compose.yml` atual é apoio futuro para Qdrant e não é requisito para rodar a v0.1.
 

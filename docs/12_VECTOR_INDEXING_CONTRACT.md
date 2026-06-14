@@ -16,7 +16,13 @@ LEX_KRATOS_ENABLE_QDRANT=true
 
 Sem essa variável, `get_qdrant_client()` falha com `RuntimeError` e o pipeline usa `MockVectorStore`.
 
-Mesmo com a flag, a v0.1 não executa busca real em Qdrant; a integração real permanece tarefa futura explícita.
+> **Atualização v0.3 (PR #17):** com a flag ligada, o `QdrantVectorStore` deixou
+> de ser stub — passa a indexar e buscar **com embeddings reais** (`fastembed`,
+> modelo multilíngue local) sobre um Qdrant local, recuperando por significado.
+> Ver `README.md` (seção "Recuperação real com Qdrant") e
+> `docs/superpowers/specs/2026-06-14-qdrant-real-retrieval-design.md`. O chunking
+> mockado descrito abaixo continua sendo a fonte dos `LegalChunk` indexados; só a
+> camada de armazenamento/busca passou a ser real.
 
 ## Chunking Jurídico
 
