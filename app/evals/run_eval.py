@@ -3,10 +3,15 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
+from app.services.vector_store import MockVectorStore
+
 DATASET_PATH = Path(__file__).with_name("golden_dataset.jsonl")
+CORPUS_PATH = Path(__file__).with_name("golden_corpus.jsonl")
 DEFAULT_K = 3
+# Search depth handed to the served retriever; recall@k slices this ordered list.
+SEARCH_K = 10
 DEFAULT_THRESHOLDS = {
-    "min_dataset_size": 8,
+    "min_dataset_size": 24,
     "min_average_recall_at_3": 0.85,
     "min_average_mrr": 0.85,
     "required_areas": [
@@ -126,40 +131,50 @@ def _dedupe(items: list[str]) -> list[str]:
     return deduped
 
 
-def fake_retrieve(query: str):
+def load_corpus(path: str | Path = CORPUS_PATH) -> list[dict]:
+    """Load the seedable golden corpus (chunks) used to build the eval store."""
+    chunks = []
+    for line in Path(path).read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            chunks.append(json.loads(line))
+    return chunks
+
+
+def build_eval_store(corpus: list[dict] | None = None) -> MockVectorStore:
+    """Build the *served* mock vector store seeded with the golden corpus.
+
+    Uses the same `MockVectorStore` the `/rag/search` endpoint serves, so the
+    eval scores the real retrieval code path — not a hardcoded stub.
     """
-    Produce a deterministic list of predefined legal source identifiers that match keywords in the provided query.
+    return MockVectorStore(seed_chunks=corpus if corpus is not None else load_corpus())
 
-    Parameters:
-        query (str): The user query text to inspect for keyword matches.
 
-    Returns:
-        list[str]: A de-duplicated list of legal source identifiers selected based on keyword presence in `query`.
+def retrieve_sources(
+    store: MockVectorStore, query: str, top_k: int = SEARCH_K
+) -> list[str]:
+    """Run the real retriever and map each retrieved chunk to its source identifier."""
+    retrieved = []
+    for result in store.search(query, top_k=top_k):
+        metadata = result.get("metadata", {})
+        source_ref = metadata.get("source_ref") or result.get("source")
+        if source_ref:
+            retrieved.append(source_ref)
+    return _dedupe(retrieved)
+
+
+def _smoke_retrieve(query: str) -> list[str]:
+    """Harness smoke test ONLY — a hardcoded keyword map, NOT the served retriever.
+
+    Kept for quick offline sanity of the metric helpers; it does not measure
+    retrieval quality. The real eval path uses `retrieve_sources()` over the
+    served `MockVectorStore`.
     """
     lowered = query.lower()
     retrieved = []
-
     if "fraude" in lowered or "banco" in lowered or "pix" in lowered:
         retrieved.extend(["Súmula 479/STJ", "CDC art. 14"])
-
-    if "plano de saúde" in lowered or "rol da ans" in lowered:
-        retrieved.extend(["Tema 1082/STJ", "Lei 14.454/2022", "Lei 9.656/1998"])
-
-    if "reajuste" in lowered and "idoso" in lowered:
-        retrieved.extend(["Estatuto do Idoso", "CDC", "Lei 9.656/1998"])
-
-    if "negativação" in lowered or "inscrição indevida" in lowered:
-        retrieved.extend(["CDC", "jurisprudência STJ sobre inscrição indevida"])
-
-    if "vício" in lowered or "produto defeituoso" in lowered:
-        retrieved.extend(["CDC art. 18", "CDC"])
-
-    if "tutela de urgência" in lowered:
-        retrieved.extend(["art. 300 CPC", "tutela provisória"])
-
-    if "agravo" in lowered and "tutela" in lowered:
-        retrieved.extend(["art. 1.015 CPC", "tutela provisória"])
-
+    if "rol" in lowered or "ans" in lowered:
+        retrieved.extend(["Tema 1082/STJ", "Lei 14.454/2022"])
     return _dedupe(retrieved)
 
 
@@ -200,7 +215,7 @@ def reciprocal_rank(expected, retrieved) -> float:
     return 0.0
 
 
-def evaluate_item(item: dict) -> dict:
+def evaluate_item(item: dict, store: MockVectorStore) -> dict:
     """
     Evaluate a single dataset item by retrieving sources for its query and computing match diagnostics and metrics.
 
@@ -227,7 +242,7 @@ def evaluate_item(item: dict) -> dict:
             - "recall_at_3": recall considering only the top-DEFAULT_K retrieved.
             - "mrr": mean reciprocal rank (reciprocal of the rank of the first retrieved expected source, or 0.0 if none).
     """
-    retrieved = fake_retrieve(item["query"])
+    retrieved = retrieve_sources(store, item["query"])
     expected = item["expected_sources"]
     retrieved_at_3 = retrieved[:DEFAULT_K]
     matched_expected = [source for source in expected if source in retrieved]
@@ -368,7 +383,11 @@ def evaluate_thresholds(scores: list[dict], thresholds: dict) -> list[dict]:
     return failures
 
 
-def run(dataset_path: str | Path = DATASET_PATH, thresholds: dict | None = None):
+def run(
+    dataset_path: str | Path = DATASET_PATH,
+    thresholds: dict | None = None,
+    corpus: list[dict] | None = None,
+):
     """
     Run the evaluation pipeline for the deterministic mock retriever against a golden dataset.
 
@@ -396,7 +415,8 @@ def run(dataset_path: str | Path = DATASET_PATH, thresholds: dict | None = None)
     if thresholds:
         active_thresholds.update(deepcopy(thresholds))
     dataset = load_dataset(dataset_path)
-    scores = [evaluate_item(item) for item in dataset]
+    store = build_eval_store(corpus)
+    scores = [evaluate_item(item, store) for item in dataset]
     threshold_failures = evaluate_thresholds(scores, active_thresholds)
     average_recall_at_3 = average([score["recall_at_3"] for score in scores])
     average_mrr = average([score["mrr"] for score in scores])

@@ -1,8 +1,24 @@
-{"id":"bancario_001","query":"Responsabilidade objetiva de banco em fraude praticada por terceiro","expected_sources":["Súmula 479/STJ"],"area":"bancario"}
-{"id":"bancario_002","query":"Banco responde por golpe do pix com falha de segurança?","expected_sources":["Súmula 479/STJ","CDC art. 14"],"area":"bancario"}
-{"id":"saude_001","query":"Plano de saúde deve cobrir tratamento fora do rol da ANS?","expected_sources":["Tema 1082/STJ","Lei 14.454/2022"],"area":"saude"}
-{"id":"saude_002","query":"Reajuste abusivo de plano de saúde para consumidor idoso","expected_sources":["Estatuto do Idoso","CDC","Lei 9.656/1998"],"area":"saude"}
-{"id":"consumidor_001","query":"Dano moral por negativação indevida","expected_sources":["CDC","jurisprudência STJ sobre inscrição indevida"],"area":"consumidor"}
-{"id":"consumidor_002","query":"Produto com vício não reparado no prazo legal","expected_sources":["CDC art. 18","CDC"],"area":"consumidor"}
-{"id":"processual_001","query":"Requisitos da tutela de urgência no CPC","expected_sources":["art. 300 CPC"],"area":"processual_civil"}
-{"id":"processual_002","query":"Cabimento de agravo de instrumento contra decisão de tutela provisória","expected_sources":["art. 1.015 CPC","tutela provisória"],"area":"processual_civil"}
+{"id":"bancario_001","query":"Responsabilidade objetiva do banco por fraude praticada por terceiro","expected_sources":["Súmula 479/STJ"],"area":"bancario"}
+{"id":"bancario_002","query":"Banco responde por golpe do pix e saque indevido na conta","expected_sources":["Súmula 479/STJ"],"area":"bancario"}
+{"id":"bancario_003","query":"Falha na prestação do serviço bancário e dever de indenizar o consumidor","expected_sources":["CDC art. 14"],"area":"bancario"}
+{"id":"bancario_004","query":"Código de Defesa do Consumidor aplica-se às instituições financeiras e contratos bancários","expected_sources":["Súmula 297/STJ"],"area":"bancario"}
+{"id":"bancario_005","query":"Instituição financeira responde objetivamente por golpe e fraude bancária de terceiro","expected_sources":["Súmula 479/STJ"],"area":"bancario"}
+{"id":"bancario_006","query":"Banco responde por saque indevido e falha na prestação do serviço bancário","expected_sources":["Súmula 479/STJ","CDC art. 14"],"area":"bancario"}
+{"id":"consumidor_001","query":"Produto com vício defeituoso não reparado no prazo de trinta dias","expected_sources":["CDC art. 18"],"area":"consumidor"}
+{"id":"consumidor_002","query":"Repetição do indébito em dobro por cobrança indevida de dívida de consumo","expected_sources":["CDC art. 42"],"area":"consumidor"}
+{"id":"consumidor_003","query":"Dano moral por inscrição indevida em cadastro de inadimplentes","expected_sources":["Súmula 385/STJ"],"area":"consumidor"}
+{"id":"consumidor_004","query":"Troca ou devolução de produto defeituoso com vício no prazo legal","expected_sources":["CDC art. 18"],"area":"consumidor"}
+{"id":"consumidor_005","query":"Negativação indevida e dano moral quando há registro preexistente","expected_sources":["Súmula 385/STJ"],"area":"consumidor"}
+{"id":"consumidor_006","query":"Cobrança indevida ao consumidor gera repetição do indébito em dobro","expected_sources":["CDC art. 42"],"area":"consumidor"}
+{"id":"processual_001","query":"Requisitos da tutela de urgência: probabilidade do direito e perigo de dano","expected_sources":["art. 300 CPC"],"area":"processual_civil"}
+{"id":"processual_002","query":"Cabimento de agravo de instrumento contra decisão de tutela provisória","expected_sources":["art. 1.015 CPC"],"area":"processual_civil"}
+{"id":"processual_003","query":"Ônus da prova do autor quanto ao fato constitutivo do direito","expected_sources":["art. 373 CPC"],"area":"processual_civil"}
+{"id":"processual_004","query":"Tutela provisória de urgência exige perigo de dano e risco ao resultado útil do processo","expected_sources":["art. 300 CPC"],"area":"processual_civil"}
+{"id":"processual_005","query":"Agravo de instrumento cabível contra decisão interlocutória sobre tutela provisória","expected_sources":["art. 1.015 CPC"],"area":"processual_civil"}
+{"id":"processual_006","query":"Distribuição do ônus da prova entre autor e réu quanto a fato impeditivo","expected_sources":["art. 373 CPC"],"area":"processual_civil"}
+{"id":"saude_001","query":"Plano de saúde deve cobrir tratamento fora do rol da ANS","expected_sources":["Tema 1082/STJ","Lei 14.454/2022"],"area":"saude"}
+{"id":"saude_002","query":"Reajuste abusivo de plano de saúde para o consumidor idoso","expected_sources":["Estatuto do Idoso","Lei 9.656/1998"],"area":"saude"}
+{"id":"saude_003","query":"Cobertura obrigatória de tratamento prescrito não previsto no rol exemplificativo da ANS","expected_sources":["Lei 14.454/2022"],"area":"saude"}
+{"id":"saude_004","query":"Planos de saúde: regras de reajuste e proteção do consumidor de assistência à saúde","expected_sources":["Lei 9.656/1998"],"area":"saude"}
+{"id":"saude_005","query":"Vedação de reajuste de mensalidade de plano de saúde por idade do idoso","expected_sources":["Estatuto do Idoso"],"area":"saude"}
+{"id":"saude_006","query":"Rol da ANS é taxativo mitigado e admite cobertura excepcional de procedimento","expected_sources":["Tema 1082/STJ"],"area":"saude"}

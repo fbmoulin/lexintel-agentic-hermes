@@ -1,4 +1,5 @@
 import re
+import unicodedata
 from copy import deepcopy
 from typing import Protocol
 
@@ -68,7 +69,11 @@ class VectorStore(Protocol):
 
 
 def _tokenize(value: str) -> set[str]:
-    return {token for token in re.split(r"\W+", value.lower()) if len(token) >= 3}
+    # Accent-fold so real Portuguese queries ("saúde", "serviço") match indexed
+    # text regardless of diacritics. Mirrors SecurityAgent.normalize_text.
+    folded = unicodedata.normalize("NFKD", value.lower())
+    folded = "".join(char for char in folded if not unicodedata.combining(char))
+    return {token for token in re.split(r"\W+", folded) if len(token) >= 3}
 
 
 class MockVectorStore:

@@ -4,6 +4,14 @@ Este contrato descreve a avaliação local em `python -m app.evals.run_eval`.
 
 A avaliação permanece mockada, determinística e sem acesso a Qdrant, LLMs, STJ Dados Abertos, DataJud ou qualquer serviço externo.
 
+## Recuperador avaliado (importante)
+
+A avaliação pontua o **mesmo `MockVectorStore` que o endpoint `/rag/search` serve** — não um stub. `evaluate_item` semeia o store com o corpus dourado e chama `store.search(query)`, mapeando cada chunk recuperado para seu `source_ref`. Assim, uma regressão na recuperação real (tokenizer, scoring, remoção de chunk) reduz as métricas e reprova o gate. A função `_smoke_retrieve` (mapa de keywords) permanece apenas como teste de fumaça rotulado; **não** mede qualidade de recuperação.
+
+## Corpus
+
+Arquivo: `app/evals/golden_corpus.jsonl` — chunks semeados no store. Contém chunks "gold" (um por fonte canônica) **e chunks distratores** de outras áreas (trabalhista, penal, tributário, ambiental, família, locação, administrativo). Os distratores são obrigatórios: sem eles a recuperação por sobreposição de tokens acerta trivialmente e o gate não consegue reprovar por qualidade.
+
 ## Dataset
 
 Arquivo: `app/evals/golden_dataset.jsonl`
@@ -51,10 +59,12 @@ Cada item em `results` inclui:
 
 O limiar local atual é:
 
-- `dataset_size >= 8`
+- `dataset_size >= 24` (mínimo 6 casos por área obrigatória)
 - áreas obrigatórias presentes
 - `average_recall_at_3 >= 0.85`
 - `average_mrr >= 0.85`
+
+Os limiares de métrica ficam abaixo do baseline medido sobre o store real (recall@3 = 1.0, recall@1 = 0.9375, MRR = 1.0), dando margem para detectar regressões sem reprovar por ruído.
 
 O campo `passed` só retorna `true` quando todos os limiares são atendidos.
 
