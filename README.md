@@ -120,3 +120,17 @@ python -m app.evals.run_eval
 Também há um workflow em `.github/workflows/ci.yml` que executa lint (ruff), type-check (mypy), checagem de drift de schema, testes e avaliação mockada em Python 3.12.
 
 No Windows, se o `pytest` falhar por permissão no diretório temporário padrão, rode com `TMP` e `TEMP` apontando para uma pasta controlada do workspace. Esse é um ajuste ambiental, não uma dependência do produto.
+
+## Integração com o Hermes Agent
+
+Este projeto é a **implementação** da metodologia descrita na skill Hermes
+`ai-legal-development` (ver `docs/09_SKILLS_AGENTS_CATALOG.md`), não uma fonte
+concorrente.
+
+- **Plugin** `integrations/hermes/lex_kratos/` expõe o pipeline como ferramentas
+  do Hermes (`lex_intake`, `lex_run_pipeline`), acessíveis pelo gateway (Telegram).
+  Transporte HTTP (Hermes Py3.11 ↔ lexintel Py3.12, processos separados). Ver o
+  README do plugin para instalação.
+- As `app/skills/SKILL_*.md` têm frontmatter Hermes/agentskills.io e são carregáveis
+  por um install do Hermes.
+- Conformidade CNJ 615/2025 + LGPD mapeada em `docs/COMPLIANCE_CNJ_615.md`.
