@@ -1,5 +1,5 @@
 import logging
-from typing import cast
+from typing import cast, get_args
 
 from app.schemas.case import AgentResult, ChunkUnitType, IndexingSummary
 from app.services.chunking import chunk_extracted_text
@@ -7,6 +7,8 @@ from app.services.qdrant_service import is_qdrant_enabled
 from app.services.vector_store import VectorStore, get_vector_store
 
 logger = logging.getLogger(__name__)
+
+_ALLOWED_UNIT_TYPES = set(get_args(ChunkUnitType))
 
 
 class IndexingAgent:
@@ -17,9 +19,19 @@ class IndexingAgent:
 
     @staticmethod
     def _chunk_unit_types(chunks: list[dict]) -> list[ChunkUnitType]:
+        # Filter to valid literals: the error path also builds IndexingSummary
+        # with these, so an unknown unit_type must not raise a masking
+        # secondary ValidationError.
         return cast(
             list[ChunkUnitType],
-            sorted({chunk.get("unit_type", "documento") for chunk in chunks}),
+            sorted(
+                {
+                    unit_type
+                    for chunk in chunks
+                    if (unit_type := chunk.get("unit_type", "documento"))
+                    in _ALLOWED_UNIT_TYPES
+                }
+            ),
         )
 
     def run(self, case_id: str, extracted_text: list[dict]) -> AgentResult:

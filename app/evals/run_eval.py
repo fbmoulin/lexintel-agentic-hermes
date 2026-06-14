@@ -134,17 +134,33 @@ def _dedupe(items: list[str]) -> list[str]:
 def load_corpus(path: str | Path = CORPUS_PATH) -> list[dict]:
     """Load the seedable golden corpus (chunks) used to build the eval store."""
     chunks = []
-    for line in Path(path).read_text(encoding="utf-8").splitlines():
-        if line.strip():
-            chunks.append(json.loads(line))
+    for line_number, line in enumerate(
+        Path(path).read_text(encoding="utf-8").splitlines(),
+        start=1,
+    ):
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"Invalid corpus row at line {line_number}: {exc.msg}"
+            ) from exc
+        if not isinstance(row, dict):
+            raise ValueError(f"Corpus row {line_number} must be a JSON object")
+        chunks.append(row)
     return chunks
 
 
 def build_eval_store(corpus: list[dict] | None = None) -> MockVectorStore:
-    """Build the *served* mock vector store seeded with the golden corpus.
+    """Build an eval store on the same retrieval code path the API serves.
 
-    Uses the same `MockVectorStore` the `/rag/search` endpoint serves, so the
-    eval scores the real retrieval code path — not a hardcoded stub.
+    Uses the same `MockVectorStore` class (and therefore the same `_tokenize`
+    + scoring the `/rag/search` endpoint runs), but a *separate instance* seeded
+    with the golden corpus — the eval needs known ground truth, so it cannot
+    reuse the API singleton's `DEFAULT_MOCK_CHUNKS`. A regression in retrieval
+    logic (tokenizer/scoring/ranking) is caught here; a regression purely in
+    the API's singleton wiring/seed is covered by the API tests, not the eval.
     """
     return MockVectorStore(seed_chunks=corpus if corpus is not None else load_corpus())
 

@@ -107,11 +107,16 @@ Os comandos de aceite da v0.1 são:
 
 ```bash
 pip install -r requirements.txt
+pip install -r requirements-dev.txt   # ruff, mypy, jsonschema — necessários para testes/lint
 uvicorn app.main:app --reload
+ruff check app tests scripts && ruff format --check app tests scripts
+mypy app
 pytest
 python -m app.evals.run_eval
 ```
 
-Também há um workflow em `.github/workflows/ci.yml` que executa testes e avaliação mockada em Python 3.12.
+> `requirements-dev.txt` é obrigatório para rodar `pytest` (alguns testes importam `jsonschema`), `ruff` e `mypy`. Rodar a API em si só precisa de `requirements.txt`.
+
+Também há um workflow em `.github/workflows/ci.yml` que executa lint (ruff), type-check (mypy), checagem de drift de schema, testes e avaliação mockada em Python 3.12.
 
 No Windows, se o `pytest` falhar por permissão no diretório temporário padrão, rode com `TMP` e `TEMP` apontando para uma pasta controlada do workspace. Esse é um ajuste ambiental, não uma dependência do produto.

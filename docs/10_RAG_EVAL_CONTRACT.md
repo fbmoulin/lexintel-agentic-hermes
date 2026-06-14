@@ -6,7 +6,7 @@ A avaliação permanece mockada, determinística e sem acesso a Qdrant, LLMs, ST
 
 ## Recuperador avaliado (importante)
 
-A avaliação pontua o **mesmo `MockVectorStore` que o endpoint `/rag/search` serve** — não um stub. `evaluate_item` semeia o store com o corpus dourado e chama `store.search(query)`, mapeando cada chunk recuperado para seu `source_ref`. Assim, uma regressão na recuperação real (tokenizer, scoring, remoção de chunk) reduz as métricas e reprova o gate. A função `_smoke_retrieve` (mapa de keywords) permanece apenas como teste de fumaça rotulado; **não** mede qualidade de recuperação.
+A avaliação pontua a **mesma classe/código de recuperação que o endpoint `/rag/search` usa** (`MockVectorStore` — mesmo `_tokenize` e scoring) — não um stub. Usa uma **instância separada** semeada com o corpus dourado (a avaliação precisa de ground truth conhecido, então não reutiliza o `DEFAULT_MOCK_CHUNKS` do singleton da API). `evaluate_item` chama `store.search(query)` e mapeia cada chunk recuperado para seu `source_ref`. Uma regressão na lógica de recuperação (tokenizer, scoring, ranking) reduz as métricas e reprova o gate; uma regressão apenas na fiação/seed do singleton da API é coberta pelos testes da API, não pela avaliação. A função `_smoke_retrieve` (mapa de keywords) permanece apenas como teste de fumaça rotulado; **não** mede qualidade de recuperação.
 
 ## Corpus
 

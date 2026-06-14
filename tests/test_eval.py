@@ -28,8 +28,9 @@ def test_eval_runs():
     assert any(score["retrieved"] for score in result["results"])
 
 
-def test_eval_scores_served_store_not_smoke_stub():
-    # The smoke stub still exists but is NOT what run() uses.
+def test_smoke_retrieve_is_an_isolated_keyword_stub():
+    # The smoke stub is a labeled keyword map kept for sanity only; run() does
+    # NOT use it (see test_eval_runs / test_eval_discriminates for the real path).
     assert _smoke_retrieve("fraude no banco") == ["Súmula 479/STJ", "CDC art. 14"]
 
 
