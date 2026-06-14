@@ -20,10 +20,14 @@ TIMEOUT_SECONDS = 30
 
 
 def _base_url() -> str:
-    return os.getenv(BASE_URL_ENV, DEFAULT_BASE_URL).rstrip("/")
+    # Fall back to the default when the env var is unset OR empty.
+    return (os.getenv(BASE_URL_ENV) or DEFAULT_BASE_URL).rstrip("/")
 
 
-def _case_payload(args: dict) -> dict:
+def _case_payload(args: dict | None) -> dict:
+    # Defensive: an unexpected tool-call shape must not raise.
+    if not isinstance(args, dict):
+        args = {}
     return {
         "case_id": args.get("case_id", ""),
         "source_type": args.get("source_type", "manual"),
@@ -50,8 +54,15 @@ def _call(path: str, args: dict) -> str:
         result = _post(path, _case_payload(args))
         return json.dumps(result, ensure_ascii=False)
     except urllib.error.HTTPError as exc:
+        try:
+            detail = exc.read().decode("utf-8", "replace")[:500]
+        except Exception:
+            detail = ""
         return json.dumps(
-            {"error": f"lexintel API retornou HTTP {exc.code} em {path}."},
+            {
+                "error": f"lexintel API retornou HTTP {exc.code} em {path}.",
+                "detail": detail,
+            },
             ensure_ascii=False,
         )
     except urllib.error.URLError as exc:

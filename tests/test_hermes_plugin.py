@@ -35,8 +35,15 @@ def test_case_payload_applies_defaults():
     }
 
 
-def test_handlers_return_json_string_on_api_down():
-    # No server here: URLError -> handler must return a JSON error string, not raise.
+def test_handlers_return_json_string_on_api_down(monkeypatch):
+    # Mock the network (deterministic, no real localhost POST): URLError -> the
+    # handler must return a JSON error string, never raise.
+    import urllib.error
+
+    def _raise(path, payload):
+        raise urllib.error.URLError("connection refused")
+
+    monkeypatch.setattr(tools, "_post", _raise)
     for handler in (tools.lex_intake, tools.lex_run_pipeline):
         out = handler({"case_id": "c1"})
         assert isinstance(out, str)

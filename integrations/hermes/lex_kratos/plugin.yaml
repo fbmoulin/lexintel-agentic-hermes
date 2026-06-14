@@ -7,9 +7,6 @@ author: Felipe
 provides_tools:
   - lex_intake
   - lex_run_pipeline
-requires_env:
-  - name: LEX_KRATOS_BASE_URL
-    description: >-
-      URL base da API lexintel em execução (default http://127.0.0.1:8000).
-      A API roda em processo separado (Python 3.12); o plugin só fala HTTP.
-    url: https://github.com/fbmoulin/lexintel-agentic-hermes
+# LEX_KRATOS_BASE_URL é OPCIONAL (default http://127.0.0.1:8000) — por isso NÃO
+# está em `requires_env`: declará-la ali faria o Hermes desabilitar o plugin
+# quando a variável estiver ausente. Documentada no README.

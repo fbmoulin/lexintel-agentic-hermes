@@ -16,7 +16,9 @@ def _split_frontmatter(text: str) -> tuple[str, str]:
 
 def test_all_skills_have_hermes_frontmatter_and_keep_catalog_contract():
     files = sorted(SKILLS_DIR.glob("SKILL_*.md"))
-    assert len(files) == 12
+    # The exact count (12) is owned by test_catalog; here we only require that
+    # every skill present carries frontmatter, so adding a skill won't break this.
+    assert files, "Nenhum SKILL_*.md encontrado em app/skills/"
 
     for path in files:
         frontmatter, body = _split_frontmatter(path.read_text(encoding="utf-8"))
