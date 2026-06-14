@@ -1,3 +1,13 @@
+---
+name: firac-plus-civil
+description: "Gera análise FIRAC+ (Facts/Issues/Rules/Application/Conclusion) para processos cíveis."
+version: 1.0.0
+metadata:
+  hermes:
+    tags: [firac, analise, civel]
+    category: legal-br
+---
+
 # SKILL_FIRAC_PLUS_CIVIL
 
 ## Objetivo

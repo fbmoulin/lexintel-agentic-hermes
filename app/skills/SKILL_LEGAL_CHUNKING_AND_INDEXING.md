@@ -1,3 +1,13 @@
+---
+name: legal-chunking-and-indexing
+description: "Divide documentos jurídicos por unidade lógica e indexa em base vetorial."
+version: 1.0.0
+metadata:
+  hermes:
+    tags: [chunking, indexacao, rag]
+    category: legal-br
+---
+
 # SKILL_LEGAL_CHUNKING_AND_INDEXING
 
 ## Objetivo

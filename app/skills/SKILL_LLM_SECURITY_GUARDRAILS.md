@@ -1,3 +1,13 @@
+---
+name: llm-security-guardrails
+description: "Detecta prompt injection, vazamento de dados e manipulação de decisão."
+version: 1.0.0
+metadata:
+  hermes:
+    tags: [seguranca, prompt-injection, guardrails]
+    category: legal-br
+---
+
 # SKILL_LLM_SECURITY_GUARDRAILS
 
 ## Objetivo

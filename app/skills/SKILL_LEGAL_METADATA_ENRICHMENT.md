@@ -1,3 +1,13 @@
+---
+name: legal-metadata-enrichment
+description: "Enriquece documentos e chunks com metadados jurídicos (tribunal, classe, assunto)."
+version: 1.0.0
+metadata:
+  hermes:
+    tags: [metadados, enriquecimento]
+    category: legal-br
+---
+
 # SKILL_LEGAL_METADATA_ENRICHMENT
 
 ## Objetivo

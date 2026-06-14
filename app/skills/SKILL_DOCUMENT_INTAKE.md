@@ -1,3 +1,13 @@
+---
+name: document-intake
+description: "Classifica documentos jurídicos recebidos e monta o pacote inicial do caso (intake)."
+version: 1.0.0
+metadata:
+  hermes:
+    tags: [intake, classificacao, documentos]
+    category: legal-br
+---
+
 # SKILL_DOCUMENT_INTAKE
 
 ## Objetivo

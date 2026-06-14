@@ -1,3 +1,13 @@
+---
+name: judicial-drafting-civil
+description: "Redige minuta judicial cível a partir de FIRAC+, autos e precedentes validados."
+version: 1.0.0
+metadata:
+  hermes:
+    tags: [minuta, drafting, civel]
+    category: legal-br
+---
+
 # SKILL_JUDICIAL_DRAFTING_CIVIL
 
 ## Objetivo
