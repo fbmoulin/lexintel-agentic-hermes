@@ -1,0 +1,15 @@
+name: lex_kratos
+version: 0.1.0
+description: >-
+  Roda o pipeline jurídico Lex Kratos (mock v0.1) a partir do Hermes via HTTP —
+  intake+segurança ou o pipeline completo auditável sobre um caso.
+author: Felipe
+provides_tools:
+  - lex_intake
+  - lex_run_pipeline
+requires_env:
+  - name: LEX_KRATOS_BASE_URL
+    description: >-
+      URL base da API lexintel em execução (default http://127.0.0.1:8000).
+      A API roda em processo separado (Python 3.12); o plugin só fala HTTP.
+    url: https://github.com/fbmoulin/lexintel-agentic-hermes
