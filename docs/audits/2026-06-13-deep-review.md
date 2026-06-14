@@ -4,6 +4,15 @@
 > Commit reviewed: `e5a0c05` (master) · 53 tests passing · eval recall@3 = 0.917
 > Lineage: conceptual reboot of [`kratos-master`](https://github.com/fbmoulin/kratos-master) (the mature 7-layer enterprise ecosystem, 295 tests, AWS/CNJ-deployed). This repo is the **deliberate clean-slate v0.1 scaffold** of just the *agentic core*, fully mocked.
 
+> **Disposition (2026-06-14): REMEDIATED.** All High/Medium findings fixed and
+> merged — Strand A (PR #13) and Strand B (PR #15) on `master`; 53 → 71 tests.
+> H1 (tautological eval) → eval now scores the served `MockVectorStore` over a
+> corpus with distractors. H2 (blocked-stops-pipeline) → enforced. M1 (dead
+> validator) → wired live. M5 (drifting JSON schemas) → single Pydantic source +
+> drift gate; `agent_run.schema.json` kept as future-spec (operator decision).
+> M2/M3/M4 + L-series → done. Plus Hermes integration (plugin, skill frontmatter,
+> CNJ 615/2025 map). See `CHANGELOG.md` and `docs/superpowers/`.
+
 ---
 
 ## 1. Verdict
