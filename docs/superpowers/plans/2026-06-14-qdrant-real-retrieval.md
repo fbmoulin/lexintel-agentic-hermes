@@ -6,7 +6,7 @@
 
 **Architecture:** A new `embeddings.py` isolates a local multilingual sentence-transformer (`paraphrase-multilingual-MiniLM-L12-v2`, 384-dim, symmetric — no e5 prefixes). `QdrantVectorStore` takes injectable `client`/`embedder` (mirroring `IndexingAgent(vector_store=...)`), ensures its collection, upserts full-chunk payloads under deterministic `uuid5` ids, and maps Qdrant hits back to the **same `RetrievedContext` dict shape the mock emits** — so `app/api/rag.py` and downstream agents are untouched. The mock path, the eval (`run_eval.py`, mock-only), and CI behavior are unchanged when the flag is off.
 
-**Tech Stack:** Python 3.12, fastembed 0.7.x, qdrant-client 1.14.3, Qdrant v1.14.3 (docker), pytest.
+**Tech Stack:** Python 3.12, fastembed 0.7.x, qdrant-client 1.14.3, Qdrant v1.14.1 (docker server — no v1.14.3 server image exists), pytest.
 
 **Spec:** `docs/superpowers/specs/2026-06-14-qdrant-real-retrieval-design.md`
 

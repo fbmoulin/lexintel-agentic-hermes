@@ -109,7 +109,7 @@ Quando ligada, a busca passa a usar embeddings reais (modelo multilíngue local 
 # 1. Instale o extra opcional (baixa ~0.22 GB de pesos do modelo no 1º uso).
 .venv/bin/pip install -r requirements-qdrant.txt
 
-# 2. Suba o Qdrant pinado (v1.14.3) na porta 6533 — evita colidir com um
+# 2. Suba o Qdrant pinado (v1.14.1) na porta 6533 — evita colidir com um
 #    Qdrant que já ocupe :6333.
 QDRANT_HOST_PORT=6533 docker compose up -d qdrant
 
