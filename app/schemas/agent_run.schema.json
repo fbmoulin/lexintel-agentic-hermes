@@ -1,4 +1,5 @@
 {
+  "$comment": "FUTURE-SPEC (kept by decision): aspirational contract for an unbuilt run-ledger / cost-observability layer (run_id, started_at, latency_ms, cost_usd). No agent emits this yet and it is NOT generated from any Pydantic model. See docs/08_TRACE_CONTRACT.md. The live per-agent contract is AgentResult.",
   "type": "object",
   "required": [
     "run_id",

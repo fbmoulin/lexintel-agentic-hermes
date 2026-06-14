@@ -1,4 +1,5 @@
 {
+  "$comment": "Hand-authored /rag/search response ENVELOPE contract. Each item in `results` mirrors retrieved_context.schema.json (generated from the RetrievedContext model).",
   "type": "object",
   "required": [
     "query",

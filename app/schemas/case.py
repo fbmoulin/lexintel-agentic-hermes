@@ -181,8 +181,21 @@ class RetrievedContext(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class BlockingError(BaseModel):
+    type: Literal[
+        "missing_claim",
+        "hallucinated_precedent",
+        "unsupported_fact",
+        "contradiction",
+        "security_risk",
+    ]
+    description: str
+    severity: Literal["low", "medium", "high", "critical"]
+    suggested_fix: Optional[str] = None
+
+
 class ValidationResult(BaseModel):
     approved: bool
-    blocking_errors: list[dict[str, Any]] = Field(default_factory=list)
+    blocking_errors: list[BlockingError] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     final_recommendation: Literal["approve", "revise", "block"]

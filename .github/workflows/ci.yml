@@ -32,6 +32,11 @@ jobs:
         run: |
           mypy app
 
+      - name: Schema drift check
+        run: |
+          python -m scripts.gen_schemas
+          git diff --exit-code app/schemas
+
       - name: Run tests
         run: |
           pytest
