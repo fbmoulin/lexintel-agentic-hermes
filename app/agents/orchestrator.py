@@ -210,6 +210,22 @@ class CaseOrchestrator:
             "external_use_allowed": False,
         }
 
+    def _blocked_response(self, case: CaseInput, trace: list[dict]) -> dict:
+        """Build the halt response when any step returns ``blocked``.
+
+        Per ``docs/08_TRACE_CONTRACT.md``, a blocked step stops the pipeline
+        before any subsequent legal phase runs.
+        """
+        pipeline_summary = self._summarize_trace(trace, self.FULL_MOCK_PIPELINE)
+        return {
+            "case_id": case.case_id,
+            "status": "blocked",
+            "trace": trace,
+            "pipeline_summary": pipeline_summary,
+            "requires_human_review": True,
+            "external_use_allowed": False,
+        }
+
     def run_full_mock(self, case: CaseInput):
         """
         Execute the full mock case processing pipeline (intake → security → extraction → normalization → metadata → indexing → FIRAC → mock draft → validation).
@@ -231,46 +247,49 @@ class CaseOrchestrator:
 
         intake_result = self.intake_agent.run(case)
         self._record_trace(trace, intake_result, 1, "intake")
+        if intake_result.status == "blocked":
+            return self._blocked_response(case, trace)
 
         security_result = self.security_agent.run(
             case.case_id, self._build_security_text(case, intake_result.output)
         )
         self._record_trace(trace, security_result, 2, "security")
-
         if security_result.status == "blocked":
-            pipeline_summary = self._summarize_trace(trace, self.FULL_MOCK_PIPELINE)
-            return {
-                "case_id": case.case_id,
-                "status": "blocked",
-                "trace": trace,
-                "pipeline_summary": pipeline_summary,
-                "requires_human_review": True,
-                "external_use_allowed": False,
-            }
+            return self._blocked_response(case, trace)
 
         documents = intake_result.output.get("detected_documents", [])
 
         extraction_result = self.extraction_agent.run(case.case_id, documents)
         self._record_trace(trace, extraction_result, 3, "extraction")
+        if extraction_result.status == "blocked":
+            return self._blocked_response(case, trace)
 
         normalizer_result = self.normalizer_agent.run(
             case.case_id, extraction_result.output.get("extracted_text", [])
         )
         self._record_trace(trace, normalizer_result, 4, "normalization")
+        if normalizer_result.status == "blocked":
+            return self._blocked_response(case, trace)
 
         metadata_result = self.metadata_agent.run(
             case.case_id, normalizer_result.output
         )
         self._record_trace(trace, metadata_result, 5, "metadata")
+        if metadata_result.status == "blocked":
+            return self._blocked_response(case, trace)
 
         indexing_result = self.indexing_agent.run(
             case.case_id,
             extraction_result.output.get("extracted_text", []),
         )
         self._record_trace(trace, indexing_result, 6, "indexing")
+        if indexing_result.status == "blocked":
+            return self._blocked_response(case, trace)
 
         firac_result = self.firac_agent.run(case.case_id, normalizer_result.output)
         self._record_trace(trace, firac_result, 7, "firac")
+        if firac_result.status == "blocked":
+            return self._blocked_response(case, trace)
 
         mock_draft = {
             "relatorio": "Relatório simulado.",
