@@ -5,7 +5,6 @@ from app.agents.normalizer_agent import LegalNormalizerAgent
 from app.main import app
 from app.schemas.case import ExtractedText, NormalizedCase
 
-
 client = TestClient(app)
 
 
@@ -61,11 +60,13 @@ def test_extraction_agent_returns_pydantic_validated_records():
 def test_extraction_agent_marks_unknown_document_as_low_quality():
     result = ExtractionAgent().run(
         "caso_extracao_unknown_001",
-        [{
-            "doc_id": "doc_1",
-            "file_path": "documento_generico.pdf",
-            "doc_type": "unknown",
-        }],
+        [
+            {
+                "doc_id": "doc_1",
+                "file_path": "documento_generico.pdf",
+                "doc_type": "unknown",
+            }
+        ],
     )
 
     assert result.status == "warning"

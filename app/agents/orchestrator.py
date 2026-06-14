@@ -1,12 +1,12 @@
-from app.schemas.case import CaseInput
-from app.agents.intake_agent import IntakeAgent
-from app.agents.security_agent import SecurityAgent
 from app.agents.extraction_agent import ExtractionAgent
-from app.agents.normalizer_agent import LegalNormalizerAgent
-from app.agents.metadata_agent import MetadataAgent
-from app.agents.indexing_agent import IndexingAgent
 from app.agents.firac_agent import FIRACAgent
+from app.agents.indexing_agent import IndexingAgent
+from app.agents.intake_agent import IntakeAgent
+from app.agents.metadata_agent import MetadataAgent
+from app.agents.normalizer_agent import LegalNormalizerAgent
+from app.agents.security_agent import SecurityAgent
 from app.agents.validator_agent import ValidatorAgent
+from app.schemas.case import CaseInput
 
 
 class CaseOrchestrator:
@@ -17,7 +17,7 @@ class CaseOrchestrator:
     def __init__(self):
         """
         Create a CaseOrchestrator and instantiate its downstream agents.
-        
+
         Instantiated attributes:
             intake_agent: Handles initial case intake and detects documents.
             security_agent: Assesses case content for security or policy blocking.
@@ -41,11 +41,11 @@ class CaseOrchestrator:
     def _build_security_text(case: CaseInput, intake_output: dict) -> str:
         """
         Compose newline-separated input text for the security agent from the case's identifying fields and the intake output.
-        
+
         Parameters:
             case (CaseInput): Provides `case_id`, `source_type`, `user_goal`, and `files` whose values are included in the text in that order.
             intake_output (dict): Intake agent output appended to the text as its string representation.
-        
+
         Returns:
             str: A single string with the listed fields joined by newline characters.
         """
@@ -61,13 +61,13 @@ class CaseOrchestrator:
     def _record_trace(self, trace: list[dict], result, step_index: int, phase: str):
         """
         Update an agent's result with propagated review/external-use flags, attach trace metadata, append its serialized form to the trace, and return the updated result.
-        
+
         Parameters:
             trace (list[dict]): Mutable list representing the pipeline trace; the function appends the agent's serialized result to this list.
             result: Agent execution result object whose attributes are updated (`requires_human_review`, `external_use_allowed`, `trace_metadata`) and which must provide `output`, `status`, `agent_name`, `model_dump()` and existing flag attributes.
             step_index (int): Numeric index of the agent step within the pipeline (used in trace metadata).
             phase (str): Logical phase name for the step (used in trace metadata).
-        
+
         Returns:
             The same `result` object after mutation.
         """
@@ -79,7 +79,9 @@ class CaseOrchestrator:
             or output_requires_review
             or result.status in {"warning", "blocked"}
         )
-        result.external_use_allowed = result.external_use_allowed and output_external_allowed
+        result.external_use_allowed = (
+            result.external_use_allowed and output_external_allowed
+        )
         result.trace_metadata = {
             "trace_version": self.TRACE_VERSION,
             "step_index": step_index,
@@ -94,13 +96,13 @@ class CaseOrchestrator:
     def _summarize_trace(self, trace: list[dict], pipeline_name: str) -> dict:
         """
         Builds an aggregated summary of a pipeline run from a list of per-agent trace entries.
-        
+
         Parameters:
             trace (list[dict]): Ordered list of agent trace entries. Each entry is expected to include the keys
                 "agent_name", "status", "warnings" (list), "errors" (list),
                 "requires_human_review" (bool), and "external_use_allowed" (bool).
             pipeline_name (str): Logical name of the pipeline being summarized.
-        
+
         Returns:
             dict: Summary with the following keys:
                 - trace_version (str): Trace schema/version label.
@@ -131,17 +133,19 @@ class CaseOrchestrator:
             ),
             "external_use_allowed": all(
                 entry["external_use_allowed"] for entry in trace
-            ) if trace else False,
+            )
+            if trace
+            else False,
         }
 
     @staticmethod
     def _response_status(trace: list[dict]) -> str:
         """
         Determine the overall pipeline status from a sequence of agent trace entries.
-        
+
         Parameters:
             trace (list[dict]): Ordered list of per-agent trace dictionaries; each entry is expected to include a "status" key.
-        
+
         Returns:
             str: `"blocked"` if any trace entry has `status == "blocked"`, `"warning"` if no entries are blocked but at least one has `status == "warning"`, otherwise `"success"`.
         """
@@ -159,10 +163,10 @@ class CaseOrchestrator:
     def run_intake_only(self, case: CaseInput):
         """
         Run intake and security steps and return their ordered trace plus an aggregated pipeline summary.
-        
+
         Parameters:
             case (CaseInput): Input case data containing at minimum `case_id` and fields consumed by the intake agent.
-        
+
         Returns:
             dict: A result dictionary with keys:
                 - case_id (str): The input case's identifier.
@@ -171,7 +175,7 @@ class CaseOrchestrator:
                 - pipeline_summary (dict): Aggregated pipeline metadata produced by `_summarize_trace`.
                 - requires_human_review (bool): `True` if any trace entry requires human review.
                 - external_use_allowed (bool): `False` for intake-only runs (external use is not permitted).
-            
+
             Note:
                 If the security step blocks the case, `status` will be `"blocked"`, `requires_human_review` will be `True`, and `external_use_allowed` will be `False`.
         """
@@ -182,7 +186,7 @@ class CaseOrchestrator:
 
         security_result = self.security_agent.run(
             case_id=case.case_id,
-            text=self._build_security_text(case, intake_result.output)
+            text=self._build_security_text(case, intake_result.output),
         )
         self._record_trace(trace, security_result, 2, "security")
         pipeline_summary = self._summarize_trace(trace, self.INTAKE_PIPELINE)
@@ -194,7 +198,7 @@ class CaseOrchestrator:
                 "trace": trace,
                 "pipeline_summary": pipeline_summary,
                 "requires_human_review": True,
-                "external_use_allowed": False
+                "external_use_allowed": False,
             }
 
         return {
@@ -203,16 +207,16 @@ class CaseOrchestrator:
             "trace": trace,
             "pipeline_summary": pipeline_summary,
             "requires_human_review": pipeline_summary["requires_human_review"],
-            "external_use_allowed": False
+            "external_use_allowed": False,
         }
 
     def run_full_mock(self, case: CaseInput):
         """
         Execute the full mock case processing pipeline (intake → security → extraction → normalization → metadata → indexing → FIRAC → mock draft → validation).
-        
+
         Parameters:
             case (CaseInput): Input case; must include `case.case_id`. If present, `case` may include `detected_documents` used by extraction.
-        
+
         Returns:
             dict: Pipeline execution result containing:
                 - case_id (str): The input case's ID.
@@ -229,8 +233,7 @@ class CaseOrchestrator:
         self._record_trace(trace, intake_result, 1, "intake")
 
         security_result = self.security_agent.run(
-            case.case_id,
-            self._build_security_text(case, intake_result.output)
+            case.case_id, self._build_security_text(case, intake_result.output)
         )
         self._record_trace(trace, security_result, 2, "security")
 
@@ -242,7 +245,7 @@ class CaseOrchestrator:
                 "trace": trace,
                 "pipeline_summary": pipeline_summary,
                 "requires_human_review": True,
-                "external_use_allowed": False
+                "external_use_allowed": False,
             }
 
         documents = intake_result.output.get("detected_documents", [])
@@ -251,12 +254,13 @@ class CaseOrchestrator:
         self._record_trace(trace, extraction_result, 3, "extraction")
 
         normalizer_result = self.normalizer_agent.run(
-            case.case_id,
-            extraction_result.output.get("extracted_text", [])
+            case.case_id, extraction_result.output.get("extracted_text", [])
         )
         self._record_trace(trace, normalizer_result, 4, "normalization")
 
-        metadata_result = self.metadata_agent.run(case.case_id, normalizer_result.output)
+        metadata_result = self.metadata_agent.run(
+            case.case_id, normalizer_result.output
+        )
         self._record_trace(trace, metadata_result, 5, "metadata")
 
         indexing_result = self.indexing_agent.run(
@@ -274,7 +278,7 @@ class CaseOrchestrator:
             "dispositivo": "Dispositivo simulado.",
             "requires_human_review": True,
             "external_use_allowed": False,
-            "draft_status": "mock_not_for_external_use"
+            "draft_status": "mock_not_for_external_use",
         }
 
         validator_result = self.validator_agent.run(case.case_id, mock_draft)
@@ -288,5 +292,5 @@ class CaseOrchestrator:
             "pipeline_summary": pipeline_summary,
             "mock_draft": mock_draft,
             "requires_human_review": pipeline_summary["requires_human_review"],
-            "external_use_allowed": False
+            "external_use_allowed": False,
         }

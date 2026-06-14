@@ -1,5 +1,6 @@
-import pytest
 from pathlib import Path
+
+import pytest
 
 from app.evals.run_eval import load_dataset, run
 
@@ -55,7 +56,7 @@ def test_eval_dataset_validation_rejects_duplicate_ids():
 def test_eval_dataset_validation_rejects_non_text_id_before_duplicate_lookup():
     """
     Verify that loading a dataset with a non-text `id` raises a `ValueError` and that the loader validates the `id` type before checking for duplicate IDs.
-    
+
     Calls `load_dataset` with the `non_text_id.jsonl` fixture and expects a `ValueError` whose message matches "field id must be text".
     """
     with pytest.raises(ValueError, match="field id must be text"):
@@ -67,8 +68,7 @@ def test_eval_thresholds_fail_when_dataset_is_too_small():
 
     assert result["passed"] is False
     assert any(
-        failure["metric"] == "dataset_size"
-        for failure in result["threshold_failures"]
+        failure["metric"] == "dataset_size" for failure in result["threshold_failures"]
     )
 
 

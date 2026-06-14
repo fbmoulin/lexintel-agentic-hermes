@@ -2,7 +2,6 @@ import re
 
 from app.schemas.case import LegalChunk
 
-
 UNIT_TYPE_BY_DOC_TYPE = {
     "peticao_inicial": "pedido",
     "contestacao": "contestacao",

@@ -39,10 +39,12 @@ def search(request: SearchRequest):
         results = []
         for result in vector_store.search(request.query, request.top_k):
             metadata = result.get("metadata", {})
-            results.append({
-                **result,
-                "retrieval_method": metadata.get("retrieval_method", "mock"),
-            })
+            results.append(
+                {
+                    **result,
+                    "retrieval_method": metadata.get("retrieval_method", "mock"),
+                }
+            )
     except Exception as exc:
         logger.exception("RAG search failed")
         return {

@@ -136,7 +136,8 @@ class SecurityAgent:
         normalized = re.sub(r"[\u200b-\u200f\u202a-\u202e\ufeff]", "", normalized)
         normalized = unicodedata.normalize("NFKD", normalized)
         normalized = "".join(
-            character for character in normalized
+            character
+            for character in normalized
             if not unicodedata.combining(character)
         )
         normalized = normalized.lower()
@@ -159,23 +160,25 @@ class SecurityAgent:
 
         for rule in self.DETECTION_RULES:
             if any(re.search(pattern, normalized_text) for pattern in rule["patterns"]):
-                detected.append({
-                    "id": rule["id"],
-                    "label": rule["label"],
-                    "severity": rule["severity"],
-                    "recommended_action": rule["recommended_action"],
-                })
+                detected.append(
+                    {
+                        "id": rule["id"],
+                        "label": rule["label"],
+                        "severity": rule["severity"],
+                        "recommended_action": rule["recommended_action"],
+                    }
+                )
 
         return detected
 
     def run(self, case_id: str, text: str = "") -> AgentResult:
         """
         Scan the provided text for prompt-injection or malicious-instruction patterns and produce a security assessment.
-        
+
         Parameters:
             case_id (str): Identifier for the case being scanned; propagated into the returned result.
             text (str): Text to be analyzed for suspicious or malicious instruction patterns.
-        
+
         Returns:
             AgentResult: An assessment containing:
                 - status: one of `"blocked"`, `"warning"`, or `"success"`.
@@ -196,8 +199,7 @@ class SecurityAgent:
         detected = [risk["label"] for risk in risk_details]
         max_severity = self._max_severity(risk_details)
         should_block = any(
-            risk["recommended_action"] == "block"
-            for risk in risk_details
+            risk["recommended_action"] == "block" for risk in risk_details
         )
 
         if should_block:
@@ -233,7 +235,9 @@ class SecurityAgent:
                     "recommended_action": "human_review",
                     "scan_version": self.scan_version,
                 },
-                warnings=["Entrada marcada para revisão humana por risco de segurança."],
+                warnings=[
+                    "Entrada marcada para revisão humana por risco de segurança."
+                ],
                 requires_human_review=True,
                 external_use_allowed=False,
             )

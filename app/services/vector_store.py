@@ -5,7 +5,6 @@ from typing import Protocol
 from app.schemas.case import LegalChunk, RetrievedContext
 from app.services.qdrant_service import is_qdrant_enabled
 
-
 DEFAULT_MOCK_CHUNKS = [
     {
         "chunk_id": "mock_bancario_sumula_479",
@@ -58,23 +57,18 @@ DEFAULT_MOCK_CHUNKS = [
 class VectorStore(Protocol):
     backend_name: str
 
-    def upsert(self, chunks: list[dict]) -> dict:
-        ...
+    def upsert(self, chunks: list[dict]) -> dict: ...
 
     def search(
         self,
         query: str,
         top_k: int = 5,
         filters: dict | None = None,
-    ) -> list[dict]:
-        ...
+    ) -> list[dict]: ...
 
 
 def _tokenize(value: str) -> set[str]:
-    return {
-        token for token in re.split(r"\W+", value.lower())
-        if len(token) >= 3
-    }
+    return {token for token in re.split(r"\W+", value.lower()) if len(token) >= 3}
 
 
 class MockVectorStore:
@@ -92,13 +86,11 @@ class MockVectorStore:
 
     def upsert(self, chunks: list[dict]) -> dict:
         indexed_chunks = [
-            LegalChunk.model_validate(chunk).model_dump()
-            for chunk in chunks
+            LegalChunk.model_validate(chunk).model_dump() for chunk in chunks
         ]
         existing_ids = {chunk["chunk_id"] for chunk in indexed_chunks}
         self._chunks = [
-            chunk for chunk in self._chunks
-            if chunk["chunk_id"] not in existing_ids
+            chunk for chunk in self._chunks if chunk["chunk_id"] not in existing_ids
         ]
         self._chunks.extend(indexed_chunks)
         return {
@@ -120,9 +112,9 @@ class MockVectorStore:
                 continue
 
             text_tokens = _tokenize(chunk["text"])
-            metadata_tokens = _tokenize(" ".join(
-                str(value) for value in chunk["metadata"].values()
-            ))
+            metadata_tokens = _tokenize(
+                " ".join(str(value) for value in chunk["metadata"].values())
+            )
             overlap = len(query_tokens & (text_tokens | metadata_tokens))
             score = overlap / max(len(query_tokens), 1)
             if score > 0:
@@ -130,15 +122,13 @@ class MockVectorStore:
 
         scored.sort(key=lambda item: (-item[0], item[1]["chunk_id"]))
         return [
-            self._to_retrieved_context(chunk, score)
-            for score, chunk in scored[:top_k]
+            self._to_retrieved_context(chunk, score) for score, chunk in scored[:top_k]
         ]
 
     @staticmethod
     def _matches_filters(chunk: dict, filters: dict) -> bool:
         return all(
-            chunk["metadata"].get(key) == value
-            for key, value in filters.items()
+            chunk["metadata"].get(key) == value for key, value in filters.items()
         )
 
     @staticmethod

@@ -12,23 +12,23 @@ class MetadataAgent:
         metadata = CaseMetadata(
             tribunal="TJ-MOCK" if "acordao" in document_types else None,
             classe="Procedimento Comum Cível"
-            if "peticao_inicial" in document_types else None,
-            assunto="Responsabilidade civil bancária"
-            if legal_issues else None,
+            if "peticao_inicial" in document_types
+            else None,
+            assunto="Responsabilidade civil bancária" if legal_issues else None,
             relator="Relator Mockado" if "acordao" in document_types else None,
             orgao_julgador="Câmara Cível Mockada"
-            if "acordao" in document_types else None,
+            if "acordao" in document_types
+            else None,
             data_julgamento="2026-01-15" if "acordao" in document_types else None,
-            data_publicacao="2026-01-20"
-            if procedural_events else None,
-            ramo_direito="Direito do Consumidor"
-            if legal_issues else None,
-            tipo_documento="conjunto_processual_mockado"
-            if document_types else None,
+            data_publicacao="2026-01-20" if procedural_events else None,
+            ramo_direito="Direito do Consumidor" if legal_issues else None,
+            tipo_documento="conjunto_processual_mockado" if document_types else None,
             tese_juridica="Responsabilidade objetiva por fraude bancária"
-            if legal_issues else None,
+            if legal_issues
+            else None,
             resultado="parcialmente_procedente"
-            if "sentenca" in document_types else None,
+            if "sentenca" in document_types
+            else None,
             document_types=document_types,
             document_count=len(normalized_case.get("source_doc_ids", [])),
             has_petition="peticao_inicial" in document_types,

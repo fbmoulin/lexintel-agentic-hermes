@@ -11,7 +11,6 @@ from app.services.vector_store import (
     reset_mock_vector_store,
 )
 
-
 EXTRACTED_TEXT = [
     {
         "doc_id": "doc_1",
@@ -47,7 +46,10 @@ def test_chunk_extracted_text_generates_deterministic_legal_chunks():
         "pedido",
         "contestacao",
     ]
-    assert all(chunk["metadata"]["chunking_strategy"] == "legal_unit_mock_v0.1" for chunk in chunks)
+    assert all(
+        chunk["metadata"]["chunking_strategy"] == "legal_unit_mock_v0.1"
+        for chunk in chunks
+    )
 
 
 def test_chunk_extracted_text_skips_empty_text_and_normalizes_page():

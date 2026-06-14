@@ -14,13 +14,10 @@ class LegalNormalizerAgent:
     name = "LegalNormalizerAgent"
 
     def run(self, case_id: str, extracted_text: list[dict]) -> AgentResult:
-        doc_ids = [
-            item["doc_id"] for item in extracted_text
-            if item.get("doc_id")
-        ]
-        document_types = sorted({
-            item.get("doc_type", "unknown") for item in extracted_text
-        })
+        doc_ids = [item["doc_id"] for item in extracted_text if item.get("doc_id")]
+        document_types = sorted(
+            {item.get("doc_type", "unknown") for item in extracted_text}
+        )
         source_ids_by_type = {
             doc_type: self._doc_ids_by_type(extracted_text, doc_type)
             for doc_type in document_types
@@ -37,78 +34,98 @@ class LegalNormalizerAgent:
         normalization_warnings = []
 
         if "peticao_inicial" in document_types:
-            parties.extend([
-                LegalParty(
-                    role="author",
-                    name="Consumidor Alfa",
+            parties.extend(
+                [
+                    LegalParty(
+                        role="author",
+                        name="Consumidor Alfa",
+                        source_doc_ids=source_ids_by_type["peticao_inicial"],
+                    ),
+                    LegalParty(
+                        role="defendant",
+                        name="Banco Beta",
+                        source_doc_ids=source_ids_by_type["peticao_inicial"],
+                    ),
+                ]
+            )
+            claims.append(
+                LegalClaim(
+                    claim_type="indenizacao_dano_moral_material",
+                    summary="Pedido mockado de indenização por fraude bancária via pix.",
                     source_doc_ids=source_ids_by_type["peticao_inicial"],
-                ),
-                LegalParty(
-                    role="defendant",
-                    name="Banco Beta",
-                    source_doc_ids=source_ids_by_type["peticao_inicial"],
-                ),
-            ])
-            claims.append(LegalClaim(
-                claim_type="indenizacao_dano_moral_material",
-                summary="Pedido mockado de indenização por fraude bancária via pix.",
-                source_doc_ids=source_ids_by_type["peticao_inicial"],
-            ))
-            evidence.extend([
-                LegalEvidence(
-                    evidence_type="comprovante_transferencia",
-                    summary="Comprovante de transferência citado na petição inicial mockada.",
-                    source_doc_ids=source_ids_by_type["peticao_inicial"],
-                ),
-                LegalEvidence(
-                    evidence_type="boletim_ocorrencia",
-                    summary="Boletim de ocorrência citado na petição inicial mockada.",
-                    source_doc_ids=source_ids_by_type["peticao_inicial"],
-                ),
-            ])
-            facts.append({
-                "fact_type": "fraude_bancaria_pix",
-                "summary": "Fraude bancária via pix narrada em documento mockado.",
-                "source_doc_ids": source_ids_by_type["peticao_inicial"],
-            })
-            cause_of_action.append({
-                "cause_type": "falha_prestacao_servico_bancario",
-                "summary": "Causa de pedir mockada fundada em responsabilidade objetiva.",
-                "source_doc_ids": source_ids_by_type["peticao_inicial"],
-            })
+                )
+            )
+            evidence.extend(
+                [
+                    LegalEvidence(
+                        evidence_type="comprovante_transferencia",
+                        summary="Comprovante de transferência citado na petição inicial mockada.",
+                        source_doc_ids=source_ids_by_type["peticao_inicial"],
+                    ),
+                    LegalEvidence(
+                        evidence_type="boletim_ocorrencia",
+                        summary="Boletim de ocorrência citado na petição inicial mockada.",
+                        source_doc_ids=source_ids_by_type["peticao_inicial"],
+                    ),
+                ]
+            )
+            facts.append(
+                {
+                    "fact_type": "fraude_bancaria_pix",
+                    "summary": "Fraude bancária via pix narrada em documento mockado.",
+                    "source_doc_ids": source_ids_by_type["peticao_inicial"],
+                }
+            )
+            cause_of_action.append(
+                {
+                    "cause_type": "falha_prestacao_servico_bancario",
+                    "summary": "Causa de pedir mockada fundada em responsabilidade objetiva.",
+                    "source_doc_ids": source_ids_by_type["peticao_inicial"],
+                }
+            )
 
         if "contestacao" in document_types:
-            defenses.append(LegalDefense(
-                defense_type="culpa_exclusiva_terceiro",
-                summary="Defesa mockada de culpa exclusiva de terceiro e ausência de falha.",
-                source_doc_ids=source_ids_by_type["contestacao"],
-            ))
-            evidence.append(LegalEvidence(
-                evidence_type="logs_autenticacao",
-                summary="Logs de autenticação indicados na contestação mockada.",
-                source_doc_ids=source_ids_by_type["contestacao"],
-            ))
+            defenses.append(
+                LegalDefense(
+                    defense_type="culpa_exclusiva_terceiro",
+                    summary="Defesa mockada de culpa exclusiva de terceiro e ausência de falha.",
+                    source_doc_ids=source_ids_by_type["contestacao"],
+                )
+            )
+            evidence.append(
+                LegalEvidence(
+                    evidence_type="logs_autenticacao",
+                    summary="Logs de autenticação indicados na contestação mockada.",
+                    source_doc_ids=source_ids_by_type["contestacao"],
+                )
+            )
 
         if "sentenca" in document_types:
-            procedural_events.append(ProceduralEvent(
-                event_type="sentenca_publicada",
-                summary="Sentença mockada parcialmente procedente.",
-                source_doc_ids=source_ids_by_type["sentenca"],
-            ))
+            procedural_events.append(
+                ProceduralEvent(
+                    event_type="sentenca_publicada",
+                    summary="Sentença mockada parcialmente procedente.",
+                    source_doc_ids=source_ids_by_type["sentenca"],
+                )
+            )
 
         if "acordao" in document_types:
-            procedural_events.append(ProceduralEvent(
-                event_type="julgamento_colegiado",
-                summary="Acórdão mockado que mantém a sentença.",
-                source_doc_ids=source_ids_by_type["acordao"],
-            ))
+            procedural_events.append(
+                ProceduralEvent(
+                    event_type="julgamento_colegiado",
+                    summary="Acórdão mockado que mantém a sentença.",
+                    source_doc_ids=source_ids_by_type["acordao"],
+                )
+            )
 
         if {"peticao_inicial", "contestacao"} & set(document_types):
-            legal_issues.append(LegalIssue(
-                issue_type="responsabilidade_bancaria_fraude",
-                summary="Questão mockada sobre responsabilidade objetiva em fraude bancária.",
-                source_doc_ids=doc_ids,
-            ))
+            legal_issues.append(
+                LegalIssue(
+                    issue_type="responsabilidade_bancaria_fraude",
+                    summary="Questão mockada sobre responsabilidade objetiva em fraude bancária.",
+                    source_doc_ids=doc_ids,
+                )
+            )
 
         if "unknown" in document_types:
             normalization_warnings.append(
@@ -145,6 +162,7 @@ class LegalNormalizerAgent:
     @staticmethod
     def _doc_ids_by_type(extracted_text: list[dict], doc_type: str) -> list[str]:
         return [
-            item["doc_id"] for item in extracted_text
+            item["doc_id"]
+            for item in extracted_text
             if item.get("doc_type") == doc_type and item.get("doc_id")
         ]

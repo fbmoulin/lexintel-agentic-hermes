@@ -19,9 +19,7 @@ class IndexingAgent:
         warnings = []
 
         if not chunks:
-            warnings.append(
-                "Nenhum chunk jurídico gerado para indexação mockada."
-            )
+            warnings.append("Nenhum chunk jurídico gerado para indexação mockada.")
 
         try:
             index_result = self.vector_store.upsert(chunks)

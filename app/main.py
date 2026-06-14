@@ -1,10 +1,11 @@
 from fastapi import FastAPI
-from app.api import health, cases, rag, evals, catalog
+
+from app.api import cases, catalog, evals, health, rag
 
 app = FastAPI(
     title="Lex Kratos Agentic Core",
     version="0.1.0",
-    description="Núcleo agentico modular para automação jurídica auditável."
+    description="Núcleo agentico modular para automação jurídica auditável.",
 )
 
 app.include_router(health.router, prefix="/health", tags=["health"])

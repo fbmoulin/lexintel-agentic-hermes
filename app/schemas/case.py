@@ -1,5 +1,6 @@
+from typing import Any, Literal, Optional
+
 from pydantic import BaseModel, Field, model_validator
-from typing import Literal, Optional, Any
 
 
 class CaseInput(BaseModel):

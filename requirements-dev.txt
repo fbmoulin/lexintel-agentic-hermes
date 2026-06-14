@@ -1,0 +1,4 @@
+# Dev/CI tooling — not required to run the app.
+ruff==0.15.17
+mypy==1.18.2
+jsonschema==4.25.1
