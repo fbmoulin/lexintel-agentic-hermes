@@ -291,10 +291,14 @@ class CaseOrchestrator:
         if firac_result.status == "blocked":
             return self._blocked_response(case, trace)
 
+        # The validator audits pipeline-derived content, not a fixed string:
+        # the FIRAC analysis is routed into the draft so the blocking path
+        # (e.g. hallucinated precedent) is reachable through the orchestrator.
         mock_draft = {
             "relatorio": "Relatório simulado.",
             "fundamentacao": "Fundamentação simulada.",
             "dispositivo": "Dispositivo simulado.",
+            "firac_analysis": firac_result.output,
             "requires_human_review": True,
             "external_use_allowed": False,
             "draft_status": "mock_not_for_external_use",
@@ -302,6 +306,9 @@ class CaseOrchestrator:
 
         validator_result = self.validator_agent.run(case.case_id, mock_draft)
         self._record_trace(trace, validator_result, 8, "validation")
+        if validator_result.status == "blocked":
+            return self._blocked_response(case, trace)
+
         pipeline_summary = self._summarize_trace(trace, self.FULL_MOCK_PIPELINE)
 
         return {
