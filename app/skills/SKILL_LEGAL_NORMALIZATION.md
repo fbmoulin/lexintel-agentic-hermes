@@ -1,3 +1,13 @@
+---
+name: legal-normalization
+description: "Converte texto processual bruto em estrutura jurídica normalizada."
+version: 1.0.0
+metadata:
+  hermes:
+    tags: [normalizacao, estrutura]
+    category: legal-br
+---
+
 # SKILL_LEGAL_NORMALIZATION
 
 ## Objetivo

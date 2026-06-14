@@ -1,3 +1,13 @@
+---
+name: legal-pdf-extraction
+description: "Extrai texto juridicamente útil de PDFs e imagens via OCR."
+version: 1.0.0
+metadata:
+  hermes:
+    tags: [pdf, ocr, extracao]
+    category: legal-br
+---
+
 # SKILL_LEGAL_PDF_EXTRACTION
 
 ## Objetivo

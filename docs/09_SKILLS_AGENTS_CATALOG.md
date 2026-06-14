@@ -4,6 +4,22 @@ O catálogo local conecta as skills Markdown versionadas em `app/skills/` às ca
 
 Ele é apenas um mecanismo local de auditoria e descoberta. Não carrega LLMs, não executa integrações reais e não usa serviços externos.
 
+## Relação com a skill `ai-legal-development` do Hermes
+
+A skill `mlops/ai-legal-development` (instalada no Hermes Agent do operador) descreve
+**padrões e salvaguardas** para construir IA jurídica brasileira (RAG legal, LGPD,
+ciclo de vida do projeto). Este repositório é a **implementação** desses padrões,
+não uma fonte concorrente:
+
+- `ai-legal-development` = *metodologia* (o que fazer e por quê);
+- `lexintel-agentic-hermes` (`app/`) = *implementação executável* (pipeline, contratos, testes);
+- as `app/skills/SKILL_*.md` (com frontmatter Hermes/agentskills.io) são as skills
+  **específicas** das etapas deste pipeline.
+
+Manter uma única fonte de verdade: padrões gerais e benchmarks vivem na skill
+`ai-legal-development` (refs `judicial-pipeline-benchmark`, `brazilian-legal-sources`,
+`dispositivo-template-library`); a implementação e os contratos vivem aqui.
+
 ## Endpoints
 
 ```text

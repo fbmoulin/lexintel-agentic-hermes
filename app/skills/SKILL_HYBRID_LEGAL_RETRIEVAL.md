@@ -1,3 +1,13 @@
+---
+name: hybrid-legal-retrieval
+description: "Busca híbrida jurídica combinando recuperação semântica e lexical com reranking."
+version: 1.0.0
+metadata:
+  hermes:
+    tags: [rag, retrieval, hibrido]
+    category: legal-br
+---
+
 # SKILL_HYBRID_LEGAL_RETRIEVAL
 
 ## Objetivo

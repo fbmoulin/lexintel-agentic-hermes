@@ -25,8 +25,8 @@ jobs:
 
       - name: Lint (ruff)
         run: |
-          ruff check app tests scripts
-          ruff format --check app tests scripts
+          ruff check app tests scripts integrations
+          ruff format --check app tests scripts integrations
 
       - name: Type check (mypy)
         run: |

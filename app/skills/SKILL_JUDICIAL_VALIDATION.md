@@ -1,3 +1,13 @@
+---
+name: judicial-validation
+description: "Audita minuta judicial antes da revisão humana (anti-alucinação, conformidade)."
+version: 1.0.0
+metadata:
+  hermes:
+    tags: [validacao, hitl, auditoria]
+    category: legal-br
+---
+
 # SKILL_JUDICIAL_VALIDATION
 
 ## Objetivo

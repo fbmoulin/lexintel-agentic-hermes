@@ -1,3 +1,13 @@
+---
+name: rag-evaluation
+description: "Avalia qualidade de recuperação, fundamentação e resposta final (recall, MRR)."
+version: 1.0.0
+metadata:
+  hermes:
+    tags: [eval, rag, metricas]
+    category: legal-br
+---
+
 # SKILL_RAG_EVALUATION
 
 ## Objetivo

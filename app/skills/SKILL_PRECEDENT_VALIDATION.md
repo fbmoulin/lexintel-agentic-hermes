@@ -1,3 +1,13 @@
+---
+name: precedent-validation
+description: "Valida precedentes antes da inserção em minuta (anti-precedente-inventado)."
+version: 1.0.0
+metadata:
+  hermes:
+    tags: [precedente, jurisprudencia, validacao]
+    category: legal-br
+---
+
 # SKILL_PRECEDENT_VALIDATION
 
 ## Objetivo

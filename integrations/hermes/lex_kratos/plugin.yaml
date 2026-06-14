@@ -1,0 +1,12 @@
+name: lex_kratos
+version: 0.1.0
+description: >-
+  Roda o pipeline jurídico Lex Kratos (mock v0.1) a partir do Hermes via HTTP —
+  intake+segurança ou o pipeline completo auditável sobre um caso.
+author: Felipe
+provides_tools:
+  - lex_intake
+  - lex_run_pipeline
+# LEX_KRATOS_BASE_URL é OPCIONAL (default http://127.0.0.1:8000) — por isso NÃO
+# está em `requires_env`: declará-la ali faria o Hermes desabilitar o plugin
+# quando a variável estiver ausente. Documentada no README.
