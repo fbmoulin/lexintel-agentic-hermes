@@ -1,6 +1,7 @@
 import re
 
 from app.schemas.case import ChunkUnitType, LegalChunk
+from app.services.markers import detect_sections, extract_acordao_metadata
 
 _SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?])\s+")
 
@@ -90,6 +91,36 @@ class ParagraphChunker:
             tail = split_sentences(previous)[-self.overlap_sentences :]
             result.append(f"[...] {' '.join(tail)} {current}".strip())
         return result
+
+
+class StructuralChunker:
+    strategy = "structural_v0.2"
+
+    def __init__(self, max_tokens=800):
+        self.max_tokens = max_tokens
+        self._fallback = ParagraphChunker(max_tokens=max_tokens)
+
+    def chunk(self, text: str, doc_type: str) -> list[dict]:
+        sections = detect_sections(text, doc_type) or []
+        acordao_meta = extract_acordao_metadata(text) if doc_type == "acordao" else None
+        chunks: list[dict] = []
+        for section in sections:
+            if estimate_tokens(section.text) > self.max_tokens:
+                pieces = self._fallback.chunk(section.text, unit_type=section.unit_type)
+            else:
+                pieces = [
+                    {
+                        "text": section.text,
+                        "unit_type": section.unit_type,
+                        "metadata": {},
+                    }
+                ]
+            for piece in pieces:
+                piece["metadata"]["chunking_strategy"] = self.strategy
+                if acordao_meta is not None:
+                    piece["metadata"]["acordao"] = acordao_meta
+                chunks.append(piece)
+        return chunks
 
 
 UNIT_TYPE_BY_DOC_TYPE: dict[str, ChunkUnitType] = {

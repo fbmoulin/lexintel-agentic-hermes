@@ -4,9 +4,11 @@ from pydantic import ValidationError
 from app.schemas.case import LegalChunk
 from app.services.chunking import (
     ParagraphChunker,
+    StructuralChunker,
     estimate_tokens,
     split_sentences,
 )
+from tests.test_markers import ACORDAO_HEADER, SENTENCA
 
 
 @pytest.mark.parametrize("unit_type", ["fatos", "direito", "preliminares", "merito"])
@@ -79,3 +81,26 @@ def test_paragraph_chunker_splits_oversized_text_with_overlap():
 
 def test_paragraph_chunker_empty_text_returns_empty():
     assert ParagraphChunker().chunk("   ", unit_type="documento") == []
+
+
+def test_structural_chunker_sentenca_three_sections():
+    chunks = StructuralChunker().chunk(SENTENCA, "sentenca")
+    assert [c["unit_type"] for c in chunks] == [
+        "relatorio",
+        "fundamentos",
+        "dispositivo",
+    ]
+    assert all(c["metadata"]["chunking_strategy"] == "structural_v0.2" for c in chunks)
+
+
+def test_structural_chunker_acordao_attaches_metadata_to_all_chunks():
+    acordao = (
+        ACORDAO_HEADER
+        + "Corpo da ementa.\n\nVOTO\nCorpo do voto.\n\nDISPOSITIVO\nNego provimento.\n"
+    )
+    chunks = StructuralChunker().chunk(acordao, "acordao")
+    assert len(chunks) >= 2
+    assert all(
+        c["metadata"]["acordao"]["relator"] == "Desembargador Fulano de Tal"
+        for c in chunks
+    )
