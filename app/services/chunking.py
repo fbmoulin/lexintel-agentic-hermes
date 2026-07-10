@@ -2,6 +2,23 @@ import re
 
 from app.schemas.case import ChunkUnitType, LegalChunk
 
+_SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?])\s+")
+
+
+def estimate_tokens(text: str) -> int:
+    """Cheap deterministic token proxy: whitespace-delimited word count."""
+    return len(text.split())
+
+
+def split_sentences(text: str) -> list[str]:
+    """Split on sentence terminators, keeping the terminator with each sentence.
+
+    Deliberately dumb: mock/legal templates avoid abbreviations (art., nº, STJ.)
+    so no abbreviation handling is needed. Returns [text] when no boundary found.
+    """
+    parts = [part.strip() for part in _SENTENCE_BOUNDARY.split(text.strip())]
+    return [part for part in parts if part]
+
 UNIT_TYPE_BY_DOC_TYPE: dict[str, ChunkUnitType] = {
     "peticao_inicial": "pedido",
     "contestacao": "contestacao",
