@@ -121,6 +121,9 @@ def test_indexing_agent_uses_mock_vector_store_by_default():
     assert result.output["chunk_count"] == 2
     assert result.output["indexed_count"] == 2
     assert result.output["chunk_unit_types"] == ["contestacao", "pedido"]
+    # A successful (or empty) upsert is queryable as "ok" so a systemic run of
+    # index failures is distinguishable from content warnings (see below).
+    assert result.output["index_status"] == "ok"
 
 
 def test_indexing_agent_marks_empty_chunks_for_review():
@@ -162,6 +165,9 @@ def test_indexing_agent_returns_warning_result_on_upsert_error():
     assert result.requires_human_review is True
     assert result.output["indexed_count"] == 0
     assert result.output["skipped_count"] == 2
+    # Distinct, queryable tag: a systemic index outage (every case tagged
+    # "upsert_failed") is separable from ordinary content warnings.
+    assert result.output["index_status"] == "upsert_failed"
     # Generic, client-safe message — raw exception text must not leak.
     assert result.warnings == [
         "Falha na indexação mockada; revisão humana recomendada."

@@ -399,7 +399,9 @@ def evaluate_thresholds(scores: list[dict], thresholds: dict) -> list[dict]:
             }
         )
 
-    per_area_floor = thresholds.get("min_per_area_recall_at_3")
+    # Read fail-LOUD (KeyError) like every sibling gate above, not `.get`: a
+    # partial thresholds dict must not silently disable this floor.
+    per_area_floor = thresholds["min_per_area_recall_at_3"]
     if per_area_floor is not None:
         recall_by_area: dict[str, list[float]] = {}
         for score in scores:
