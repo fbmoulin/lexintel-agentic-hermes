@@ -1,4 +1,4 @@
-from app.services.markers import detect_sections
+from app.services.markers import detect_sections, extract_acordao_metadata
 
 SENTENCA = (
     "RELATÓRIO\n"
@@ -12,7 +12,11 @@ SENTENCA = (
 
 def test_detects_three_sections_in_sentenca():
     sections = detect_sections(SENTENCA, "sentenca")
-    assert [s.unit_type for s in sections] == ["relatorio", "fundamentos", "dispositivo"]
+    assert [s.unit_type for s in sections] == [
+        "relatorio",
+        "fundamentos",
+        "dispositivo",
+    ]
     assert "Trata-se" in sections[0].text
     assert "objetiva" in sections[1].text
 
@@ -33,3 +37,26 @@ def test_marker_mid_line_not_detected():
     # "RELATÓRIO" must be its own line (^\s*...\s*$), not embedded.
     text = "no meio do RELATÓRIO texto\noutra linha DISPOSITIVO aqui"
     assert detect_sections(text, "sentenca") is None
+
+
+ACORDAO_HEADER = (
+    "TRIBUNAL DE JUSTICA - QUARTA CAMARA CIVEL\n"
+    "APELACAO CIVEL Nº 0001234-56.2026.8.08.0001\n"
+    "RELATOR: Desembargador Fulano de Tal\n"
+    "Publicado no DJe de 15/01/2026\n"
+    "EMENTA\n...\n"
+)
+
+
+def test_extract_acordao_metadata_pulls_header_fields():
+    meta = extract_acordao_metadata(ACORDAO_HEADER)
+    assert meta["orgao_julgador"] == "QUARTA CAMARA CIVEL"
+    assert meta["numero"] == "0001234-56.2026.8.08.0001"
+    assert meta["relator"] == "Desembargador Fulano de Tal"
+    assert meta["tipo_recurso"] == "APELACAO"
+    assert meta["data_publicacao"] == "15/01/2026"
+
+
+def test_extract_acordao_metadata_missing_fields_are_none():
+    meta = extract_acordao_metadata("texto sem cabecalho estruturado")
+    assert all(meta[k] is None for k in meta)

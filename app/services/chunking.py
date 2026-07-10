@@ -19,6 +19,7 @@ def split_sentences(text: str) -> list[str]:
     parts = [part.strip() for part in _SENTENCE_BOUNDARY.split(text.strip())]
     return [part for part in parts if part]
 
+
 UNIT_TYPE_BY_DOC_TYPE: dict[str, ChunkUnitType] = {
     "peticao_inicial": "pedido",
     "contestacao": "contestacao",

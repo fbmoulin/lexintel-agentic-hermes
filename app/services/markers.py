@@ -77,3 +77,31 @@ def detect_sections(text: str, doc_type: str) -> list[DetectedSection] | None:
             )
 
     return sections if len(sections) >= 2 else None
+
+
+_ACORDAO_FIELDS = {
+    "orgao_julgador": re.compile(
+        r"((?:PRIMEIRA|SEGUNDA|TERCEIRA|QUARTA|QUINTA)\s+C[ÂA]MARA[^\n]*|\w+\s+TURMA[^\n]*|PLENO)",
+        re.IGNORECASE,
+    ),
+    "numero": re.compile(r"N[ºo°]?\s*([\d.\-/]{10,})"),
+    "relator": re.compile(r"RELATOR[A]?\s*:?\s*([^\n]+)", re.IGNORECASE),
+    "tipo_recurso": re.compile(
+        r"\b(APELA[ÇC][ÃA]O|AGRAVO|EMBARGOS|RECURSO ESPECIAL)\b", re.IGNORECASE
+    ),
+    "data_publicacao": re.compile(r"DJe\s+de\s+(\d{2}/\d{2}/\d{4})", re.IGNORECASE),
+}
+
+
+def extract_acordao_metadata(text: str) -> dict[str, str | None]:
+    """Best-effort header extraction from the first 2000 chars of an acórdão."""
+    head = text[:2000]
+    result: dict[str, str | None] = {}
+    for field, pattern in _ACORDAO_FIELDS.items():
+        match = pattern.search(head)
+        result[field] = (
+            match.group(1).strip().upper()
+            if field == "tipo_recurso" and match
+            else (match.group(1).strip() if match else None)
+        )
+    return result
