@@ -80,6 +80,10 @@ AGENT_REGISTRY: list[dict[str, Any]] = [
         "skill_name": "SKILL_HYBRID_LEGAL_RETRIEVAL.md",
         "status": "planned",
         "mocked": True,
+        # ⚠️ Before this activates: IndexingAgent is best-effort — a run tagged
+        # index_status="upsert_failed" completed WITHOUT indexing its chunks, so
+        # "pipeline run completed" does NOT imply "chunks are retrievable". This
+        # agent must not assume index completeness; reconcile/backfill first.
         "description": "Planejado para busca híbrida e reranking.",
     },
     {

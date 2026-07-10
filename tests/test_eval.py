@@ -158,6 +158,24 @@ def test_eval_default_thresholds_include_per_area_floor():
     assert run()["thresholds"]["min_per_area_recall_at_3"] == 0.85
 
 
+def test_eval_per_area_gate_is_not_silently_skippable():
+    """The per-area floor must fail LOUD when absent (like every sibling gate,
+    which read `thresholds[key]`) — never silently disable itself. A caller that
+    builds a thresholds dict without merging DEFAULT_THRESHOLDS must not lose the
+    M3 protection unnoticed."""
+    from app.evals.run_eval import DEFAULT_THRESHOLDS, evaluate_thresholds
+
+    partial = {
+        key: value
+        for key, value in DEFAULT_THRESHOLDS.items()
+        if key != "min_per_area_recall_at_3"
+    }
+    scores = [{"id": "a", "area": "bancario", "recall_at_3": 1.0, "mrr": 1.0}]
+
+    with pytest.raises(KeyError):
+        evaluate_thresholds(scores, partial)
+
+
 def test_eval_thresholds_do_not_reuse_default_mutable_values():
     result = run()
     result["thresholds"]["required_areas"].append("mutated")

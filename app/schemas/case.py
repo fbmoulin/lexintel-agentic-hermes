@@ -18,7 +18,10 @@ class CaseInput(BaseModel):
 class AgentResult(BaseModel):
     case_id: str
     agent_name: str
-    status: Literal["success", "warning", "failed", "blocked"]
+    # Pipeline terminal state is "blocked" (halts); a soft/degraded step is
+    # "warning". "failed" was removed — no agent emitted it and the per-step
+    # guards never halted on it, so it advertised a state the flow didn't back.
+    status: Literal["success", "warning", "blocked"]
     output: dict[str, Any]
     warnings: list[str] = Field(default_factory=list)
     errors: list[str] = Field(default_factory=list)

@@ -152,9 +152,6 @@ class CaseOrchestrator:
         if any(entry["status"] == "blocked" for entry in trace):
             return "blocked"
 
-        if any(entry["status"] == "failed" for entry in trace):
-            return "failed"
-
         if any(entry["status"] == "warning" for entry in trace):
             return "warning"
 

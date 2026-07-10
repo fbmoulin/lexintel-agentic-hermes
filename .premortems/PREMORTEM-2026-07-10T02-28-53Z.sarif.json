@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "premortem-code",
+          "version": "2.0.0",
+          "informationUri": "https://github.com/fbmoulin/premortem-code",
+          "rules": [
+            {
+              "id": "7 (Invisible invariants) + 5 (Coincidental correctness), Qdrant addendum (non-atomic upsert / orphaned vectors)",
+              "name": "7 (Invisible invariants) + 5 (Coincidental correctness), Qdrant addendum (non-atomic upsert / orphaned vectors)",
+              "shortDescription": {
+                "text": "premortem fragility: 7 (Invisible invariants) + 5 (Coincidental correctness), Qdrant addendum (non-atomic upsert / orphaned vectors)"
+              },
+              "properties": {
+                "security-severity": "5.0"
+              }
+            },
+            {
+              "id": "7 (Invisible invariants) \u2014 a cross-module invariant held by convention",
+              "name": "7 (Invisible invariants) \u2014 a cross-module invariant held by convention",
+              "shortDescription": {
+                "text": "premortem fragility: 7 (Invisible invariants) \u2014 a cross-module invariant held by convention"
+              },
+              "properties": {
+                "security-severity": "3.0"
+              }
+            },
+            {
+              "id": "8 (Load-bearing defaults)",
+              "name": "8 (Load-bearing defaults)",
+              "shortDescription": {
+                "text": "premortem fragility: 8 (Load-bearing defaults)"
+              },
+              "properties": {
+                "security-severity": "3.0"
+              }
+            },
+            {
+              "id": "3 (Stringly-typed contracts) + 5 (Coincidental correctness)",
+              "name": "3 (Stringly-typed contracts) + 5 (Coincidental correctness)",
+              "shortDescription": {
+                "text": "premortem fragility: 3 (Stringly-typed contracts) + 5 (Coincidental correctness)"
+              },
+              "properties": {
+                "security-severity": "3.0"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "7 (Invisible invariants) + 5 (Coincidental correctness), Qdrant addendum (non-atomic upsert / orphaned vectors)",
+          "ruleIndex": 0,
+          "level": "warning",
+          "message": {
+            "text": "Systemic index outage completes every case as a \"warning\", never an alarm \u2014 The team flips `LEX_KRATOS_ENABLE_QDRANT=true` in a real deployment (the whole point of PR #17). Qdrant then goes unreachable for an hour (restart, network, disk-full). Every `run_full_mock` call still runs Intake\u2192Security\u2192\u2026\u2192FIRAC\u2192Validation and returns `status=\"warning\"` \u2014 the *same* status a single low-quality extraction produces \u2014 so the dashboards look normal and nobody pages. Meanwhile the invariant a future consumer assumes \u2014 **\"a pipeline run that completed \u21d2 its chunks are in the vector index\"** \u2014 is silently false for every case processed during the outage. The already-planned `HybridRetrievalAgent` (`registry.py:76-84`, status `planned`) is built later on exactly that assumption; it retrieves against an index missing an hour of cases and returns confidently wrong precedent context, with no error anywhere. The best-effort decision (M1) is correct for *this* case's analysis, but it converted a loud `failed` into an indistinguishable `warning`, erasing the only signal that would have surfaced a systemic backlog."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "app/agents/indexing_agent.py"
+                },
+                "region": {
+                  "startLine": 44,
+                  "endLine": 77
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "premortemCode/v1": "b790eb2cf8e80447"
+          },
+          "properties": {
+            "security-severity": "5.0",
+            "confidence": "confirmed"
+          }
+        },
+        {
+          "ruleId": "7 (Invisible invariants) \u2014 a cross-module invariant held by convention",
+          "ruleIndex": 1,
+          "level": "note",
+          "message": {
+            "text": "`case_id` min_length=1 is kept off the primary path only by the Hermes tool schema \u2014 A later edit relaxes the `lex_intake`/`lex_run_pipeline` tool schema \u2014 makes `case_id` optional, or adds a \"quick triage\" tool that auto-generates an ID \u2014 reasonably, since the plugin already defaults it. Now a Telegram tool call without `case_id` reaches `_case_payload`, sends `case_id=\"\"`, and the API 422s. `_call` catches it and returns `{\"error\": \"lexintel API retornou HTTP 422...\"}` to the user, who did nothing wrong. The break is in `schemas.py` (schema) but surfaces in `case.py` (validation) via a plugin default nobody re-examined. It fails loud and is recoverable, hence low \u2014 but the two sides can drift silently until someone touches the schema."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "app/schemas/case.py:11` \u2194 `integrations/hermes/lex_kratos/tools.py"
+                },
+                "region": {
+                  "startLine": 32
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "premortemCode/v1": "0c13103a0c837931"
+          },
+          "properties": {
+            "security-severity": "3.0",
+            "confidence": "confirmed"
+          }
+        },
+        {
+          "ruleId": "8 (Load-bearing defaults)",
+          "ruleIndex": 2,
+          "level": "note",
+          "message": {
+            "text": "The per-area eval gate fails *open*; its sibling gates fail *loud* \u2014 A future change constructs a thresholds dict directly instead of merging onto `DEFAULT_THRESHOLDS` (e.g. a new eval harness, a CI matrix, a test that passes a hand-built dict \u2014 `test_eval_gate_enforces_per_area_floor` already passes `DEFAULT_THRESHOLDS` explicitly, normalising the pattern). The per-area floor silently disappears; the eval goes back to global-average-only and can again green a build where one legal area is broken \u2014 the exact regression M3 was added to prevent \u2014 with no error to reveal the gate was dropped. The `run()` merge path (`run_eval.py:430-432`) protects the CLI today; a caller that bypasses it is unprotected and unwarned."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "app/evals/run_eval.py"
+                },
+                "region": {
+                  "startLine": 402
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "premortemCode/v1": "d6ed1596f989e9e4"
+          },
+          "properties": {
+            "security-severity": "3.0",
+            "confidence": "confirmed"
+          }
+        },
+        {
+          "ruleId": "3 (Stringly-typed contracts) + 5 (Coincidental correctness)",
+          "ruleIndex": 3,
+          "level": "note",
+          "message": {
+            "text": "`\"failed\"` is now an orphan status in the orchestrator \u2014 A developer adds a new agent (or a future non-mock step) that returns `status=\"failed\"` for a hard error, reasonably expecting \u2014 from the surviving `_response_status` branch and the `Literal` \u2014 that the framework treats `failed` as a real terminal state. It does not: the per-step guards ignore `failed`, so the pipeline runs on through every downstream legal phase, and only the final summary label reads `\"failed\"`. The status vocabulary advertises a capability (a distinct terminal failure) the control flow no longer backs. Low, because it needs a new producer to bite, and it surfaces in the trace rather than corrupting data."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "app/agents/orchestrator.py"
+                },
+                "region": {
+                  "startLine": 155,
+                  "endLine": 156
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "premortemCode/v1": "9c3d6d6b7395e4ff"
+          },
+          "properties": {
+            "security-severity": "3.0",
+            "confidence": "confirmed"
+          }
+        }
+      ]
+    }
+  ]
+}

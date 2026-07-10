@@ -1,8 +1,20 @@
 """Orchestrator contract: a blocked step halts the pipeline before later phases."""
 
+import pytest
+from pydantic import ValidationError
+
 from app.agents.indexing_agent import IndexingAgent
 from app.agents.orchestrator import CaseOrchestrator
 from app.schemas.case import AgentResult, CaseInput
+
+
+def test_agent_result_rejects_orphan_failed_status():
+    # No pipeline agent emits "failed" (indexing degrades to "warning"), and the
+    # per-step guards halt only on "blocked". Keeping "failed" in the vocabulary
+    # would advertise a terminal state the control flow doesn't back — so it is
+    # removed. A hard terminal error uses "blocked" (which halts).
+    with pytest.raises(ValidationError):
+        AgentResult(case_id="c", agent_name="X", status="failed", output={})
 
 
 def _case() -> CaseInput:

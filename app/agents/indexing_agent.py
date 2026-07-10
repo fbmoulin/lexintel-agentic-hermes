@@ -67,6 +67,14 @@ class IndexingAgent:
                     **summary.model_dump(),
                     "chunks": chunks,
                     "index_result": None,
+                    # Distinct tag (not just "warning"): a systemic index outage
+                    # surfaces as every case tagged "upsert_failed", which a
+                    # consumer/alert can separate from ordinary content warnings.
+                    # NB: a degraded run completes WITHOUT its chunks in the index,
+                    # so "run completed" no longer implies "chunks indexed" — a
+                    # future retrieval consumer (HybridRetrievalAgent) must not
+                    # assume index completeness. See registry.py.
+                    "index_status": "upsert_failed",
                     "requires_human_review": True,
                     "external_use_allowed": False,
                 },
@@ -92,6 +100,7 @@ class IndexingAgent:
                 **summary.model_dump(),
                 "chunks": chunks,
                 "index_result": index_result,
+                "index_status": "ok",
                 "external_use_allowed": False,
             },
             warnings=warnings,
