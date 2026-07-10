@@ -26,9 +26,11 @@ Sem essa variável, `get_qdrant_client()` falha com `RuntimeError` e o pipeline 
 
 ## Chunking Jurídico
 
-O serviço `chunk_extracted_text` recebe `ExtractedText` e gera `LegalChunk` validado por Pydantic.
+O serviço `build_chunks` recebe `ExtractedText` e gera `LegalChunk` validado por Pydantic. A estratégia é escolhida por `get_chunker(text, doc_type)`: quando o texto tem ≥2 seções jurídicas detectáveis, o `StructuralChunker` emite **um chunk por seção** (relatório, fundamentação, dispositivo, ementa, voto, fatos, direito, preliminares, mérito, pedido); caso contrário, o `ParagraphChunker` (fallback) agrega/divide por orçamento de tokens com overlap de 1 sentença. Metadados de acórdão (órgão julgador, relator, número, tipo de recurso, data de publicação) são anexados a todos os chunks de um acórdão.
 
-Entradas sem texto útil são ignoradas e páginas inválidas são normalizadas para `1`, evitando que OCR vazio ou metadados incompletos derrubem o pipeline mockado.
+> A função `chunk_extracted_text` permanece como wrapper **deprecado** (emite `DeprecationWarning` e delega para `build_chunks`).
+
+Entradas sem texto útil são ignoradas e páginas inválidas são normalizadas para `1`, evitando que OCR vazio ou metadados incompletos derrubem o pipeline mockado. O `chunk_id` recebe um ordinal condicional (só quando um grupo `(doc, página, unit_type)` gera mais de um chunk) e é único no conjunto, evitando colisão e perda silenciosa no `upsert`.
 
 Cada chunk inclui:
 
@@ -42,7 +44,7 @@ Cada chunk inclui:
 - `source`
 - `metadata`
 
-Mapeamento mockado:
+Mapeamento por tipo documental usado pelo fallback `ParagraphChunker` (sem marcadores); o `StructuralChunker` deriva o `unit_type` da própria seção detectada:
 
 - `peticao_inicial` -> `pedido`
 - `contestacao` -> `contestacao`
@@ -54,13 +56,13 @@ Mapeamento mockado:
 
 O `IndexingAgent`:
 
-- gera chunks jurídicos;
-- indexa no `MockVectorStore`;
+- gera chunks jurídicos via `build_chunks` (structural/paragraph);
+- indexa no `MockVectorStore` (ou no `QdrantVectorStore` quando a flag está ligada);
 - retorna `IndexingSummary`;
-- expõe `vector_backend`, `qdrant_enabled`, `chunk_count`, `indexed_count` e `chunk_unit_types`;
+- expõe `vector_backend`, `qdrant_enabled`, `chunk_count`, `indexed_count`, `chunk_unit_types` e `index_status` (`ok`/`upsert_failed`);
 - mantém `external_use_allowed = false`.
 
-Se nenhum chunk for gerado, o agente retorna `warning` e exige revisão humana.
+Se nenhum chunk for gerado, o agente retorna `warning` e exige revisão humana. A indexação é **best-effort**: uma falha de `upsert` degrada para `warning` com revisão humana (`index_status = upsert_failed`), sem interromper o pipeline nem marcar a execução como `failed`.
 
 ## MockVectorStore
 

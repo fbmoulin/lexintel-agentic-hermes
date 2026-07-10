@@ -28,6 +28,7 @@ python -m app.evals.run_eval
 - `app/main.py`: aplicacao FastAPI e registro de rotas.
 - `app/api/`: endpoints HTTP mockados.
 - `app/agents/`: agentes especializados com comportamento local.
+- `app/services/`: serviços de dominio (chunking estrutural, markers, extracao mockada, embeddings, Qdrant, vector store, skill loader).
 - `app/skills/`: skills em Markdown para orientar futuras capacidades.
 - `app/schemas/`: modelos Pydantic e schemas JSON.
 - `app/evals/`: dataset dourado e avaliacao RAG mockada.

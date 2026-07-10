@@ -1,13 +1,20 @@
 # Resumo Executivo
 
-> **Status v0.3 (2026-06-14):** sobre a v0.2 (otimização pós-revisão — avaliação
-> RAG religada ao recuperador servido com distratores, `blocked` interrompe o
-> pipeline, validator vivo, contrato Pydantic único, CI com ruff/mypy/drift,
-> plugin Hermes `lex_kratos`, mapa CNJ 615/2025), a v0.3 adiciona **recuperação
-> semântica real opcional com Qdrant** (PR #17, atrás de `LEX_KRATOS_ENABLE_QDRANT`,
-> desligada por padrão; embeddings locais `fastembed`). **77 testes** (+2 de
-> integração pulados por padrão). Detalhes em `CHANGELOG.md`,
-> `docs/audits/2026-06-13-deep-review.md` e `docs/superpowers/`.
+> **Status v0.4 (2026-07-10):** sobre a v0.3 (recuperação semântica real
+> opcional com Qdrant, PR #17), a v0.4 adiciona um ciclo de revisão + premortem
+> (PRs #18–#20: indexação best-effort, piso de recall@3 por área, caps de
+> entrada em `CaseInput`, tag `index_status`, hardening do plugin Hermes) e
+> **chunking estrutural jurídico** (PR #21: `StructuralChunker`/`ParagraphChunker`,
+> interface `Extractor`/`MockExtractor`). **123 testes** (+2 de integração
+> pulados por padrão); nenhum achado CRITICAL/HIGH na revisão completa. Detalhes
+> em `CHANGELOG.md`, `docs/audits/2026-07-09-full-review.md` e `docs/superpowers/`.
+>
+> _Histórico v0.3 (2026-06-14):_ sobre a v0.2 (otimização pós-revisão —
+> avaliação RAG religada ao recuperador servido com distratores, `blocked`
+> interrompe o pipeline, validator vivo, contrato Pydantic único, CI com
+> ruff/mypy/drift, plugin Hermes `lex_kratos`, mapa CNJ 615/2025), a v0.3
+> adicionou recuperação semântica real opcional com Qdrant (PR #17, atrás de
+> `LEX_KRATOS_ENABLE_QDRANT`, desligada por padrão; embeddings locais `fastembed`).
 
 O objetivo do projeto é transformar o Lex Intelligentia/Kratos em um app jurídico auditável, modular e mensurável.
 

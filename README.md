@@ -1,6 +1,6 @@
-# Lex Kratos Agentic Core — v0.1
+# Lex Kratos Agentic Core — v0.4
 
-Este repositório consolida o núcleo jurídico agentico local do Lex Kratos. A v0.1 é intencionalmente pequena: FastAPI, agentes mockados, testes automatizados, dataset de avaliação e documentação de execução.
+Este repositório consolida o núcleo jurídico agentico local do Lex Kratos. O núcleo permanece intencionalmente pequeno e auditável — FastAPI, agentes mockados, testes automatizados, dataset de avaliação e documentação de execução — mas já cresceu além do scaffold inicial: recuperação semântica real opcional com Qdrant (desligada por padrão) e chunking estrutural jurídico. A suíte tem **123 testes** (+2 de integração pulados por padrão).
 
 ## Fronteira de escopo
 

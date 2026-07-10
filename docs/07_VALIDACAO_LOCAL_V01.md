@@ -4,9 +4,10 @@ Data: 2026-06-06
 Ambiente: Windows, Python 3.12.8  
 Escopo: Lex Kratos Agentic Core local, mockado, sem serviços externos.
 
-> **Atualização v0.3 (2026-06-14):** após a otimização (PRs #13/#15) e a
-> recuperação real com Qdrant (PR #17), a suíte tem **77 testes** (eram 53; +2 de
-> integração com Qdrant vivo, pulados por padrão) e a CI roda, nesta ordem:
+> **Atualização v0.4 (2026-07-10):** após o ciclo de revisão + premortem
+> (PRs #18–#20) e o chunking estrutural (PR #21), a suíte tem **123 testes**
+> (eram 77 na v0.3; +2 de integração com Qdrant vivo, pulados por padrão) e a
+> CI roda, nesta ordem:
 > `ruff check` + `ruff format --check` (app/tests/scripts/integrations),
 > `mypy app`, drift de schema (`scripts.gen_schemas` + `git diff`), `pytest`,
 > `python -m app.evals.run_eval`. Para rodar testes localmente é preciso instalar

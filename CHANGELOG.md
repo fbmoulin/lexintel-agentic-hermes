@@ -4,6 +4,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ## [Não lançado]
 
+## [0.4.0] — 2026-07-10
+
+Ciclo de revisão + premortem + chunking estrutural (PRs #18–#21). 77 → **123 testes**.
+Base: `docs/audits/2026-07-09-full-review.md`, `.premortems/PREMORTEM-2026-07-10*` e
+`docs/superpowers/plans/2026-07-10-richer-chunking.md`.
+
 ### Adicionado
 
 - **Chunking estrutural jurídico** (`app/services/chunking.py`, `app/services/markers.py`).
@@ -17,6 +23,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 - **Interface de extração** (`app/services/extraction.py`): protocolo `Extractor`,
   modelo Pydantic `ExtractedDocument` e `MockExtractor` com templates
   marker-rich por `doc_type` — o `ExtractionAgent` passa a consumir esse texto.
+- **Piso de recall@3 por área na avaliação** (`min_per_area_recall_at_3=0.85`,
+  M3): uma área forte não pode mais mascarar uma área quebrada na média global.
+- **Tag `index_status`** (`ok`/`upsert_failed`) no `IndexingAgent` (F1): uma
+  falha sistêmica de indexação fica separável de warnings de conteúdo.
 
 ### Alterado
 
@@ -24,8 +34,27 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   um-chunk-por-documento. `chunk_extracted_text()` mantida como wrapper
   **deprecado** (emite `DeprecationWarning`, delega para `build_chunks()`).
 - `build_chunk_id()` ganha um ordinal **condicional** (só quando um grupo
-  `(doc, página, unit_type)` gera mais de um chunk), evitando colisão de id e
-  perda silenciosa de chunk no `upsert`.
+  `(doc, página, unit_type)` gera mais de um chunk) + unicidade global entre
+  itens, evitando colisão de id e perda silenciosa de chunk no `upsert` (R1).
+- **Indexação best-effort** (M1): falha de `upsert` degrada para `warning` com
+  revisão humana (não `failed`), sem interromper o pipeline.
+- `CaseInput` limita a superfície de entrada (M4): `case_id` 1–128, `files`
+  ≤200 itens × ≤2048 chars → HTTP 422 na borda.
+- Vocabulário de status alinhado ao fluxo (F4): `"failed"` removido de
+  `AgentResult.status` (terminal = `blocked`, degradação = `warning`).
+
+### Corrigido / Segurança
+
+- Gate de avaliação por área lê o limiar fail-loud, não fail-open (F3).
+- Plugin Hermes rejeita `case_id` vazio localmente em vez de enviar `""` (F2).
+- Precisão de docs: paridade eval↔API reescrita (mesma classe, instância
+  separada), chaves `.env.example` marcadas como placeholders, comandos de lint
+  incluem `integrations` (L1–L3).
+
+> Revisão completa em `docs/audits/2026-07-09-full-review.md`: nenhum achado
+> CRITICAL/HIGH; defesa contra path traversal confirmada. M2 retirado como
+> falso-positivo. Premortem (`premortem-code`, veredito REFINE): F1/F3/F4
+> corrigidos, F2 corrigido; itens não-bloqueantes rastreados.
 
 ## [0.3.0] — 2026-06-14
 

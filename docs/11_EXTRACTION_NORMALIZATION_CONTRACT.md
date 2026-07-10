@@ -6,7 +6,9 @@ A fase permanece local, mockada e sem extração real de PDF, OCR, LLM, Qdrant, 
 
 ## Extração
 
-O `ExtractionAgent` recebe documentos detectados pelo `IntakeAgent` e retorna:
+O texto mockado é produzido por um `MockExtractor` (em `app/services/extraction.py`), por trás da interface `Extractor` (protocolo `extract()`/`supports()` + modelo Pydantic `ExtractedDocument`) — uma interface preparada para extração real de PDF em fase futura, sem alterar o restante do pipeline. Os templates do `MockExtractor` são **marker-rich** (contêm cabeçalhos de seção como RELATÓRIO/FUNDAMENTAÇÃO/DISPOSITIVO), de modo que o chunking estrutural (ver `docs/12`) seja exercitado ponta a ponta. O `extraction_method` permanece `mock_filename_template`.
+
+O `ExtractionAgent` recebe documentos detectados pelo `IntakeAgent`, consome o texto do extrator e retorna:
 
 - `extraction_schema_version`
 - `extracted_text`
