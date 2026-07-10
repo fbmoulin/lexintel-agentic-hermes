@@ -144,8 +144,61 @@ def _slug(value: str) -> str:
     return slug.strip("_") or "unknown"
 
 
-def build_chunk_id(case_id: str, doc_id: str, page: int, unit_type: str) -> str:
-    return f"chunk_{_slug(case_id)}_{_slug(doc_id)}_p{page}_{_slug(unit_type)}"
+def build_chunk_id(
+    case_id: str, doc_id: str, page: int, unit_type: str, ordinal: int | None = None
+) -> str:
+    base = f"chunk_{_slug(case_id)}_{_slug(doc_id)}_p{page}_{_slug(unit_type)}"
+    return base if ordinal is None else f"{base}_{ordinal}"
+
+
+def build_chunks(case_id: str, extracted_text: list[dict]) -> list[dict]:
+    out: list[dict] = []
+    for item in extracted_text:
+        text = str(item.get("text", "") or "").strip()
+        if not text:
+            continue
+        doc_type = item.get("doc_type", "unknown")
+        doc_id = item.get("doc_id", "doc_unknown")
+        try:
+            page = max(int(item.get("page", 1)), 1)
+        except (TypeError, ValueError):
+            page = 1
+
+        chunker = get_chunker(text, doc_type)
+        if isinstance(chunker, StructuralChunker):
+            pieces = chunker.chunk(text, doc_type)
+        else:
+            fallback_unit = UNIT_TYPE_BY_DOC_TYPE.get(doc_type, "documento")
+            pieces = chunker.chunk(text, unit_type=fallback_unit)
+
+        # conditional ordinal: only suffix when a (doc,page,unit) group has >1 chunk
+        by_unit: dict[str, int] = {}
+        for piece in pieces:
+            by_unit[piece["unit_type"]] = by_unit.get(piece["unit_type"], 0) + 1
+        seen: dict[str, int] = {}
+        for piece in pieces:
+            unit = piece["unit_type"]
+            multi = by_unit[unit] > 1
+            ordinal = seen.get(unit, 0) if multi else None
+            seen[unit] = seen.get(unit, 0) + 1
+            chunk = LegalChunk(
+                chunk_id=build_chunk_id(case_id, doc_id, page, unit, ordinal),
+                case_id=case_id,
+                doc_id=doc_id,
+                unit_type=unit,
+                text=piece["text"],
+                page_start=page,
+                page_end=page,
+                source=item.get("file_path"),
+                metadata={
+                    "doc_type": doc_type,
+                    "quality_score": item.get("quality_score"),
+                    "extraction_method": item.get("extraction_method"),
+                    **piece["metadata"],
+                },
+            )
+            out.append(chunk.model_dump())
+    return out
 
 
 def chunk_extracted_text(case_id: str, extracted_text: list[dict]) -> list[dict]:

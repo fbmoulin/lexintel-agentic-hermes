@@ -5,6 +5,7 @@ from app.schemas.case import LegalChunk
 from app.services.chunking import (
     ParagraphChunker,
     StructuralChunker,
+    build_chunks,
     estimate_tokens,
     get_chunker,
     split_sentences,
@@ -119,3 +120,36 @@ def test_get_chunker_returns_paragraph_without_markers():
 
 def test_get_chunker_paragraph_for_unknown_doc_type():
     assert isinstance(get_chunker(SENTENCA, "algo"), ParagraphChunker)
+
+
+def _item(doc_id, doc_type, text, page=1):
+    return {
+        "doc_id": doc_id,
+        "doc_type": doc_type,
+        "text": text,
+        "file_path": f"{doc_id}.pdf",
+        "page": page,
+        "quality_score": 0.9,
+    }
+
+
+def test_build_chunks_single_chunk_keeps_bare_id():
+    # marker-free short text -> paragraph -> one chunk -> id has NO ordinal suffix.
+    chunks = build_chunks("caso", [_item("doc_1", "peticao_inicial", "texto curto")])
+    assert chunks[0]["chunk_id"] == "chunk_caso_doc_1_p1_pedido"
+    assert chunks[0]["unit_type"] == "pedido"
+
+
+def test_build_chunks_multichunk_section_gets_unique_ordinal_ids(monkeypatch):
+    # Force an oversized single section so one (doc,page,unit) yields >1 chunk.
+    big = "palavra. " * 2000
+    text = f"RELATÓRIO\n{big}\n\nDISPOSITIVO\nfim.\n"
+    chunks = build_chunks("caso", [_item("doc_1", "sentenca", text)])
+    relatorio_ids = [c["chunk_id"] for c in chunks if c["unit_type"] == "relatorio"]
+    assert len(relatorio_ids) >= 2
+    assert len(set(relatorio_ids)) == len(relatorio_ids)  # no collisions
+    assert relatorio_ids[0].endswith("_relatorio_0")
+
+
+def test_build_chunks_skips_empty_text():
+    assert build_chunks("caso", [_item("doc_1", "sentenca", "   ")]) == []
