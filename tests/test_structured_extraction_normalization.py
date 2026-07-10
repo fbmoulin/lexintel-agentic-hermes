@@ -176,8 +176,8 @@ def test_full_mock_pipeline_exposes_structured_extraction_and_metadata():
     assert metadata_output["has_decision"] is True
     assert metadata_output["has_appeal_decision"] is True
     assert indexing_output["vector_backend"] == "mock"
-    assert indexing_output["chunk_count"] == 4
-    assert indexing_output["indexed_count"] == 4
+    assert indexing_output["chunk_count"] == 13
+    assert indexing_output["indexed_count"] == 13
 
 
 def test_extraction_agent_emits_marker_rich_text():

@@ -212,8 +212,8 @@ def test_full_mock_pipeline_runs_all_available_agents():
     validator_trace = data["trace"][7]["output"]
     assert indexing_trace["vector_backend"] == "mock"
     assert indexing_trace["qdrant_enabled"] is False
-    assert indexing_trace["chunk_count"] == 2
-    assert indexing_trace["indexed_count"] == 2
+    assert indexing_trace["chunk_count"] == 6
+    assert indexing_trace["indexed_count"] == 6
     assert firac_trace["requires_human_review"] is True
     assert firac_trace["external_use_allowed"] is False
     assert validator_trace["requires_human_review"] is True
