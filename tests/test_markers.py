@@ -39,6 +39,24 @@ def test_marker_mid_line_not_detected():
     assert detect_sections(text, "sentenca") is None
 
 
+def test_adjacent_markers_drop_empty_section_no_marker_leak():
+    # M3: an empty section body between adjacent markers must be dropped, and no
+    # marker text may leak into any body.
+    text = (
+        "DOS FATOS\nDO DIREITO\nconteudo do direito aqui.\nDOS PEDIDOS\npedido final.\n"
+    )
+    sections = detect_sections(text, "peticao_inicial")
+    assert sections is not None
+    assert "fatos" not in [s.unit_type for s in sections]  # empty section dropped
+    assert all(s.text.strip() != "DO DIREITO" for s in sections)
+    assert all(
+        s.text.strip() not in {"DOS FATOS", "DO DIREITO", "DOS PEDIDOS"}
+        for s in sections
+    )
+    direito = next(s for s in sections if s.unit_type == "direito")
+    assert "conteudo do direito" in direito.text
+
+
 ACORDAO_HEADER = (
     "TRIBUNAL DE JUSTICA - QUARTA CAMARA CIVEL\n"
     "APELACAO CIVEL Nº 0001234-56.2026.8.08.0001\n"

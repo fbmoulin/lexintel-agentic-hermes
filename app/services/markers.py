@@ -43,7 +43,6 @@ STRUCTURAL_MARKERS: dict[str, list[tuple[str, re.Pattern]]] = {
 class DetectedSection:
     unit_type: ChunkUnitType
     text: str
-    order: int
 
 
 def detect_sections(text: str, doc_type: str) -> list[DetectedSection] | None:
@@ -52,28 +51,25 @@ def detect_sections(text: str, doc_type: str) -> list[DetectedSection] | None:
     if not markers:
         return None
 
-    hits: list[tuple[int, str]] = []  # (start_offset_of_body, unit_type)
+    # (marker_start, body_start, unit_type): slicing bodies to the NEXT marker's
+    # START excludes that marker line by construction, so no marker text leaks and
+    # adjacent markers yield an empty body that is dropped below.
+    hits: list[tuple[int, int, str]] = []
     for unit_type, pattern in markers:
         for match in pattern.finditer(text):
-            hits.append((match.end(), unit_type))
+            hits.append((match.start(), match.end(), unit_type))
 
     if len(hits) < 2:
         return None
 
     hits.sort(key=lambda h: h[0])
     sections: list[DetectedSection] = []
-    for index, (body_start, unit_type) in enumerate(hits):
+    for index, (_marker_start, body_start, unit_type) in enumerate(hits):
         body_end = hits[index + 1][0] if index + 1 < len(hits) else len(text)
-        # trim the trailing marker line of the NEXT section off this body:
         body = text[body_start:body_end].strip()
-        if index + 1 < len(hits):
-            # cut the next marker's own line from the tail
-            body = body.rsplit("\n", 1)[0].strip() if "\n" in body else body
         if body:
             sections.append(
-                DetectedSection(
-                    unit_type=cast(ChunkUnitType, unit_type), text=body, order=index
-                )
+                DetectedSection(unit_type=cast(ChunkUnitType, unit_type), text=body)
             )
 
     return sections if len(sections) >= 2 else None

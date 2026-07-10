@@ -154,6 +154,18 @@ def test_build_chunks_multichunk_section_gets_unique_ordinal_ids(monkeypatch):
     assert relatorio_ids[0].endswith("_relatorio_0")
 
 
+def test_build_chunks_cross_item_same_identity_ids_are_unique():
+    # M1: two items sharing doc_id+page+unit_type in ONE call must not collide.
+    items = [
+        _item("doc_1", "peticao_inicial", "primeiro pedido de indenizacao."),
+        _item("doc_1", "peticao_inicial", "segundo pedido bem diferente."),
+    ]
+    chunks = build_chunks("caso", items)
+    ids = [c["chunk_id"] for c in chunks]
+    assert len(ids) == 2
+    assert len(ids) == len(set(ids))  # globally unique across items
+
+
 def test_build_chunks_skips_empty_text():
     assert build_chunks("caso", [_item("doc_1", "sentenca", "   ")]) == []
 

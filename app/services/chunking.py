@@ -1,5 +1,6 @@
 import re
 import warnings
+from typing import NamedTuple
 
 from app.schemas.case import ChunkUnitType, LegalChunk
 from app.services.markers import detect_sections, extract_acordao_metadata
@@ -28,8 +29,12 @@ class ParagraphChunker:
     strategy = "paragraph_v0.2"
 
     def __init__(
-        self, target_tokens=500, min_tokens=200, max_tokens=800, overlap_sentences=1
-    ):
+        self,
+        target_tokens: int = 500,
+        min_tokens: int = 200,
+        max_tokens: int = 800,
+        overlap_sentences: int = 1,
+    ) -> None:
         self.target_tokens = target_tokens
         self.min_tokens = min_tokens
         self.max_tokens = max_tokens
@@ -97,7 +102,7 @@ class ParagraphChunker:
 class StructuralChunker:
     strategy = "structural_v0.2"
 
-    def __init__(self, max_tokens=800):
+    def __init__(self, max_tokens: int = 800) -> None:
         self.max_tokens = max_tokens
         self._fallback = ParagraphChunker(max_tokens=max_tokens)
 
@@ -152,8 +157,19 @@ def build_chunk_id(
     return base if ordinal is None else f"{base}_{ordinal}"
 
 
+class _PieceRecord(NamedTuple):
+    item: dict
+    piece: dict
+    unit: ChunkUnitType
+    page: int
+    base_id: str
+
+
 def build_chunks(case_id: str, extracted_text: list[dict]) -> list[dict]:
-    out: list[dict] = []
+    # Pass 1: produce every piece with its identity context and count how many
+    # chunks share each bare id (doc_id+page+unit) ACROSS the whole call.
+    records: list[_PieceRecord] = []
+    base_counts: dict[str, int] = {}
     for item in extracted_text:
         text = str(item.get("text", "") or "").strip()
         if not text:
@@ -172,33 +188,49 @@ def build_chunks(case_id: str, extracted_text: list[dict]) -> list[dict]:
             fallback_unit = UNIT_TYPE_BY_DOC_TYPE.get(doc_type, "documento")
             pieces = chunker.chunk(text, unit_type=fallback_unit)
 
-        # conditional ordinal: only suffix when a (doc,page,unit) group has >1 chunk
-        by_unit: dict[str, int] = {}
-        for piece in pieces:
-            by_unit[piece["unit_type"]] = by_unit.get(piece["unit_type"], 0) + 1
-        seen: dict[str, int] = {}
         for piece in pieces:
             unit = piece["unit_type"]
-            multi = by_unit[unit] > 1
-            ordinal = seen.get(unit, 0) if multi else None
-            seen[unit] = seen.get(unit, 0) + 1
-            chunk = LegalChunk(
-                chunk_id=build_chunk_id(case_id, doc_id, page, unit, ordinal),
-                case_id=case_id,
-                doc_id=doc_id,
-                unit_type=unit,
-                text=piece["text"],
-                page_start=page,
-                page_end=page,
-                source=item.get("file_path"),
-                metadata={
-                    "doc_type": doc_type,
-                    "quality_score": item.get("quality_score"),
-                    "extraction_method": item.get("extraction_method"),
-                    **piece["metadata"],
-                },
-            )
-            out.append(chunk.model_dump())
+            base_id = build_chunk_id(case_id, doc_id, page, unit)
+            records.append(_PieceRecord(item, piece, unit, page, base_id))
+            base_counts[base_id] = base_counts.get(base_id, 0) + 1
+
+    # Pass 2: assign globally-unique ids. A bare id shared by >1 chunk (whether
+    # within one item or across items) is suffixed with an ordinal from _0; unique
+    # bare ids stay bare so exact-id assertions hold. A global set guards against
+    # any residual collision.
+    out: list[dict] = []
+    used_ids: set[str] = set()
+    per_base: dict[str, int] = {}
+    for item, piece, unit, page, base_id in records:
+        doc_id = item.get("doc_id", "doc_unknown")
+        doc_type = item.get("doc_type", "unknown")
+        if base_counts[base_id] > 1:
+            ordinal = per_base.get(base_id, 0)
+            chunk_id = build_chunk_id(case_id, doc_id, page, unit, ordinal)
+            while chunk_id in used_ids:
+                ordinal += 1
+                chunk_id = build_chunk_id(case_id, doc_id, page, unit, ordinal)
+            per_base[base_id] = ordinal + 1
+        else:
+            chunk_id = base_id
+        used_ids.add(chunk_id)
+        chunk = LegalChunk(
+            chunk_id=chunk_id,
+            case_id=case_id,
+            doc_id=doc_id,
+            unit_type=unit,
+            text=piece["text"],
+            page_start=page,
+            page_end=page,
+            source=item.get("file_path"),
+            metadata={
+                "doc_type": doc_type,
+                "quality_score": item.get("quality_score"),
+                "extraction_method": item.get("extraction_method"),
+                **piece["metadata"],
+            },
+        )
+        out.append(chunk.model_dump())
     return out
 
 
