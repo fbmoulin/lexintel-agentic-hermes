@@ -146,6 +146,11 @@ ChunkUnitType = Literal[
     "tese",
     "precedente_citado",
     "documento",
+    # Richer-chunking sections (unaccented, house style):
+    "fatos",
+    "direito",
+    "preliminares",
+    "merito",
 ]
 
 
