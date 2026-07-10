@@ -65,3 +65,21 @@ def test_schemas_declare_required_case_id():
     for schema in (schemas.LEX_INTAKE, schemas.LEX_RUN_PIPELINE):
         assert schema["parameters"]["required"] == ["case_id"]
         assert "case_id" in schema["parameters"]["properties"]
+
+
+def test_call_rejects_missing_case_id_without_calling_api(monkeypatch):
+    # The API requires case_id (min_length=1). The plugin must not send an empty
+    # default and let the API 422 — it rejects locally with a clear error and
+    # never touches the network. (Belt-and-suspenders behind the schema's
+    # required:[case_id]; see F2 in the 2026-07-10 premortem.)
+    calls = []
+    monkeypatch.setattr(
+        tools, "_post", lambda path, payload: calls.append(payload) or {"status": "ok"}
+    )
+
+    for handler in (tools.lex_intake, tools.lex_run_pipeline):
+        for bad_args in ({}, {"case_id": ""}, {"case_id": "   "}):
+            parsed = json.loads(handler(bad_args))
+            assert "case_id" in parsed["error"]
+
+    assert calls == []  # the API was never contacted

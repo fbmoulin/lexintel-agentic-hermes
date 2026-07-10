@@ -13,8 +13,14 @@
 > (`tests/test_orchestrator.py`) — only the *default* FIRAC mock emits empty
 > content, which is a mock-completeness note, not a wiring gap. M3 (per-area
 > recall@3 floor added to the eval gate + enforced). M4 (`CaseInput` now caps
-> `case_id` ≤128, `files` ≤200 items, each path ≤2048 chars). L1–L3 doc/claim
-> fixes pending. Full gate green: 83 passed / 2 skipped, ruff + mypy clean, eval exit 0.
+> `case_id` ≤128, `files` ≤200 items, each path ≤2048 chars). **L1–L3 doc/claim
+> fixes done** (branch `fix/review-followups-f2-l1-l3`): L1 README parity wording
+> now says "same retrieval code path, separate instance"; L2 `.env.example` marks
+> the SUPABASE/OPENAI/ANTHROPIC/GEMINI keys as unread phase-2 placeholders; L3
+> README+AGENTS lint commands include `integrations` (matching CI). A follow-up
+> premortem (`.premortems/PREMORTEM-2026-07-10*`) hardened F1/F3/F4 and deferred
+> then closed **F2** (the Hermes plugin now rejects an empty `case_id` locally
+> instead of sending `""`). Full gate green: 86 passed / 2 skipped, ruff + mypy clean, eval exit 0.
 
 ---
 

@@ -18,7 +18,7 @@ Este repositorio e o scaffold limpo v0.1 do Lex Kratos Agentic Core.
 pip install -r requirements.txt
 pip install -r requirements-dev.txt   # ruff, mypy, jsonschema (testes/lint)
 uvicorn app.main:app --reload
-ruff check app tests scripts && mypy app
+ruff check app tests scripts integrations && mypy app
 pytest
 python -m app.evals.run_eval
 ```

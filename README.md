@@ -87,7 +87,7 @@ Esse catálogo apenas lê arquivos locais em `app/skills/` e registra o estado d
 
 O runner local em `app/evals/run_eval.py` avalia o dataset dourado sem rede e sem Qdrant real.
 
-Ele pontua o **mesmo `MockVectorStore` que o endpoint `/rag/search` serve** (semeado com `golden_corpus.jsonl`, que inclui chunks distratores), valida o JSONL, agrupa casos por área e retorna `average_recall_at_1`, `average_recall_at_3`, `average_mrr`, `area_summary` e `passed`. O limiar mínimo atual exige 24 casos (6 por área), quatro áreas obrigatórias e médias globais `>= 0.85` para `recall@3` e MRR. O CLI encerra com erro quando `passed` é `false`.
+Ele pontua com o **mesmo caminho de recuperação que o endpoint `/rag/search` usa** — a mesma classe `MockVectorStore` (mesmo tokenizer e scoring), numa **instância própria** semeada com `golden_corpus.jsonl` (que inclui chunks distratores), não a instância singleton da API. Valida o JSONL, agrupa casos por área e retorna `average_recall_at_1`, `average_recall_at_3`, `average_mrr`, `area_summary` e `passed`. O limiar mínimo atual exige 24 casos (6 por área), quatro áreas obrigatórias e médias globais `>= 0.85` para `recall@3` e MRR. O CLI encerra com erro quando `passed` é `false`.
 
 ## Extração e normalização mockadas
 
@@ -127,7 +127,7 @@ Os comandos de aceite da v0.1 são:
 pip install -r requirements.txt
 pip install -r requirements-dev.txt   # ruff, mypy, jsonschema — necessários para testes/lint
 uvicorn app.main:app --reload
-ruff check app tests scripts && ruff format --check app tests scripts
+ruff check app tests scripts integrations && ruff format --check app tests scripts integrations
 mypy app
 pytest
 python -m app.evals.run_eval
