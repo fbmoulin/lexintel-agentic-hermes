@@ -20,6 +20,78 @@ def split_sentences(text: str) -> list[str]:
     return [part for part in parts if part]
 
 
+class ParagraphChunker:
+    """Token-budgeted fallback chunker. unit_type is supplied by the caller (D3)."""
+
+    strategy = "paragraph_v0.2"
+
+    def __init__(
+        self, target_tokens=500, min_tokens=200, max_tokens=800, overlap_sentences=1
+    ):
+        self.target_tokens = target_tokens
+        self.min_tokens = min_tokens
+        self.max_tokens = max_tokens
+        self.overlap_sentences = overlap_sentences
+
+    def chunk(self, text: str, unit_type: str) -> list[dict]:
+        text = text.strip()
+        if not text:
+            return []
+        paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
+        units = paragraphs or [text]
+
+        # Aggregate small paragraphs toward target; flush oversize via sentence split.
+        bodies: list[str] = []
+        buffer = ""
+        for para in units:
+            candidate = f"{buffer}\n\n{para}".strip() if buffer else para
+            if estimate_tokens(candidate) > self.max_tokens:
+                if buffer:
+                    bodies.append(buffer)
+                bodies.extend(self._split_oversized(para))
+                buffer = ""
+            elif estimate_tokens(candidate) >= self.target_tokens:
+                bodies.append(candidate)
+                buffer = ""
+            else:
+                buffer = candidate
+        if buffer:
+            bodies.append(buffer)
+
+        bodies = self._apply_overlap(bodies)
+        return [
+            {
+                "text": body,
+                "unit_type": unit_type,
+                "metadata": {"chunking_strategy": self.strategy},
+            }
+            for body in bodies
+        ]
+
+    def _split_oversized(self, para: str) -> list[str]:
+        sentences = split_sentences(para)
+        out, buffer = [], ""
+        for sentence in sentences:
+            candidate = f"{buffer} {sentence}".strip()
+            if buffer and estimate_tokens(candidate) > self.max_tokens:
+                out.append(buffer)
+                buffer = sentence
+            else:
+                buffer = candidate
+        if buffer:
+            out.append(buffer)
+        return out or [para]
+
+    def _apply_overlap(self, bodies: list[str]) -> list[str]:
+        if self.overlap_sentences <= 0 or len(bodies) < 2:
+            return bodies
+        result = [bodies[0]]
+        for previous, current in zip(bodies, bodies[1:]):
+            tail = split_sentences(previous)[-self.overlap_sentences :]
+            result.append(f"[...] {' '.join(tail)} {current}".strip())
+        return result
+
+
 UNIT_TYPE_BY_DOC_TYPE: dict[str, ChunkUnitType] = {
     "peticao_inicial": "pedido",
     "contestacao": "contestacao",
