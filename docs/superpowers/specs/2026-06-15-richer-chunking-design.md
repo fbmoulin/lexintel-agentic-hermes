@@ -1,6 +1,6 @@
 # Richer Chunking Design Spec
 
-> **Status:** Approved
+> **Status:** Implemented (2026-07-10) — see `docs/superpowers/plans/2026-07-10-richer-chunking.md` for the executed plan and its D1–D5/R1 deviations (unaccented unit types, Pydantic not dataclass, conditional-ordinal chunk ids, etc.).
 > **Date:** 2026-06-15
 > **Baseline:** master @ `d261e40`, 77 tests, v0.3
 
