@@ -44,7 +44,12 @@ class IndexingAgent:
         try:
             index_result = self.vector_store.upsert(chunks)
         except Exception:
-            # Log full detail server-side; surface a generic, client-safe message.
+            # Indexing is best-effort: the RAG index serves FUTURE retrieval, not
+            # this case's downstream FIRAC analysis (which reads the normalizer
+            # output). An upsert failure therefore degrades to a review-flagged
+            # WARNING — it must not halt the pipeline nor stamp the whole run
+            # "failed". Full detail is logged server-side; the surfaced message
+            # is generic and client-safe (no raw exception / path leak).
             logger.exception("Indexing upsert failed for case %s", case_id)
             summary = IndexingSummary(
                 vector_backend=self.vector_store.backend_name,
@@ -57,14 +62,16 @@ class IndexingAgent:
             return AgentResult(
                 case_id=case_id,
                 agent_name=self.name,
-                status="failed",
+                status="warning",
                 output={
                     **summary.model_dump(),
                     "chunks": chunks,
                     "index_result": None,
+                    "requires_human_review": True,
                     "external_use_allowed": False,
                 },
-                errors=["Erro interno na indexação."],
+                warnings=["Falha na indexação mockada; revisão humana recomendada."],
+                requires_human_review=True,
                 external_use_allowed=False,
             )
 

@@ -135,7 +135,10 @@ def test_indexing_agent_marks_empty_chunks_for_review():
     assert result.output["indexed_count"] == 0
 
 
-def test_indexing_agent_returns_failed_result_on_upsert_error():
+def test_indexing_agent_returns_warning_result_on_upsert_error():
+    # Indexing is best-effort: the RAG index serves future retrieval, not this
+    # case's FIRAC analysis. An upsert failure degrades to a review-flagged
+    # WARNING (not a hard failure) so the legal analysis still completes.
     class FailingVectorStore:
         backend_name = "mock"
 
@@ -155,11 +158,15 @@ def test_indexing_agent_returns_failed_result_on_upsert_error():
         EXTRACTED_TEXT,
     )
 
-    assert result.status == "failed"
+    assert result.status == "warning"
+    assert result.requires_human_review is True
     assert result.output["indexed_count"] == 0
     assert result.output["skipped_count"] == 2
     # Generic, client-safe message — raw exception text must not leak.
-    assert result.errors == ["Erro interno na indexação."]
+    assert result.warnings == [
+        "Falha na indexação mockada; revisão humana recomendada."
+    ]
+    assert result.errors == []
 
 
 def test_get_vector_store_defaults_to_mock(monkeypatch):

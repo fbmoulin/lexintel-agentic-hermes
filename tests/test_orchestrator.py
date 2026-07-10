@@ -94,13 +94,16 @@ class _FailingUpsertStore:
         return []
 
 
-def test_failed_indexing_propagates_without_halting():
+def test_failed_indexing_degrades_to_warning_without_halting():
     orchestrator = CaseOrchestrator()
     orchestrator.indexing_agent = IndexingAgent(vector_store=_FailingUpsertStore())
 
     result = orchestrator.run_full_mock(_case())
 
-    # "failed" is a soft failure: it surfaces but does not halt the pipeline.
-    assert result["status"] == "failed"
+    # Indexing is best-effort: an upsert failure surfaces as a review-flagged
+    # WARNING, does not halt the pipeline, and does not stamp the whole run
+    # "failed" (the legal analysis downstream is unaffected by a broken index).
+    assert result["status"] == "warning"
+    assert result["requires_human_review"] is True
     completed = [entry["agent_name"] for entry in result["trace"]]
     assert completed[-1] == "ValidatorAgent"
