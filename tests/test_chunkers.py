@@ -1,3 +1,5 @@
+import warnings as _warnings
+
 import pytest
 from pydantic import ValidationError
 
@@ -6,6 +8,7 @@ from app.services.chunking import (
     ParagraphChunker,
     StructuralChunker,
     build_chunks,
+    chunk_extracted_text,
     estimate_tokens,
     get_chunker,
     split_sentences,
@@ -153,3 +156,19 @@ def test_build_chunks_multichunk_section_gets_unique_ordinal_ids(monkeypatch):
 
 def test_build_chunks_skips_empty_text():
     assert build_chunks("caso", [_item("doc_1", "sentenca", "   ")]) == []
+
+
+def test_chunk_extracted_text_is_deprecated_but_delegates():
+    item = {
+        "doc_id": "doc_1",
+        "doc_type": "peticao_inicial",
+        "text": "texto curto",
+        "file_path": "a.pdf",
+        "page": 1,
+        "quality_score": 0.9,
+    }
+    with _warnings.catch_warnings(record=True) as caught:
+        _warnings.simplefilter("always")
+        result = chunk_extracted_text("caso", [item])
+    assert any(issubclass(w.category, DeprecationWarning) for w in caught)
+    assert result == build_chunks("caso", [item])

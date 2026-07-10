@@ -47,8 +47,7 @@ def test_chunk_extracted_text_generates_deterministic_legal_chunks():
         "contestacao",
     ]
     assert all(
-        chunk["metadata"]["chunking_strategy"] == "legal_unit_mock_v0.1"
-        for chunk in chunks
+        chunk["metadata"]["chunking_strategy"] == "paragraph_v0.2" for chunk in chunks
     )
 
 
