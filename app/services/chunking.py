@@ -123,6 +123,13 @@ class StructuralChunker:
         return chunks
 
 
+def get_chunker(text: str, doc_type: str) -> StructuralChunker | ParagraphChunker:
+    sections = detect_sections(text, doc_type)
+    if sections and len(sections) >= 2:
+        return StructuralChunker()
+    return ParagraphChunker()
+
+
 UNIT_TYPE_BY_DOC_TYPE: dict[str, ChunkUnitType] = {
     "peticao_inicial": "pedido",
     "contestacao": "contestacao",

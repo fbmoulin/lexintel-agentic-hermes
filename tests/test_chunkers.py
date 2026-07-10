@@ -6,6 +6,7 @@ from app.services.chunking import (
     ParagraphChunker,
     StructuralChunker,
     estimate_tokens,
+    get_chunker,
     split_sentences,
 )
 from tests.test_markers import ACORDAO_HEADER, SENTENCA
@@ -104,3 +105,17 @@ def test_structural_chunker_acordao_attaches_metadata_to_all_chunks():
         c["metadata"]["acordao"]["relator"] == "Desembargador Fulano de Tal"
         for c in chunks
     )
+
+
+def test_get_chunker_returns_structural_when_markers_present():
+    assert isinstance(get_chunker(SENTENCA, "sentenca"), StructuralChunker)
+
+
+def test_get_chunker_returns_paragraph_without_markers():
+    assert isinstance(
+        get_chunker("texto plano sem cabecalhos", "sentenca"), ParagraphChunker
+    )
+
+
+def test_get_chunker_paragraph_for_unknown_doc_type():
+    assert isinstance(get_chunker(SENTENCA, "algo"), ParagraphChunker)
