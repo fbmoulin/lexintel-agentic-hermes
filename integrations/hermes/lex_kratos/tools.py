@@ -50,8 +50,14 @@ def _post(path: str, payload: dict) -> dict:
 
 
 def _call(path: str, args: dict) -> str:
+    payload = _case_payload(args)
+    # The API requires case_id (min_length=1). Reject an empty/missing one
+    # locally with a clear message instead of sending "" and letting the API
+    # 422 — the tool schema marks case_id required, so this is a defensive net.
+    if not str(payload["case_id"]).strip():
+        return json.dumps({"error": "case_id é obrigatório."}, ensure_ascii=False)
     try:
-        result = _post(path, _case_payload(args))
+        result = _post(path, payload)
         return json.dumps(result, ensure_ascii=False)
     except urllib.error.HTTPError as exc:
         try:
