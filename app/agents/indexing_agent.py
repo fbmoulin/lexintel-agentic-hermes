@@ -2,7 +2,7 @@ import logging
 from typing import cast, get_args
 
 from app.schemas.case import AgentResult, ChunkUnitType, IndexingSummary
-from app.services.chunking import chunk_extracted_text
+from app.services.chunking import build_chunks
 from app.services.qdrant_service import is_qdrant_enabled
 from app.services.vector_store import VectorStore, get_vector_store
 
@@ -35,7 +35,7 @@ class IndexingAgent:
         )
 
     def run(self, case_id: str, extracted_text: list[dict]) -> AgentResult:
-        chunks = chunk_extracted_text(case_id, extracted_text)
+        chunks = build_chunks(case_id, extracted_text)
         warnings = []
 
         if not chunks:
