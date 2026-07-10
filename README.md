@@ -97,7 +97,7 @@ Documento não classificado recebe baixa qualidade mockada, bloqueia automação
 
 ## Indexação e busca mockadas
 
-O `IndexingAgent` gera chunks jurídicos determinísticos e indexa em `MockVectorStore`. O endpoint `/rag/search` usa esse store mockado por padrão, reutilizando a instância em memória para que chunks indexados no pipeline possam ser buscados em chamadas seguintes.
+O `IndexingAgent` gera chunks jurídicos determinísticos e indexa em `MockVectorStore`. A chunking é **estrutural**: `get_chunker()` detecta seções jurídicas (RELATÓRIO/FUNDAMENTAÇÃO/DISPOSITIVO em sentença; EMENTA/RELATÓRIO/VOTO/DISPOSITIVO em acórdão; DOS FATOS/DO DIREITO/DOS PEDIDOS em petição; DAS PRELIMINARES/DO MÉRITO/DOS PEDIDOS em contestação) e emite um chunk por seção via `StructuralChunker`, com fallback para `ParagraphChunker` (orçamento de tokens + overlap de 1 sentença) quando não há marcadores. A extração mockada (`MockExtractor` em `app/services/extraction.py`, atrás da interface `Extractor`) produz o texto estruturado; a função legada `chunk_extracted_text()` está **deprecada** em favor de `build_chunks()`. O endpoint `/rag/search` usa esse store mockado por padrão, reutilizando a instância em memória para que chunks indexados no pipeline possam ser buscados em chamadas seguintes.
 
 Por padrão o Qdrant real permanece desligado (`LEX_KRATOS_ENABLE_QDRANT=false`). Para ligar a recuperação semântica real, veja a seção abaixo.
 

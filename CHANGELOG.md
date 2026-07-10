@@ -4,6 +4,29 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ## [Não lançado]
 
+### Adicionado
+
+- **Chunking estrutural jurídico** (`app/services/chunking.py`, `app/services/markers.py`).
+  `detect_sections()` reconhece seções por tipo documental (sentença, acórdão,
+  petição inicial, contestação) e `StructuralChunker` emite um chunk por seção;
+  `ParagraphChunker` (fallback) agrega/divide por orçamento de tokens com overlap
+  de 1 sentença; `get_chunker()` escolhe a estratégia. Metadados de acórdão
+  (órgão julgador, relator, número, tipo de recurso, data de publicação) são
+  anexados a todos os chunks. Quatro novos `ChunkUnitType`: `fatos`, `direito`,
+  `preliminares`, `merito` (não acentuados, house style).
+- **Interface de extração** (`app/services/extraction.py`): protocolo `Extractor`,
+  modelo Pydantic `ExtractedDocument` e `MockExtractor` com templates
+  marker-rich por `doc_type` — o `ExtractionAgent` passa a consumir esse texto.
+
+### Alterado
+
+- `IndexingAgent` usa `build_chunks()` (structural/paragraph) no lugar do antigo
+  um-chunk-por-documento. `chunk_extracted_text()` mantida como wrapper
+  **deprecado** (emite `DeprecationWarning`, delega para `build_chunks()`).
+- `build_chunk_id()` ganha um ordinal **condicional** (só quando um grupo
+  `(doc, página, unit_type)` gera mais de um chunk), evitando colisão de id e
+  perda silenciosa de chunk no `upsert`.
+
 ## [0.3.0] — 2026-06-14
 
 Recuperação semântica real opcional (PR #17, merge `6d06566`). 71 → **77 testes**

@@ -3,37 +3,16 @@ from app.schemas.case import (
     ExtractedText,
     ExtractionQualitySummary,
 )
+from app.services.extraction import Extractor, MockExtractor
 
-MOCK_TEXT_BY_DOC_TYPE = {
-    "peticao_inicial": (
-        "Petição inicial mockada. Autor: Consumidor Alfa. Réu: Banco Beta. "
-        "Fatos: fraude bancária via pix. Pedido: indenização por dano moral "
-        "e material. Provas: comprovante de transferência e boletim de ocorrência."
-    ),
-    "contestacao": (
-        "Contestação mockada. Réu Banco Beta apresenta defesa de culpa "
-        "exclusiva de terceiro e ausência de falha do serviço. Provas: logs "
-        "de autenticação e termos de uso."
-    ),
-    "sentenca": (
-        "Sentença mockada. Juízo de primeiro grau julga parcialmente "
-        "procedentes os pedidos e reconhece falha na prestação do serviço. "
-        "Evento processual: sentença publicada."
-    ),
-    "acordao": (
-        "Acórdão mockado. Tribunal mantém a sentença e reforça a aplicação "
-        "da responsabilidade objetiva em fraude bancária. Evento processual: "
-        "julgamento colegiado."
-    ),
-    "unknown": (
-        "Documento mockado não classificado. Conteúdo insuficiente para "
-        "extração jurídica confiável."
-    ),
-}
+_KNOWN_DOC_TYPES = {"peticao_inicial", "contestacao", "sentenca", "acordao"}
 
 
 class ExtractionAgent:
     name = "ExtractionAgent"
+
+    def __init__(self, extractor: Extractor | None = None):
+        self._extractor = extractor or MockExtractor()
 
     def run(self, case_id: str, documents: list[dict]) -> AgentResult:
         extracted = []
@@ -46,7 +25,7 @@ class ExtractionAgent:
 
         for doc in documents:
             doc_type = doc.get("doc_type", "unknown")
-            if doc_type not in MOCK_TEXT_BY_DOC_TYPE:
+            if doc_type not in _KNOWN_DOC_TYPES:
                 doc_type = "unknown"
 
             quality_score = 0.92 if doc_type != "unknown" else 0.68
@@ -64,7 +43,7 @@ class ExtractionAgent:
                 file_path=doc.get("file_path") or "",
                 doc_type=doc_type,
                 page=1,
-                text=MOCK_TEXT_BY_DOC_TYPE[doc_type],
+                text=self._extractor.extract(doc.get("file_path") or "", doc_type).text,
                 quality_score=quality_score,
                 warnings=page_warnings,
             )
