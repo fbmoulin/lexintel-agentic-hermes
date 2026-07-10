@@ -118,6 +118,46 @@ def test_eval_threshold_overrides_can_be_partial():
     ]
 
 
+def test_eval_gate_enforces_per_area_floor():
+    """A whole area failing recall@3 must fail the gate even when the GLOBAL
+    average still clears 0.85 — a strong area must not mask a broken one."""
+    from app.evals.run_eval import DEFAULT_THRESHOLDS, evaluate_thresholds
+
+    # 4 areas x 6 cases. One area at recall@3=0.4, the rest perfect ->
+    # global average = (6*0.4 + 18*1.0)/24 = 0.85 (clears the GLOBAL gate),
+    # but "bancario" is below the 0.85 per-area floor.
+    scores = []
+    for area, recall_at_3 in [
+        ("bancario", 0.4),
+        ("consumidor", 1.0),
+        ("processual_civil", 1.0),
+        ("saude", 1.0),
+    ]:
+        for index in range(6):
+            scores.append(
+                {
+                    "id": f"{area}_{index}",
+                    "area": area,
+                    "recall_at_3": recall_at_3,
+                    "mrr": 1.0,
+                }
+            )
+
+    failures = evaluate_thresholds(scores, DEFAULT_THRESHOLDS)
+
+    metrics = {failure["metric"] for failure in failures}
+    assert "average_recall_at_3" not in metrics  # global gate clears at 0.85
+    assert "per_area_recall_at_3" in metrics
+    area_failure = next(
+        failure for failure in failures if failure["metric"] == "per_area_recall_at_3"
+    )
+    assert area_failure["area"] == "bancario"
+
+
+def test_eval_default_thresholds_include_per_area_floor():
+    assert run()["thresholds"]["min_per_area_recall_at_3"] == 0.85
+
+
 def test_eval_thresholds_do_not_reuse_default_mutable_values():
     result = run()
     result["thresholds"]["required_areas"].append("mutated")

@@ -14,6 +14,9 @@ DEFAULT_THRESHOLDS = {
     "min_dataset_size": 24,
     "min_average_recall_at_3": 0.85,
     "min_average_mrr": 0.85,
+    # Per-area floor: a strong area must not mask a broken one behind the global
+    # average. Each required area must clear this recall@3 on its own.
+    "min_per_area_recall_at_3": 0.85,
     "required_areas": [
         "bancario",
         "consumidor",
@@ -395,6 +398,23 @@ def evaluate_thresholds(scores: list[dict], thresholds: dict) -> list[dict]:
                 "actual": average_mrr,
             }
         )
+
+    per_area_floor = thresholds.get("min_per_area_recall_at_3")
+    if per_area_floor is not None:
+        recall_by_area: dict[str, list[float]] = {}
+        for score in scores:
+            recall_by_area.setdefault(score["area"], []).append(score["recall_at_3"])
+        for area in sorted(recall_by_area):
+            area_recall_at_3 = average(recall_by_area[area])
+            if area_recall_at_3 < per_area_floor:
+                failures.append(
+                    {
+                        "metric": "per_area_recall_at_3",
+                        "area": area,
+                        "expected_minimum": per_area_floor,
+                        "actual": area_recall_at_3,
+                    }
+                )
 
     return failures
 

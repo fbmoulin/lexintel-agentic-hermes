@@ -1,13 +1,18 @@
-from typing import Any, Literal, Optional
+from typing import Annotated, Any, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
 
 class CaseInput(BaseModel):
-    case_id: str
+    # Bounds cap the unauthenticated pipeline's input surface: case_id + every
+    # file string are concatenated and regex-scanned by the SecurityAgent, so
+    # unbounded input is a DoS vector. Reject oversized payloads at the edge.
+    case_id: str = Field(min_length=1, max_length=128)
     source_type: Literal["pdf", "datajud", "manual", "drive", "pje_export"]
     user_goal: Literal["minuta", "analise", "triagem", "jurimetria", "relatorio"]
-    files: list[str] = Field(default_factory=list)
+    files: list[Annotated[str, Field(max_length=2048)]] = Field(
+        default_factory=list, max_length=200
+    )
 
 
 class AgentResult(BaseModel):
