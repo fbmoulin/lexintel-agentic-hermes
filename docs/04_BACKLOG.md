@@ -82,9 +82,9 @@
 - [x] QdrantService inicial.
 - [x] Chunking jurídico.
 - [x] IndexingAgent.
-- [ ] HybridRetrievalAgent.
-- [ ] RerankerService.
-- [ ] Métricas retrieval.
+- [x] HybridRetrievalAgent.
+- [~] RerankerService (parcial: fusão RRF é o rerank; cross-encoder adiado).
+- [x] Métricas retrieval.
 - [x] Feature flag para Qdrant real.
 - [x] MockVectorStore para testes sem container.
 

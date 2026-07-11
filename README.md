@@ -1,6 +1,6 @@
-# Lex Kratos Agentic Core — v0.4
+# Lex Kratos Agentic Core — v0.5
 
-Este repositório consolida o núcleo jurídico agentico local do Lex Kratos. O núcleo permanece intencionalmente pequeno e auditável — FastAPI, agentes mockados, testes automatizados, dataset de avaliação e documentação de execução — mas já cresceu além do scaffold inicial: recuperação semântica real opcional com Qdrant (desligada por padrão) e chunking estrutural jurídico. A suíte tem **123 testes** (+2 de integração pulados por padrão).
+Este repositório consolida o núcleo jurídico agentico local do Lex Kratos. O núcleo permanece intencionalmente pequeno e auditável — FastAPI, agentes mockados, testes automatizados, dataset de avaliação e documentação de execução — mas já cresceu além do scaffold inicial: recuperação híbrida jurídica (BM25 + fusão RRF, mock-first, Qdrant opcional), recuperação semântica real opcional com Qdrant (desligada por padrão) e chunking estrutural jurídico. A suíte tem **149 testes** (+2 de integração pulados por padrão).
 
 ## Fronteira de escopo
 
@@ -22,7 +22,7 @@ Criar uma esteira jurídica auditável, inicialmente mockada, para:
 - segurança contra prompt injection;
 - avaliação contínua por métricas.
 
-Indexação vetorial, busca híbrida real, pesquisa jurisprudencial real e geração de minuta ficam para fases posteriores com autorização explícita.
+A busca híbrida (BM25 + fusão RRF) já está implementada como `HybridRetrievalAgent`, mock-first, com o lado denso real acionável apenas via Qdrant opcional. Pesquisa jurisprudencial real e geração de minuta ficam para fases posteriores com autorização explícita.
 
 ## Decisão arquitetural central
 
@@ -39,7 +39,7 @@ Criar um orquestrador simples com agentes especializados:
 7. FIRACAgent
 8. ValidatorAgent
 
-Agentes como HybridRetrievalAgent, JurisprudenceAgent, DraftingAgent e EvaluationAgent permanecem planejados para fases futuras.
+O `HybridRetrievalAgent` (busca híbrida BM25 + fusão RRF) já está implementado e roda entre `IndexingAgent` e `FIRACAgent`. Agentes como JurisprudenceAgent, DraftingAgent e EvaluationAgent permanecem planejados para fases futuras.
 
 ## Como começar
 
@@ -87,7 +87,7 @@ Esse catálogo apenas lê arquivos locais em `app/skills/` e registra o estado d
 
 O runner local em `app/evals/run_eval.py` avalia o dataset dourado sem rede e sem Qdrant real.
 
-Ele pontua com o **mesmo caminho de recuperação que o endpoint `/rag/search` usa** — a mesma classe `MockVectorStore` (mesmo tokenizer e scoring), numa **instância própria** semeada com `golden_corpus.jsonl` (que inclui chunks distratores), não a instância singleton da API. Valida o JSONL, agrupa casos por área e retorna `average_recall_at_1`, `average_recall_at_3`, `average_mrr`, `area_summary` e `passed`. O limiar mínimo atual exige 24 casos (6 por área), quatro áreas obrigatórias e médias globais `>= 0.85` para `recall@3` e MRR. O CLI encerra com erro quando `passed` é `false`.
+Ele pontua com o **mesmo recuperador híbrido de referência que serve `/rag/search`** — `build_hybrid_eval_store` (fusão RRF de BM25 + Mock token-overlap, um ensemble léxico; o lado denso só entra com `QDRANT_ENABLED=1`), numa **instância própria** semeada com `golden_corpus.jsonl` (que inclui chunks distratores), não a instância singleton da API. Valida o JSONL, agrupa casos por área e retorna `retriever`, `average_recall_at_1`, `average_recall_at_3`, `average_mrr`, `area_summary` e `passed`. O limiar mínimo atual exige 24 casos (6 por área), quatro áreas obrigatórias, `recall@3 >= 0.85`, `recall@1 >= 0.9375` e MRR `>= 1.0` (pisos de não-regressão ancorados no baseline dourado do Mock, que o híbrido iguala). O CLI encerra com erro quando `passed` é `false`.
 
 ## Extração e normalização mockadas
 
