@@ -27,7 +27,9 @@ class HybridRetrievalAgent:
         self._rrf_k = rrf_k
         self._candidate_k = candidate_k
 
-    def search(self, query: str, top_k: int = 5, filters: dict | None = None) -> list[dict]:
+    def search(
+        self, query: str, top_k: int = 5, filters: dict | None = None
+    ) -> list[dict]:
         depth = max(top_k, self._candidate_k)
         rankings = [
             retriever.search(query, top_k=depth, filters=filters)
@@ -105,7 +107,9 @@ class HybridRetrievalAgent:
         )
 
 
-def build_default_hybrid_agent(store: VectorStore | None = None) -> HybridRetrievalAgent:
+def build_default_hybrid_agent(
+    store: VectorStore | None = None,
+) -> HybridRetrievalAgent:
     """Assemble the default hybrid agent from the active vector store.
 
     Offline (default): RRF(BM25, Mock token-overlap) — an ensemble of two

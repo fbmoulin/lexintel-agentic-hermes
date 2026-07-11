@@ -186,7 +186,13 @@ def test_eval_per_area_gate_is_not_silently_skippable():
         if key != "min_per_area_recall_at_3"
     }
     scores = [
-        {"id": "a", "area": "bancario", "recall_at_1": 1.0, "recall_at_3": 1.0, "mrr": 1.0}
+        {
+            "id": "a",
+            "area": "bancario",
+            "recall_at_1": 1.0,
+            "recall_at_3": 1.0,
+            "mrr": 1.0,
+        }
     ]
 
     with pytest.raises(KeyError):

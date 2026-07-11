@@ -1,7 +1,6 @@
 from fastapi.testclient import TestClient
 
 from app.agents import retrieval_agent
-from app.api import rag as rag_api
 from app.main import app
 from app.services.vector_store import reset_mock_vector_store
 

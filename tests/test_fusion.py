@@ -6,8 +6,8 @@ def _ctx(chunk_id):
 
 
 def test_fuses_two_rankings_by_reciprocal_rank():
-    a = [_ctx("x"), _ctx("y"), _ctx("z")]   # ranks 1,2,3
-    b = [_ctx("y"), _ctx("x")]              # ranks 1,2
+    a = [_ctx("x"), _ctx("y"), _ctx("z")]  # ranks 1,2,3
+    b = [_ctx("y"), _ctx("x")]  # ranks 1,2
     fused = reciprocal_rank_fusion([a, b], k=60)
     # y: 1/62 + 1/61 ; x: 1/61 + 1/62  -> equal score, tie-break by chunk_id -> x before y
     assert [c["chunk_id"] for c in fused[:2]] == ["x", "y"]

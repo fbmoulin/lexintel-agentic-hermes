@@ -64,7 +64,9 @@ def test_agent_registry_is_valid_and_links_skills():
 def test_hybrid_retrieval_agent_is_implemented_and_importable():
     from app.agents.registry import list_agent_registry, validate_agent_registry
 
-    entry = next(a for a in list_agent_registry() if a["agent_name"] == "HybridRetrievalAgent")
+    entry = next(
+        a for a in list_agent_registry() if a["agent_name"] == "HybridRetrievalAgent"
+    )
     assert entry["status"] == "implemented"
     assert entry["class_importable"] is True
     assert validate_agent_registry()["valid"] is True

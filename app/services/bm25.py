@@ -26,7 +26,9 @@ class BM25Retriever:
         ]
         self._doc_tokens = [Counter(_tokenize(chunk["text"])) for chunk in self._chunks]
         self._doc_len = [sum(counter.values()) for counter in self._doc_tokens]
-        self._avgdl = (sum(self._doc_len) / len(self._doc_len)) if self._doc_len else 0.0
+        self._avgdl = (
+            (sum(self._doc_len) / len(self._doc_len)) if self._doc_len else 0.0
+        )
         self._idf = self._compute_idf()
 
     def _compute_idf(self) -> dict[str, float]:
@@ -49,15 +51,21 @@ class BM25Retriever:
             if tf == 0:
                 continue
             idf = self._idf.get(term, 0.0)
-            denom = tf + self._k1 * (1 - self._b + self._b * length / (self._avgdl or 1))
+            denom = tf + self._k1 * (
+                1 - self._b + self._b * length / (self._avgdl or 1)
+            )
             score += idf * (tf * (self._k1 + 1)) / denom
         return score
 
     @staticmethod
     def _matches_filters(chunk: dict, filters: dict) -> bool:
-        return all(chunk["metadata"].get(key) == value for key, value in filters.items())
+        return all(
+            chunk["metadata"].get(key) == value for key, value in filters.items()
+        )
 
-    def search(self, query: str, top_k: int = 5, filters: dict | None = None) -> list[dict]:
+    def search(
+        self, query: str, top_k: int = 5, filters: dict | None = None
+    ) -> list[dict]:
         query_tokens = list(_tokenize(query))
         scored = []
         for index, chunk in enumerate(self._chunks):
@@ -67,4 +75,7 @@ class BM25Retriever:
             if score > 0:
                 scored.append((score, chunk))
         scored.sort(key=lambda item: (-item[0], item[1]["chunk_id"]))
-        return [build_retrieved_context(chunk, score, "bm25") for score, chunk in scored[:top_k]]
+        return [
+            build_retrieved_context(chunk, score, "bm25")
+            for score, chunk in scored[:top_k]
+        ]

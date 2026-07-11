@@ -1,17 +1,18 @@
 """Empirical acceptance gate (spec §7): the hybrid retriever must MEET OR BEAT
 the Mock golden baseline, not merely clear the 0.85 threshold. If this fails,
 the hybrid is a quality regression — stop and replan before wiring."""
+
 from statistics import mean
 
 from app.agents.retrieval_agent import HybridRetrievalAgent
-from app.services.bm25 import BM25Retriever
-from app.services.vector_store import MockVectorStore
 from app.evals.run_eval import (
     build_eval_store,
     evaluate_item,
     load_corpus,
     load_dataset,
 )
+from app.services.bm25 import BM25Retriever
+from app.services.vector_store import MockVectorStore
 
 # Mock golden baseline documented in docs/10_RAG_EVAL_CONTRACT.md.
 BASELINE_RECALL_AT_1 = 0.9375

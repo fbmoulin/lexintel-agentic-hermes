@@ -19,7 +19,11 @@ def reciprocal_rank_fusion(rankings: list[list[dict]], k: int = 60) -> list[dict
             contribution = 1.0 / (k + rank)
             fused_score[chunk_id] = fused_score.get(chunk_id, 0.0) + contribution
             detail.setdefault(chunk_id, []).append(
-                {"ranker": ranker_index, "rank": rank, "contribution": round(contribution, 6)}
+                {
+                    "ranker": ranker_index,
+                    "rank": rank,
+                    "contribution": round(contribution, 6),
+                }
             )
             if chunk_id not in representative:
                 representative[chunk_id] = deepcopy(ctx)
