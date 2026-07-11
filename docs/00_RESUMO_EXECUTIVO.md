@@ -1,13 +1,19 @@
 # Resumo Executivo
 
-> **Status v0.4 (2026-07-10):** sobre a v0.3 (recuperação semântica real
-> opcional com Qdrant, PR #17), a v0.4 adiciona um ciclo de revisão + premortem
-> (PRs #18–#20: indexação best-effort, piso de recall@3 por área, caps de
-> entrada em `CaseInput`, tag `index_status`, hardening do plugin Hermes) e
-> **chunking estrutural jurídico** (PR #21: `StructuralChunker`/`ParagraphChunker`,
-> interface `Extractor`/`MockExtractor`). **123 testes** (+2 de integração
-> pulados por padrão); nenhum achado CRITICAL/HIGH na revisão completa. Detalhes
-> em `CHANGELOG.md`, `docs/audits/2026-07-09-full-review.md` e `docs/superpowers/`.
+> **Status v0.5 (2026-07-11):** sobre a v0.4, a v0.5 adiciona **busca híbrida
+> jurídica** (PR #22): `BM25Retriever` (Okapi, esparso) + `reciprocal_rank_fusion`
+> (RRF) compostos no `HybridRetrievalAgent`, agora o **retriever de registro
+> único** em `/rag/search`, no passo `retrieval` do pipeline (trace-v0.3, entre
+> indexação e FIRAC; FIRAC ainda não é alimentado) e na avaliação (thresholds de
+> não-regressão recall@1≥0.9375, MRR≥1.0). Offline funde dois sinais léxicos
+> (BM25 + token-overlap do Mock); o lado denso (Qdrant) só participa com
+> `QDRANT_ENABLED`. **150 testes** (+2 de integração pulados por padrão). Detalhes
+> em `CHANGELOG.md`, `docs/10_RAG_EVAL_CONTRACT.md` e `docs/08_TRACE_CONTRACT.md`.
+>
+> _Histórico v0.4 (2026-07-10):_ ciclo de revisão + premortem (PRs #18–#20:
+> indexação best-effort, piso de recall@3 por área, caps de entrada, tag
+> `index_status`) e chunking estrutural jurídico (PR #21). 77→123 testes; nenhum
+> achado CRITICAL/HIGH na revisão completa.
 >
 > _Histórico v0.3 (2026-06-14):_ sobre a v0.2 (otimização pós-revisão —
 > avaliação RAG religada ao recuperador servido com distratores, `blocked`

@@ -157,13 +157,17 @@ Qdrant real com busca vetorial.
 
 ### v0.4
 
-Busca híbrida + reranker.
+Revisão + premortem + chunking estrutural (entregue).
 
 ### v0.5
 
-FIRAC+ e minuta com validação.
+Busca híbrida (BM25 + RRF fusion) — entregue (PR #22). Reranker cross-encoder adiado.
 
 ### v0.6
+
+FIRAC+ e minuta com validação.
+
+### v0.7
 
 n8n + Google Drive + Google Docs/Sheets.
 

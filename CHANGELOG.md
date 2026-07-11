@@ -4,6 +4,45 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ## [Não lançado]
 
+## [0.5.0] — 2026-07-11
+
+Busca híbrida jurídica (P6, PR #22). 123 → **150 testes**. Base:
+`docs/superpowers/specs/2026-07-10-hybrid-retrieval-design.md`,
+`docs/superpowers/plans/2026-07-10-hybrid-retrieval.md`, `docs/10_RAG_EVAL_CONTRACT.md`.
+
+### Adicionado
+
+- **Busca híbrida** (`app/services/bm25.py`, `app/services/fusion.py`,
+  `app/agents/retrieval_agent.py`): `BM25Retriever` (Okapi, esparso, puro Python,
+  reutiliza `_tokenize`), `reciprocal_rank_fusion` (RRF, com `fusion_detail` de
+  auditoria) e `HybridRetrievalAgent` (`search()` + `run()` + factory
+  `build_default_hybrid_agent()`). Offline funde BM25 + token-overlap do Mock
+  (ensemble de dois sinais léxicos); o lado denso (Qdrant) participa apenas com
+  `QDRANT_ENABLED`.
+- **Passo `retrieval` no pipeline** (`trace-v0.3`), entre indexação e FIRAC,
+  best-effort (nunca bloqueia; falha degrada a `warning`), grava
+  `retrieved_context[]` + `precedent_count`/`requested_top_k`/`own_case_excluded_count`.
+  FIRAC ainda não recebe o contexto (adiado).
+- **Gate empírico de não-regressão** (`tests/test_hybrid_eval_gate.py`): o híbrido
+  deve igualar ou superar o baseline do Mock (recall@1≥0.9375, MRR≥1.0), não o
+  piso frouxo de 0.85. `run_eval` passa a pontuar o híbrido
+  (`build_hybrid_eval_store`) e reporta `retriever`.
+
+### Alterado
+
+- `/rag/search` passa a ser servido pelo `HybridRetrievalAgent` (shape de resposta
+  inalterado; `retrieval_method="hybrid"`).
+- Registro do agente `HybridRetrievalAgent` de `planned` para `implemented`.
+- Thresholds de avaliação: `min_average_recall_at_1=0.9375`, `min_average_mrr` de
+  0.85 para 1.0 (não-regressão ancorada no baseline do Mock).
+
+### Limitações conhecidas (follow-ups)
+
+- BM25 usa TF binário (o `_tokenize` compartilhado retorna `set`); adequado a
+  chunks curtos, revisar para documentos longos.
+- `/rag/search` reconstrói o índice BM25 por requisição; no caminho Qdrant um
+  cache exige invalidação-no-upsert antes de servir produção.
+
 ## [0.4.0] — 2026-07-10
 
 Ciclo de revisão + premortem + chunking estrutural (PRs #18–#21). 77 → **123 testes**.

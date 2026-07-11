@@ -4,9 +4,11 @@ Data: 2026-06-06
 Ambiente: Windows, Python 3.12.8  
 Escopo: Lex Kratos Agentic Core local, mockado, sem serviços externos.
 
-> **Atualização v0.4 (2026-07-10):** após o ciclo de revisão + premortem
-> (PRs #18–#20) e o chunking estrutural (PR #21), a suíte tem **123 testes**
-> (eram 77 na v0.3; +2 de integração com Qdrant vivo, pulados por padrão) e a
+> **Atualização v0.5 (2026-07-11):** após a busca híbrida jurídica (PR #22:
+> `HybridRetrievalAgent` = BM25 + `reciprocal_rank_fusion`, retriever de registro
+> único em `/rag/search`, no passo `retrieval` do pipeline e na avaliação), a
+> suíte tem **150 testes** (eram 123 na v0.4; +2 de integração com Qdrant vivo,
+> pulados por padrão) e a
 > CI roda, nesta ordem:
 > `ruff check` + `ruff format --check` (app/tests/scripts/integrations),
 > `mypy app`, drift de schema (`scripts.gen_schemas` + `git diff`), `pytest`,
