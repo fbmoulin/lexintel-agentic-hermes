@@ -54,3 +54,17 @@ def test_deterministic_tie_break_by_chunk_id():
 def test_no_match_returns_empty():
     retriever = BM25Retriever(CHUNKS)
     assert retriever.search("xyzxyz inexistente", top_k=3) == []
+
+
+def test_empty_corpus_returns_empty_and_does_not_crash():
+    # build_default_hybrid_agent builds BM25 from snapshot_chunks(), which can be
+    # empty (e.g. a fresh store); the avgdl guard must hold.
+    retriever = BM25Retriever([])
+    assert retriever.search("qualquer coisa", top_k=3) == []
+
+
+def test_top_k_truncates_results():
+    retriever = BM25Retriever(CHUNKS)
+    # "de" appears across chunks; request fewer than the number of positive matches.
+    results = retriever.search("banco saude tutela urgencia fraude", top_k=1)
+    assert len(results) == 1
