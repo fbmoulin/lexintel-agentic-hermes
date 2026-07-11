@@ -79,6 +79,25 @@ def test_full_mock_pipeline_runs_retrieval_after_indexing():
     assert result["pipeline_summary"]["trace_version"] == "trace-v0.3"
 
 
+def test_retrieval_failure_degrades_to_warning_without_halting(monkeypatch):
+    from app.agents import retrieval_agent
+
+    def _boom(*args, **kwargs):
+        raise RuntimeError("qdrant scroll blew up")
+
+    monkeypatch.setattr(retrieval_agent, "build_default_hybrid_agent", _boom)
+    result = CaseOrchestrator().run_full_mock(_case())
+    phases = [e["trace_metadata"]["phase"] for e in result["trace"]]
+    assert "retrieval" in phases
+    assert "validation" in phases  # pipeline still reached the end, not halted
+    retrieval_entry = next(
+        e for e in result["trace"] if e["trace_metadata"]["phase"] == "retrieval"
+    )
+    assert retrieval_entry["status"] == "warning"
+    assert retrieval_entry["output"]["retrieval_status"] == "failed"
+    assert retrieval_entry["output"]["retrieved_context"] == []
+
+
 class _HallucinatingFIRACAgent:
     name = "FIRACAgent"
 

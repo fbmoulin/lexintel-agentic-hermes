@@ -1,3 +1,5 @@
+import logging
+
 from app.agents.extraction_agent import ExtractionAgent
 from app.agents.firac_agent import FIRACAgent
 from app.agents.indexing_agent import IndexingAgent
@@ -6,7 +8,9 @@ from app.agents.metadata_agent import MetadataAgent
 from app.agents.normalizer_agent import LegalNormalizerAgent
 from app.agents.security_agent import SecurityAgent
 from app.agents.validator_agent import ValidatorAgent
-from app.schemas.case import CaseInput
+from app.schemas.case import AgentResult, CaseInput
+
+logger = logging.getLogger(__name__)
 
 
 class CaseOrchestrator:
@@ -285,12 +289,39 @@ class CaseOrchestrator:
 
         from app.agents.retrieval_agent import build_default_hybrid_agent
 
+        # Retrieval is best-effort: it must never halt a case that already indexed.
+        # build_default_hybrid_agent() reads the shared get_vector_store() singleton
+        # (same store IndexingAgent wrote to in production) and rebuilds BM25 from a
+        # corpus snapshot, which can raise on the Qdrant path (malformed payload or a
+        # transient scroll error). Degrade any failure to a review-flagged warning.
         retrieval_query = " ".join([case.user_goal, str(normalizer_result.output)])
-        retrieval_result = build_default_hybrid_agent().run(
-            case_id=case.case_id,
-            query=retrieval_query,
-            index_status=indexing_result.output.get("index_status", "ok"),
-        )
+        index_status = indexing_result.output.get("index_status", "ok")
+        try:
+            retrieval_result = build_default_hybrid_agent().run(
+                case_id=case.case_id,
+                query=retrieval_query,
+                index_status=index_status,
+            )
+        except Exception:
+            # Log full detail server-side; surface a generic, client-safe message
+            # (no raw exception / path leak in a judicial system).
+            logger.exception("Hybrid retrieval failed for case %s", case.case_id)
+            retrieval_result = AgentResult(
+                case_id=case.case_id,
+                agent_name="HybridRetrievalAgent",
+                status="warning",
+                output={
+                    "retrieved_context": [],
+                    "retrieval_method": "hybrid",
+                    "index_status": index_status,
+                    "retrieval_status": "failed",
+                    "requires_human_review": True,
+                    "external_use_allowed": False,
+                },
+                warnings=["Falha na recuperação híbrida; revisão humana recomendada."],
+                requires_human_review=True,
+                external_use_allowed=False,
+            )
         self._record_trace(trace, retrieval_result, 7, "retrieval")
         # retrieval is best-effort (like indexing) and never emits "blocked".
 
