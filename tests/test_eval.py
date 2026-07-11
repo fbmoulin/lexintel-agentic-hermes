@@ -28,6 +28,19 @@ def test_eval_runs():
     assert any(score["retrieved"] for score in result["results"])
 
 
+def test_run_eval_scores_hybrid_and_enforces_non_regression():
+    from app.evals.run_eval import run
+
+    report = run()
+    assert report["retriever"] == "hybrid"
+    # Non-regression floors anchored on the Mock golden baseline, not 0.85.
+    assert report["thresholds"]["min_average_recall_at_1"] == 0.9375
+    assert report["thresholds"]["min_average_mrr"] == 1.0
+    assert report["average_recall_at_1"] >= 0.9375
+    assert report["average_mrr"] >= 1.0
+    assert report["passed"] is True
+
+
 def test_smoke_retrieve_is_an_isolated_keyword_stub():
     # The smoke stub is a labeled keyword map kept for sanity only; run() does
     # NOT use it (see test_eval_runs / test_eval_discriminates for the real path).
@@ -109,7 +122,8 @@ def test_eval_threshold_overrides_can_be_partial():
     assert result["passed"] is True
     assert result["thresholds"]["min_dataset_size"] == 1
     assert result["thresholds"]["min_average_recall_at_3"] == 0.85
-    assert result["thresholds"]["min_average_mrr"] == 0.85
+    assert result["thresholds"]["min_average_recall_at_1"] == 0.9375
+    assert result["thresholds"]["min_average_mrr"] == 1.0
     assert result["thresholds"]["required_areas"] == [
         "bancario",
         "consumidor",
@@ -138,6 +152,7 @@ def test_eval_gate_enforces_per_area_floor():
                 {
                     "id": f"{area}_{index}",
                     "area": area,
+                    "recall_at_1": recall_at_3,
                     "recall_at_3": recall_at_3,
                     "mrr": 1.0,
                 }
@@ -170,7 +185,9 @@ def test_eval_per_area_gate_is_not_silently_skippable():
         for key, value in DEFAULT_THRESHOLDS.items()
         if key != "min_per_area_recall_at_3"
     }
-    scores = [{"id": "a", "area": "bancario", "recall_at_3": 1.0, "mrr": 1.0}]
+    scores = [
+        {"id": "a", "area": "bancario", "recall_at_1": 1.0, "recall_at_3": 1.0, "mrr": 1.0}
+    ]
 
     with pytest.raises(KeyError):
         evaluate_thresholds(scores, partial)
