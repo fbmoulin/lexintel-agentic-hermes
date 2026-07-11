@@ -171,9 +171,10 @@ def test_full_mock_pipeline_runs_all_available_agents():
     data = response.json()
     assert data["case_id"] == "caso_full_mock_001"
     # Retrieval runs after indexing and, against the freshly-seeded mock corpus
-    # (3 precedents), returns fewer than the requested top_k=5, degrading to a
-    # best-effort WARNING (never "blocked"). So the happy-path run is "warning".
-    assert data["status"] == "warning"
+    # (3 precedents), returns fewer than the requested top_k=5. That shortfall is
+    # a NORMAL outcome surfaced as informational data (not a warning), so the
+    # happy-path run stays "success".
+    assert data["status"] == "success"
     assert data["mock_draft"]["relatorio"] == "Relatório simulado."
     assert data["requires_human_review"] is True
     assert data["external_use_allowed"] is False
@@ -194,7 +195,7 @@ def test_full_mock_pipeline_runs_all_available_agents():
             "ValidatorAgent",
         ],
         "blocked_at": None,
-        "warning_count": 1,
+        "warning_count": 0,
         "error_count": 0,
         "requires_human_review": True,
         "external_use_allowed": False,

@@ -1,8 +1,12 @@
+import logging
+
 from app.schemas.case import AgentResult
 from app.services.bm25 import BM25Retriever
 from app.services.fusion import reciprocal_rank_fusion
 from app.services.qdrant_service import is_qdrant_enabled
 from app.services.vector_store import VectorStore, get_vector_store
+
+logger = logging.getLogger(__name__)
 
 
 class HybridRetrievalAgent:
@@ -44,28 +48,41 @@ class HybridRetrievalAgent:
         # Over-fetch a generous pool, then drop the case's own chunks so top_k
         # precedents remain. In the pipeline the case's own chunks are the
         # strongest matches, so the pool must be larger than top_k to survive
-        # the exclusion; a genuine shortfall is surfaced as a warning below.
+        # the exclusion.
         overfetch = max(top_k * 3, self._candidate_k)
         candidates = self.search(query, top_k=overfetch)
+        own_case_excluded = sum(
+            1 for ctx in candidates if ctx["metadata"].get("case_id") == case_id
+        )
         precedents = [
             ctx for ctx in candidates if ctx["metadata"].get("case_id") != case_id
         ][:top_k]
 
         warnings: list[str] = []
+        requires_review = False
         if index_status != "ok":
             # An upsert_failed run can reflect a systemic index outage, in which
-            # case the retrievable PRECEDENT corpus (not this case's own chunks,
-            # which run() excludes by design) may be stale. Degrade, do not halt.
+            # case the retrievable PRECEDENT corpus may be stale. This IS a
+            # provenance signal worth human review. Degrade, do not halt.
             warnings.append(
                 f"Índice incompleto (index_status={index_status}); o corpus de "
                 "precedentes recuperável pode estar defasado — recuperação híbrida degradada."
             )
+            requires_review = True
+
         if len(precedents) < top_k:
-            warnings.append(
-                f"Recuperados {len(precedents)} de {top_k} precedentes solicitados; "
-                "corpus/candidatos insuficientes."
+            # Informational, NOT a warning/review trigger: retrieving fewer
+            # precedents than requested is a normal outcome (small corpus). The
+            # output counts let a monitor distinguish own-case crowding (high
+            # excluded, low precedent) from a simply-small corpus. Escalating every
+            # short run would make the pipeline status meaningless.
+            logger.info(
+                "Precedent shortfall for case %s: %d of %d requested (%d own-case excluded).",
+                case_id,
+                len(precedents),
+                top_k,
+                own_case_excluded,
             )
-        requires_review = bool(warnings)
 
         return AgentResult(
             case_id=case_id,
@@ -76,6 +93,9 @@ class HybridRetrievalAgent:
                 "retrieval_method": "hybrid",
                 "rankers_used": [r.backend_name for r in self.retrievers],
                 "index_status": index_status,
+                "precedent_count": len(precedents),
+                "requested_top_k": top_k,
+                "own_case_excluded_count": own_case_excluded,
                 "requires_human_review": requires_review,
                 "external_use_allowed": False,
             },

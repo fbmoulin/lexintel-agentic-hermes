@@ -67,9 +67,11 @@ def test_factory_builds_offline_ensemble():
     assert methods == {"bm25", "mock"}
 
 
-def test_run_warns_on_precedent_shortfall_when_own_case_dominates():
-    # Many own-case chunks that all match the query would crowd precedents out of
-    # a naive top_k*3 pool; the shortfall must surface as a warning, not silent success.
+def test_run_surfaces_precedent_shortfall_as_data_not_warning():
+    # 12 own-case chunks all match the query. Under the FIXED over-fetch depth the
+    # single precedent still enters the candidate pool and survives exclusion.
+    # REGRESSION GUARD: with the old illusory candidate_k cap, prec_banco would be
+    # crowded out of the pool and never retrieved -> "prec_banco" in ids would fail.
     corpus = [
         {
             "chunk_id": f"own_{i}", "case_id": "case_atual", "doc_id": f"c{i}",
@@ -89,10 +91,16 @@ def test_run_warns_on_precedent_shortfall_when_own_case_dominates():
     agent = HybridRetrievalAgent(retrievers=[bm25, store])
     result = agent.run(case_id="case_atual", query="fraude bancária", top_k=5)
     ids = [c["chunk_id"] for c in result.output["retrieved_context"]]
-    assert all(not i.startswith("own_") for i in ids)  # own-case excluded
-    assert len(ids) < 5  # genuine shortfall (only 1 precedent exists)
-    assert result.status == "warning"
-    assert any("precedentes solicitados" in w for w in result.warnings)
+    assert "prec_banco" in ids                          # survives the pool (over-fetch guard)
+    assert all(not i.startswith("own_") for i in ids)   # own-case excluded
+    # Shortfall is surfaced as DATA, not a warning/review escalation:
+    assert result.output["precedent_count"] == len(ids)
+    assert result.output["precedent_count"] < 5
+    assert result.output["requested_top_k"] == 5
+    assert result.output["own_case_excluded_count"] == 12
+    assert result.status == "success"
+    assert result.warnings == []
+    assert result.requires_human_review is False
 
 
 def test_raises_on_empty_retrievers():
