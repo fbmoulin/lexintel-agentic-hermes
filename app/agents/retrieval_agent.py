@@ -17,13 +17,16 @@ class HybridRetrievalAgent:
     name = "HybridRetrievalAgent"
 
     def __init__(self, retrievers: list, rrf_k: int = 60, candidate_k: int = 10):
+        if not retrievers:
+            raise ValueError("HybridRetrievalAgent requires at least one retriever.")
         self.retrievers = retrievers
         self._rrf_k = rrf_k
         self._candidate_k = candidate_k
 
     def search(self, query: str, top_k: int = 5, filters: dict | None = None) -> list[dict]:
+        depth = max(top_k, self._candidate_k)
         rankings = [
-            retriever.search(query, top_k=self._candidate_k, filters=filters)
+            retriever.search(query, top_k=depth, filters=filters)
             for retriever in self.retrievers
         ]
         fused = reciprocal_rank_fusion(rankings, k=self._rrf_k)
@@ -38,21 +41,31 @@ class HybridRetrievalAgent:
         top_k: int = 5,
         index_status: str = "ok",
     ) -> AgentResult:
-        # Over-fetch, then drop the case's own chunks so top_k precedents remain.
-        candidates = self.search(query, top_k=top_k * 3)
+        # Over-fetch a generous pool, then drop the case's own chunks so top_k
+        # precedents remain. In the pipeline the case's own chunks are the
+        # strongest matches, so the pool must be larger than top_k to survive
+        # the exclusion; a genuine shortfall is surfaced as a warning below.
+        overfetch = max(top_k * 3, self._candidate_k)
+        candidates = self.search(query, top_k=overfetch)
         precedents = [
             ctx for ctx in candidates if ctx["metadata"].get("case_id") != case_id
         ][:top_k]
 
         warnings: list[str] = []
-        requires_review = False
         if index_status != "ok":
-            # An upsert_failed run completed WITHOUT indexing its chunks, so the
-            # retrievable corpus may be incomplete for this case. Degrade, do not halt.
+            # An upsert_failed run can reflect a systemic index outage, in which
+            # case the retrievable PRECEDENT corpus (not this case's own chunks,
+            # which run() excludes by design) may be stale. Degrade, do not halt.
             warnings.append(
-                "Índice incompleto (index_status != ok); recuperação pode omitir chunks do caso."
+                f"Índice incompleto (index_status={index_status}); o corpus de "
+                "precedentes recuperável pode estar defasado — recuperação híbrida degradada."
             )
-            requires_review = True
+        if len(precedents) < top_k:
+            warnings.append(
+                f"Recuperados {len(precedents)} de {top_k} precedentes solicitados; "
+                "corpus/candidatos insuficientes."
+            )
+        requires_review = bool(warnings)
 
         return AgentResult(
             case_id=case_id,
