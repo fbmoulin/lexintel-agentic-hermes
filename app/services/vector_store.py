@@ -96,7 +96,7 @@ def build_retrieved_context(chunk: dict, score: float, method: str) -> dict:
         page_start=chunk.get("page_start"),
         page_end=chunk.get("page_end"),
         metadata={
-            **chunk.get("metadata", {}),
+            **(chunk.get("metadata") or {}),
             "case_id": chunk["case_id"],
             "unit_type": chunk["unit_type"],
             "retrieval_method": method,
@@ -259,13 +259,20 @@ class QdrantVectorStore:
             "stored_count": self._client.count(self._collection, exact=True).count,
         }
 
-    def snapshot_chunks(self, limit: int = 10_000) -> list[dict]:
-        points, _ = self._client.scroll(
-            collection_name=self._collection,
-            limit=limit,
-            with_payload=True,
-        )
-        return [dict(point.payload or {}) for point in points]
+    def snapshot_chunks(self, batch: int = 10_000) -> list[dict]:
+        chunks: list[dict] = []
+        offset = None
+        while True:
+            points, offset = self._client.scroll(
+                collection_name=self._collection,
+                limit=batch,
+                offset=offset,
+                with_payload=True,
+            )
+            chunks.extend(dict(point.payload or {}) for point in points)
+            if offset is None:
+                break
+        return chunks
 
     def search(
         self,
