@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from app.agents import retrieval_agent
 from app.api import rag as rag_api
 from app.main import app
 from app.services.vector_store import reset_mock_vector_store
@@ -18,9 +19,9 @@ def test_rag_search_returns_mock_result():
     data = response.json()
     assert data["query"] == "responsabilidade de banco"
     assert data["top_k"] == 3
-    assert data["vector_backend"] == "mock"
+    assert data["vector_backend"] == "hybrid"
     assert data["qdrant_enabled"] is False
-    assert data["results"][0]["retrieval_method"] == "mock"
+    assert data["results"][0]["retrieval_method"] == "hybrid"
 
 
 def test_rag_search_finds_chunks_indexed_by_pipeline():
@@ -71,9 +72,7 @@ def test_rag_search_blocks_prompt_injection_query():
 
 
 def test_rag_search_returns_controlled_failure(monkeypatch):
-    class FailingVectorStore:
-        backend_name = "mock"
-
+    class FailingAgent:
         def search(
             self,
             query: str,
@@ -82,7 +81,11 @@ def test_rag_search_returns_controlled_failure(monkeypatch):
         ) -> list[dict]:
             raise RuntimeError("falha simulada de busca")
 
-    monkeypatch.setattr(rag_api, "get_vector_store", lambda: FailingVectorStore())
+    # /rag/search imports build_default_hybrid_agent at call time, so patch the
+    # source module, not rag_api.
+    monkeypatch.setattr(
+        retrieval_agent, "build_default_hybrid_agent", lambda: FailingAgent()
+    )
 
     response = client.post(
         "/rag/search",
@@ -99,9 +102,7 @@ def test_rag_search_returns_controlled_failure(monkeypatch):
 
 
 def test_rag_search_defaults_retrieval_method_without_metadata(monkeypatch):
-    class MetadataLessVectorStore:
-        backend_name = "mock"
-
+    class MetadataLessAgent:
         def search(
             self,
             query: str,
@@ -118,9 +119,9 @@ def test_rag_search_defaults_retrieval_method_without_metadata(monkeypatch):
             ]
 
     monkeypatch.setattr(
-        rag_api,
-        "get_vector_store",
-        lambda: MetadataLessVectorStore(),
+        retrieval_agent,
+        "build_default_hybrid_agent",
+        lambda: MetadataLessAgent(),
     )
 
     response = client.post(
@@ -131,7 +132,7 @@ def test_rag_search_defaults_retrieval_method_without_metadata(monkeypatch):
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "success"
-    assert data["results"][0]["retrieval_method"] == "mock"
+    assert data["results"][0]["retrieval_method"] == "hybrid"
 
 
 def test_eval_endpoint_runs():
