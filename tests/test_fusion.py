@@ -34,3 +34,15 @@ def test_chunk_in_single_ranking_still_ranked():
 
 def test_empty_rankings_return_empty():
     assert reciprocal_rank_fusion([[], []], k=60) == []
+
+
+def test_does_not_mutate_input_rankings_and_rounds_score():
+    src = {"chunk_id": "x", "score": 0.0, "text": "x", "metadata": {"keep": 1}}
+    fused = reciprocal_rank_fusion([[src]], k=60)
+    # Output score is the fused value rounded to 6 places...
+    assert fused[0]["score"] == round(1.0 / 61, 6)
+    assert fused[0]["metadata"]["fusion_detail"][0]["ranker"] == 0
+    # ...and the caller's input dict is untouched (deepcopy isolation).
+    assert src["score"] == 0.0
+    assert "fusion_detail" not in src["metadata"]
+    assert src["metadata"] == {"keep": 1}

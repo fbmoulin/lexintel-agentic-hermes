@@ -21,7 +21,8 @@ def reciprocal_rank_fusion(rankings: list[list[dict]], k: int = 60) -> list[dict
             detail.setdefault(chunk_id, []).append(
                 {"ranker": ranker_index, "rank": rank, "contribution": round(contribution, 6)}
             )
-            representative.setdefault(chunk_id, deepcopy(ctx))
+            if chunk_id not in representative:
+                representative[chunk_id] = deepcopy(ctx)
 
     ordered = sorted(fused_score, key=lambda cid: (-fused_score[cid], cid))
     results = []
