@@ -10,9 +10,9 @@ from app.schemas.case import CaseInput
 
 
 class CaseOrchestrator:
-    TRACE_VERSION = "trace-v0.2"
-    INTAKE_PIPELINE = "case-intake-v0.2"
-    FULL_MOCK_PIPELINE = "case-full-mock-v0.2"
+    TRACE_VERSION = "trace-v0.3"
+    INTAKE_PIPELINE = "case-intake-v0.3"
+    FULL_MOCK_PIPELINE = "case-full-mock-v0.3"
 
     def __init__(self):
         """
@@ -283,8 +283,19 @@ class CaseOrchestrator:
         if indexing_result.status == "blocked":
             return self._blocked_response(case, trace)
 
+        from app.agents.retrieval_agent import build_default_hybrid_agent
+
+        retrieval_query = " ".join([case.user_goal, str(normalizer_result.output)])
+        retrieval_result = build_default_hybrid_agent().run(
+            case_id=case.case_id,
+            query=retrieval_query,
+            index_status=indexing_result.output.get("index_status", "ok"),
+        )
+        self._record_trace(trace, retrieval_result, 7, "retrieval")
+        # retrieval is best-effort (like indexing) and never emits "blocked".
+
         firac_result = self.firac_agent.run(case.case_id, normalizer_result.output)
-        self._record_trace(trace, firac_result, 7, "firac")
+        self._record_trace(trace, firac_result, 8, "firac")
         if firac_result.status == "blocked":
             return self._blocked_response(case, trace)
 
@@ -302,7 +313,7 @@ class CaseOrchestrator:
         }
 
         validator_result = self.validator_agent.run(case.case_id, mock_draft)
-        self._record_trace(trace, validator_result, 8, "validation")
+        self._record_trace(trace, validator_result, 9, "validation")
         if validator_result.status == "blocked":
             return self._blocked_response(case, trace)
 

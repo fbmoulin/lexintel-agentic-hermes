@@ -9,7 +9,7 @@ def test_intake_case():
     """
     Verify that posting a valid intake payload to /cases/intake returns a successful case record with the expected pipeline summary and trace ordering.
 
-    Asserts that the response JSON contains the same `case_id`, a `trace` field, `"status"` equal to `"success"`, and a `pipeline_summary` with `trace_version` "trace-v0.2", `pipeline_name` "case-intake-v0.2", `agent_count` 2, `completed_agents` ["IntakeAgent", "SecurityAgent"], `blocked_at` equal to None, and `requires_human_review` equal to False. Also asserts that the `trace` entries' `trace_metadata.step_index` values are [1, 2].
+    Asserts that the response JSON contains the same `case_id`, a `trace` field, `"status"` equal to `"success"`, and a `pipeline_summary` with `trace_version` "trace-v0.3", `pipeline_name` "case-intake-v0.3", `agent_count` 2, `completed_agents` ["IntakeAgent", "SecurityAgent"], `blocked_at` equal to None, and `requires_human_review` equal to False. Also asserts that the `trace` entries' `trace_metadata.step_index` values are [1, 2].
     """
     payload = {
         "case_id": "caso_teste_001",
@@ -25,8 +25,8 @@ def test_intake_case():
     assert data["case_id"] == "caso_teste_001"
     assert "trace" in data
     assert data["status"] == "success"
-    assert data["pipeline_summary"]["trace_version"] == "trace-v0.2"
-    assert data["pipeline_summary"]["pipeline_name"] == "case-intake-v0.2"
+    assert data["pipeline_summary"]["trace_version"] == "trace-v0.3"
+    assert data["pipeline_summary"]["pipeline_name"] == "case-intake-v0.3"
     assert data["pipeline_summary"]["agent_count"] == 2
     assert data["pipeline_summary"]["completed_agents"] == [
         "IntakeAgent",

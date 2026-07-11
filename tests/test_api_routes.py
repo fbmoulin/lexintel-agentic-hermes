@@ -170,15 +170,18 @@ def test_full_mock_pipeline_runs_all_available_agents():
     assert response.status_code == 200
     data = response.json()
     assert data["case_id"] == "caso_full_mock_001"
-    assert data["status"] == "success"
+    # Retrieval runs after indexing and, against the freshly-seeded mock corpus
+    # (3 precedents), returns fewer than the requested top_k=5, degrading to a
+    # best-effort WARNING (never "blocked"). So the happy-path run is "warning".
+    assert data["status"] == "warning"
     assert data["mock_draft"]["relatorio"] == "Relatório simulado."
     assert data["requires_human_review"] is True
     assert data["external_use_allowed"] is False
     assert data["mock_draft"]["requires_human_review"] is True
     assert data["pipeline_summary"] == {
-        "trace_version": "trace-v0.2",
-        "pipeline_name": "case-full-mock-v0.2",
-        "agent_count": 8,
+        "trace_version": "trace-v0.3",
+        "pipeline_name": "case-full-mock-v0.3",
+        "agent_count": 9,
         "completed_agents": [
             "IntakeAgent",
             "SecurityAgent",
@@ -186,11 +189,12 @@ def test_full_mock_pipeline_runs_all_available_agents():
             "LegalNormalizerAgent",
             "MetadataAgent",
             "IndexingAgent",
+            "HybridRetrievalAgent",
             "FIRACAgent",
             "ValidatorAgent",
         ],
         "blocked_at": None,
-        "warning_count": 0,
+        "warning_count": 1,
         "error_count": 0,
         "requires_human_review": True,
         "external_use_allowed": False,
@@ -204,13 +208,14 @@ def test_full_mock_pipeline_runs_all_available_agents():
         "LegalNormalizerAgent",
         "MetadataAgent",
         "IndexingAgent",
+        "HybridRetrievalAgent",
         "FIRACAgent",
         "ValidatorAgent",
     ]
 
     indexing_trace = data["trace"][5]["output"]
-    firac_trace = data["trace"][6]["output"]
-    validator_trace = data["trace"][7]["output"]
+    firac_trace = data["trace"][7]["output"]
+    validator_trace = data["trace"][8]["output"]
     assert indexing_trace["vector_backend"] == "mock"
     assert indexing_trace["qdrant_enabled"] is False
     assert indexing_trace["chunk_count"] == 6
@@ -221,10 +226,10 @@ def test_full_mock_pipeline_runs_all_available_agents():
     assert validator_trace["external_use_allowed"] is False
 
     step_indexes = [entry["trace_metadata"]["step_index"] for entry in data["trace"]]
-    assert step_indexes == [1, 2, 3, 4, 5, 6, 7, 8]
+    assert step_indexes == [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
     assert all(
-        entry["trace_metadata"]["trace_version"] == "trace-v0.2"
+        entry["trace_metadata"]["trace_version"] == "trace-v0.3"
         for entry in data["trace"]
     )
     assert all(isinstance(entry["warnings"], list) for entry in data["trace"])

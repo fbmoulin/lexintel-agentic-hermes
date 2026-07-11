@@ -66,6 +66,19 @@ def test_full_mock_completes_when_no_block():
     assert result["status"] in {"success", "warning"}
 
 
+def test_full_mock_pipeline_runs_retrieval_after_indexing():
+    result = CaseOrchestrator().run_full_mock(_case())
+
+    phases = [entry["trace_metadata"]["phase"] for entry in result["trace"]]
+    assert "retrieval" in phases
+    assert phases.index("retrieval") == phases.index("indexing") + 1
+    retrieval_entry = next(
+        e for e in result["trace"] if e["trace_metadata"]["phase"] == "retrieval"
+    )
+    assert retrieval_entry["output"]["retrieval_method"] == "hybrid"
+    assert result["pipeline_summary"]["trace_version"] == "trace-v0.3"
+
+
 class _HallucinatingFIRACAgent:
     name = "FIRACAgent"
 
