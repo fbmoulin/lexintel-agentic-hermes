@@ -90,12 +90,18 @@ O endpoint `/rag/search` usa esse store por padrão e retorna:
 
 Queries suspeitas de prompt injection não executam busca e retornam `status = blocked`.
 
+## Limitações conhecidas / follow-ups
+
+Descobertos durante a review da busca híbrida (`HybridRetrievalAgent`); pendentes de fase futura:
+
+- **BM25 usa frequências de termo binárias.** Como o `_tokenize` compartilhado retorna um **conjunto**, `Counter(_tokenize(text))` produz tf ∈ {0,1} — a saturação de TF do BM25 opera sobre **presença** do termo, não sobre frequência bruta. Aceitável para os chunks jurídicos curtos (1-2 frases) do corpus mockado; revisitar se o índice passar a cobrir documentos longos (exigiria um tokenizer preservador de frequência apenas para o BM25).
+- **`/rag/search` reconstrói o BM25 a cada requisição.** `build_default_hybrid_agent()` tira um snapshot do corpus e reconstrói o índice BM25 em toda requisição. Trivial para o store mockado; no caminho Qdrant, faz `scroll` da coleção inteira por query. Um cache ingênuo é **inseguro**: serviria um índice BM25 defasado após um `upsert` (quebrando a garantia "a busca encontra chunks recém-indexados"). Um cache correto precisa de invalidação por `upsert` ou BM25 incremental. **Deve ser resolvido antes de o caminho Qdrant servir tráfego de produção.**
+
 ## Fora do Escopo
 
 Continuam fora desta fase:
 
 - embeddings reais;
-- HybridRetrievalAgent;
-- RerankerService;
+- RerankerService com cross-encoder (a fusão RRF do `HybridRetrievalAgent` já faz o rerank baseado em rank; o cross-encoder está adiado);
 - Qdrant real;
 - DataJud, STJ Dados Abertos, PJe ou LLMs.

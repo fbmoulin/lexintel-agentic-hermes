@@ -1,4 +1,4 @@
-# Contrato de Trace v0.2
+# Contrato de Trace v0.3
 
 O trace do Lex Kratos Agentic Core v0.1 e deterministico, local e mockado. Ele existe para auditoria tecnica do fluxo, nao para demonstrar analise juridica real.
 
@@ -20,9 +20,9 @@ Cada entrada em `trace` segue o contrato `AgentResult`:
 
 Campos obrigatorios:
 
-- `trace_version`: versao do contrato, atualmente `trace-v0.2`.
+- `trace_version`: versao do contrato, atualmente `trace-v0.3`.
 - `step_index`: indice deterministico da etapa, iniciado em 1.
-- `phase`: fase funcional, como `intake`, `security`, `extraction`, `normalization`, `metadata`, `firac` ou `validation`.
+- `phase`: fase funcional, como `intake`, `security`, `extraction`, `normalization`, `metadata`, `indexing`, `retrieval`, `firac` ou `validation`.
 - `agent_name`: nome do agente.
 - `status`: status da etapa.
 
@@ -39,6 +39,20 @@ Cada resposta de pipeline inclui:
 - `error_count`.
 - `requires_human_review`.
 - `external_use_allowed`.
+
+## Etapa `retrieval` (busca hibrida)
+
+A partir de `trace-v0.3` o pipeline inclui a etapa `retrieval` (`HybridRetrievalAgent`), que roda **entre `indexing` (step 6) e `firac` (step 8)**.
+
+- **Best-effort:** a etapa nunca emite `blocked` e nunca interrompe o pipeline. No pior caso degrada para `warning`.
+- **Output** registra os precedentes recuperados e contadores de auditoria:
+  - `retrieved_context[]`: precedentes recuperados (exclui os chunks do proprio caso).
+  - `precedent_count`: numero de precedentes efetivamente retornados.
+  - `requested_top_k`: quantos precedentes foram solicitados.
+  - `own_case_excluded_count`: quantos candidatos foram descartados por pertencerem ao proprio caso.
+- **Guarda de completude do indice:** se um agente a montante marcou `index_status="upsert_failed"`, o corpus recuperavel de precedentes pode estar defasado. Nesse caso a etapa emite `status="warning"` e `requires_human_review=True` como sinal de proveniencia (degrada, nao interrompe).
+- **Escassez de precedentes e INFORMACIONAL:** recuperar menos precedentes que `requested_top_k` (corpus pequeno) e apenas registrado em log — NAO escala `status` nem `requires_human_review`. Escalar toda corrida curta tornaria o status do pipeline sem significado.
+- **FIRAC ainda NAO consome o contexto recuperado:** a injecao do `retrieved_context` na analise FIRAC esta adiada para uma fase futura.
 
 ## Regras
 

@@ -75,16 +75,16 @@ AGENT_REGISTRY: list[dict[str, Any]] = [
     {
         "agent_name": "HybridRetrievalAgent",
         "phase": "retrieval",
-        "module_path": None,
-        "class_name": None,
+        "module_path": "app.agents.retrieval_agent",
+        "class_name": "HybridRetrievalAgent",
         "skill_name": "SKILL_HYBRID_LEGAL_RETRIEVAL.md",
-        "status": "planned",
+        "status": "implemented",
         "mocked": True,
         # ⚠️ Before this activates: IndexingAgent is best-effort — a run tagged
         # index_status="upsert_failed" completed WITHOUT indexing its chunks, so
         # "pipeline run completed" does NOT imply "chunks are retrievable". This
         # agent must not assume index completeness; reconcile/backfill first.
-        "description": "Planejado para busca híbrida e reranking.",
+        "description": "Busca híbrida (RRF de BM25 + denso/léxico) com rastro de fusão.",
     },
     {
         "agent_name": "FIRACAgent",

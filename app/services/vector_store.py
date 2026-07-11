@@ -70,6 +70,8 @@ class VectorStore(Protocol):
         filters: dict | None = None,
     ) -> list[dict]: ...
 
+    def snapshot_chunks(self) -> list[dict]: ...
+
 
 def _tokenize(value: str) -> set[str]:
     # Accent-fold so real Portuguese queries ("saúde", "serviço") match indexed
@@ -77,6 +79,30 @@ def _tokenize(value: str) -> set[str]:
     folded = unicodedata.normalize("NFKD", value.lower())
     folded = "".join(char for char in folded if not unicodedata.combining(char))
     return {token for token in re.split(r"\W+", folded) if len(token) >= 3}
+
+
+def build_retrieved_context(chunk: dict, score: float, method: str) -> dict:
+    """Map a LegalChunk dict to a RetrievedContext dict with retrieval_method.
+
+    Shared by every retriever so the RetrievedContext shape (and the
+    case_id/unit_type/retrieval_method flattening) is defined in one place.
+    """
+    context = RetrievedContext(
+        chunk_id=chunk["chunk_id"],
+        doc_id=chunk["doc_id"],
+        score=round(score, 6),
+        text=chunk["text"],
+        source=chunk.get("source"),
+        page_start=chunk.get("page_start"),
+        page_end=chunk.get("page_end"),
+        metadata={
+            **(chunk.get("metadata") or {}),
+            "case_id": chunk["case_id"],
+            "unit_type": chunk["unit_type"],
+            "retrieval_method": method,
+        },
+    )
+    return context.model_dump()
 
 
 class MockVectorStore:
@@ -106,6 +132,9 @@ class MockVectorStore:
             "indexed_count": len(indexed_chunks),
             "stored_count": len(self._chunks),
         }
+
+    def snapshot_chunks(self) -> list[dict]:
+        return deepcopy(self._chunks)
 
     def search(
         self,
@@ -229,6 +258,21 @@ class QdrantVectorStore:
             "indexed_count": len(validated),
             "stored_count": self._client.count(self._collection, exact=True).count,
         }
+
+    def snapshot_chunks(self, batch: int = 10_000) -> list[dict]:
+        chunks: list[dict] = []
+        offset = None
+        while True:
+            points, offset = self._client.scroll(
+                collection_name=self._collection,
+                limit=batch,
+                offset=offset,
+                with_payload=True,
+            )
+            chunks.extend(dict(point.payload or {}) for point in points)
+            if offset is None:
+                break
+        return chunks
 
     def search(
         self,

@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 
 from app.agents.security_agent import SecurityAgent
 from app.services.qdrant_service import is_qdrant_enabled
-from app.services.vector_store import get_vector_store
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -35,16 +34,19 @@ def search(request: SearchRequest):
         }
 
     try:
-        vector_store = get_vector_store()
+        from app.agents.retrieval_agent import build_default_hybrid_agent
+
+        agent = build_default_hybrid_agent()
         results = []
-        for result in vector_store.search(request.query, request.top_k):
+        for result in agent.search(request.query, request.top_k):
             metadata = result.get("metadata", {})
             results.append(
                 {
                     **result,
-                    "retrieval_method": metadata.get("retrieval_method", "mock"),
+                    "retrieval_method": metadata.get("retrieval_method", "hybrid"),
                 }
             )
+        vector_backend = "hybrid"
     except Exception:
         # Log full detail server-side; never leak exception text to the client
         # (paths / PII risk in a judicial system).
@@ -70,7 +72,7 @@ def search(request: SearchRequest):
         "requires_human_review": False,
         "warnings": [],
         "errors": [],
-        "vector_backend": vector_store.backend_name,
+        "vector_backend": vector_backend,
         "qdrant_enabled": is_qdrant_enabled(),
         "results": results,
     }

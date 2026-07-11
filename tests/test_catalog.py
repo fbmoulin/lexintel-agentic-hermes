@@ -43,8 +43,8 @@ def test_agent_registry_is_valid_and_links_skills():
     assert validation["valid"] is True
     assert validation["issues"] == []
     assert validation["agent_count"] == 12
-    assert validation["implemented_count"] == 8
-    assert validation["planned_count"] == 4
+    assert validation["implemented_count"] == 9
+    assert validation["planned_count"] == 3
     assert validation["skill_count"] == 12
 
     implemented_agents = [agent for agent in agents if agent["implemented"]]
@@ -59,6 +59,17 @@ def test_agent_registry_is_valid_and_links_skills():
     assert all(
         agent.get("requires_human_review") is True for agent in human_review_agents
     )
+
+
+def test_hybrid_retrieval_agent_is_implemented_and_importable():
+    from app.agents.registry import list_agent_registry, validate_agent_registry
+
+    entry = next(
+        a for a in list_agent_registry() if a["agent_name"] == "HybridRetrievalAgent"
+    )
+    assert entry["status"] == "implemented"
+    assert entry["class_importable"] is True
+    assert validate_agent_registry()["valid"] is True
 
 
 def test_agent_registry_rejects_missing_human_review_for_validation(monkeypatch):
@@ -145,8 +156,8 @@ def test_catalog_agents_endpoint_returns_registry():
     data = response.json()
     assert data["valid"] is True
     assert data["count"] == 12
-    assert data["implemented_count"] == 8
-    assert data["planned_count"] == 4
+    assert data["implemented_count"] == 9
+    assert data["planned_count"] == 3
     assert data["issues"] == []
 
     intake = next(

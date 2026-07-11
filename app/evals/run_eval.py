@@ -13,7 +13,10 @@ SEARCH_K = 10
 DEFAULT_THRESHOLDS = {
     "min_dataset_size": 24,
     "min_average_recall_at_3": 0.85,
-    "min_average_mrr": 0.85,
+    # Non-regression floors anchored on the Mock golden baseline (the hybrid
+    # retriever of record matches it exactly): recall@1=0.9375, MRR=1.0.
+    "min_average_recall_at_1": 0.9375,
+    "min_average_mrr": 1.0,
     # Per-area floor: a strong area must not mask a broken one behind the global
     # average. Each required area must clear this recall@3 on its own.
     "min_per_area_recall_at_3": 0.85,
@@ -166,6 +169,16 @@ def build_eval_store(corpus: list[dict] | None = None) -> MockVectorStore:
     the API's singleton wiring/seed is covered by the API tests, not the eval.
     """
     return MockVectorStore(seed_chunks=corpus if corpus is not None else load_corpus())
+
+
+def build_hybrid_eval_store(corpus: list[dict] | None = None):
+    """Eval retriever of record: the hybrid over the golden corpus (BM25 + Mock)."""
+    from app.agents.retrieval_agent import HybridRetrievalAgent
+    from app.services.bm25 import BM25Retriever
+
+    mock = build_eval_store(corpus)
+    bm25 = BM25Retriever(mock.snapshot_chunks())
+    return HybridRetrievalAgent(retrievers=[bm25, mock])
 
 
 def retrieve_sources(
@@ -361,6 +374,7 @@ def evaluate_thresholds(scores: list[dict], thresholds: dict) -> list[dict]:
     failures = []
     areas = {score["area"] for score in scores}
     average_recall_at_3 = average([score["recall_at_3"] for score in scores])
+    average_recall_at_1 = average([score["recall_at_1"] for score in scores])
     average_mrr = average([score["mrr"] for score in scores])
 
     if len(scores) < thresholds["min_dataset_size"]:
@@ -387,6 +401,15 @@ def evaluate_thresholds(scores: list[dict], thresholds: dict) -> list[dict]:
                 "metric": "average_recall_at_3",
                 "expected_minimum": thresholds["min_average_recall_at_3"],
                 "actual": average_recall_at_3,
+            }
+        )
+
+    if average_recall_at_1 < thresholds["min_average_recall_at_1"]:
+        failures.append(
+            {
+                "metric": "average_recall_at_1",
+                "expected_minimum": thresholds["min_average_recall_at_1"],
+                "actual": average_recall_at_1,
             }
         )
 
@@ -427,9 +450,9 @@ def run(
     corpus: list[dict] | None = None,
 ):
     """
-    Run the evaluation pipeline for the deterministic mock retriever against a golden dataset.
+    Run the evaluation pipeline for the hybrid retriever of record against a golden dataset.
 
-    Loads and validates the dataset, scores each item using the deterministic retriever and scoring helpers, evaluates configured thresholds, and aggregates overall and per-area metrics.
+    Loads and validates the dataset, scores each item using the hybrid retriever (BM25 + Mock over the golden corpus) and scoring helpers, evaluates configured thresholds, and aggregates overall and per-area metrics.
 
     Parameters:
         dataset_path (str | Path): Path to the JSONL golden dataset to load and evaluate.
@@ -437,6 +460,7 @@ def run(
 
     Returns:
         result (dict): A dictionary containing:
+            - retriever: name of the retriever of record ("hybrid")
             - dataset_size: number of evaluated items
             - areas: sorted list of areas present in the dataset
             - average_recall: average recall@3
@@ -453,13 +477,14 @@ def run(
     if thresholds:
         active_thresholds.update(deepcopy(thresholds))
     dataset = load_dataset(dataset_path)
-    store = build_eval_store(corpus)
+    store = build_hybrid_eval_store(corpus)
     scores = [evaluate_item(item, store) for item in dataset]
     threshold_failures = evaluate_thresholds(scores, active_thresholds)
     average_recall_at_3 = average([score["recall_at_3"] for score in scores])
     average_mrr = average([score["mrr"] for score in scores])
 
     result = {
+        "retriever": "hybrid",
         "dataset_size": len(dataset),
         "areas": sorted({score["area"] for score in scores}),
         "average_recall": average_recall_at_3,
