@@ -43,8 +43,8 @@ Busca híbrida real, **mock-first e determinística por padrão** (Qdrant perman
 
 ## Follow-ups abertos (nenhum bloqueia; ambos em `docs/12_VECTOR_INDEXING_CONTRACT.md`)
 
-1. **BM25 usa TF binário** — o `_tokenize` compartilhado retorna `set`, então `Counter(_tokenize(text))` dá tf∈{0,1} e a saturação de TF do BM25 opera sobre presença. OK para chunks curtos (1–2 frases); revisar (tokenizer que preserve frequência) antes de indexar documentos longos.
-2. **`/rag/search` reconstrói o BM25 por requisição** — `build_default_hybrid_agent()` → `snapshot_chunks()` → novo `BM25Retriever` a cada chamada. Trivial no mock; no caminho Qdrant faz scroll da coleção inteira por query. **Cache ingênuo é PERIGOSO** (índice BM25 defasado após upsert quebra `test_rag_search_finds_chunks_indexed_by_pipeline`) → precisa de invalidação-no-upsert ou BM25 incremental **antes** de o caminho Qdrant servir produção.
+1. ~~**BM25 usa TF binário**~~ **RESOLVIDO (fix/review-2026-08-08):** `_tokenize_seq` (variante preservadora de frequência do tokenizer compartilhado) alimenta o `BM25Retriever`; tf real entra na saturação Okapi. Regressão: `test_term_frequency_influences_ranking`.
+2. ~~**`/rag/search` reconstrói o BM25 por requisição**~~ **RESOLVIDO (fix/review-2026-08-08):** cache do índice BM25 chaveado por (instância do store, `store.version`), com `version` incrementado em todo `upsert` — exatamente a invalidação-no-upsert exigida aqui (o cache ingênuo continuaria PERIGOSO). Regressões: `test_factory_reuses_cached_bm25_between_calls`, `test_factory_invalidates_bm25_cache_on_upsert`. Ressalva: escritas externas ao processo (fora da instância) não bumpam `version` — documentado no código; BM25 incremental segue como evolução futura.
 
 ## Próximo na estrada (`docs/01_SPEC_TECNICO_COMPLETO.md`)
 

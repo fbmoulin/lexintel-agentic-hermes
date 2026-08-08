@@ -102,12 +102,20 @@ class ParagraphChunker:
 class StructuralChunker:
     strategy = "structural_v0.2"
 
-    def __init__(self, max_tokens: int = 800) -> None:
+    def __init__(self, max_tokens: int = 800, sections: list | None = None) -> None:
         self.max_tokens = max_tokens
         self._fallback = ParagraphChunker(max_tokens=max_tokens)
+        # Optional precomputed sections (get_chunker already detected them for
+        # strategy selection). Must correspond to the text passed to chunk();
+        # when absent, chunk() detects on its own.
+        self._sections = sections
 
     def chunk(self, text: str, doc_type: str) -> list[dict]:
-        sections = detect_sections(text, doc_type) or []
+        sections = (
+            self._sections
+            if self._sections is not None
+            else detect_sections(text, doc_type)
+        ) or []
         acordao_meta = extract_acordao_metadata(text) if doc_type == "acordao" else None
         chunks: list[dict] = []
         for section in sections:
@@ -132,7 +140,9 @@ class StructuralChunker:
 def get_chunker(text: str, doc_type: str) -> StructuralChunker | ParagraphChunker:
     sections = detect_sections(text, doc_type)
     if sections and len(sections) >= 2:
-        return StructuralChunker()
+        # Hand the detected sections to the chunker so the (multi-pattern)
+        # scan runs once per document, not twice.
+        return StructuralChunker(sections=sections)
     return ParagraphChunker()
 
 

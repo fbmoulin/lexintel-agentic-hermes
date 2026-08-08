@@ -140,3 +140,41 @@ def test_raises_on_empty_retrievers():
 
     with pytest.raises(ValueError):
         HybridRetrievalAgent(retrievers=[])
+
+
+def test_factory_reuses_cached_bm25_between_calls():
+    # The BM25 index (a full store snapshot) must not be rebuilt per request
+    # when nothing was written — on the Qdrant path a rebuild is a full
+    # collection scroll per query.
+    store = MockVectorStore(seed_chunks=CORPUS)
+    first = build_default_hybrid_agent(store=store)
+    second = build_default_hybrid_agent(store=store)
+    bm25_first = next(r for r in first.retrievers if r.backend_name == "bm25")
+    bm25_second = next(r for r in second.retrievers if r.backend_name == "bm25")
+    assert bm25_first is bm25_second
+
+
+def test_factory_invalidates_bm25_cache_on_upsert():
+    # The documented hazard of a naive cache: a stale BM25 index would miss
+    # chunks indexed after it was built. An upsert bumps store.version and
+    # must force a rebuild that sees the new chunk.
+    store = MockVectorStore(seed_chunks=CORPUS)
+    build_default_hybrid_agent(store=store)
+    store.upsert(
+        [
+            {
+                "chunk_id": "prec_usucapiao",
+                "case_id": "seed",
+                "doc_id": "d3",
+                "unit_type": "tese",
+                "text": "Usucapião extraordinária exige posse mansa e pacífica.",
+                "page_start": 1,
+                "page_end": 1,
+                "source": "seed",
+                "metadata": {"source_ref": "art. 1.238 CC"},
+            }
+        ]
+    )
+    agent = build_default_hybrid_agent(store=store)
+    results = agent.search("usucapião extraordinária posse", top_k=3)
+    assert any(r["chunk_id"] == "prec_usucapiao" for r in results)

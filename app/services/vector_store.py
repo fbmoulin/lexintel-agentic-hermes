@@ -60,6 +60,9 @@ DEFAULT_MOCK_CHUNKS = [
 
 class VectorStore(Protocol):
     backend_name: str
+    # Monotonic write counter: bumped on every upsert THROUGH THIS INSTANCE.
+    # Lets derived indexes (BM25 cache) invalidate without re-snapshotting.
+    version: int
 
     def upsert(self, chunks: list[dict]) -> dict: ...
 
@@ -73,12 +76,17 @@ class VectorStore(Protocol):
     def snapshot_chunks(self) -> list[dict]: ...
 
 
-def _tokenize(value: str) -> set[str]:
+def _tokenize_seq(value: str) -> list[str]:
     # Accent-fold so real Portuguese queries ("saúde", "serviço") match indexed
     # text regardless of diacritics. Mirrors SecurityAgent.normalize_text.
+    # Order- and frequency-preserving: BM25 needs real term frequencies.
     folded = unicodedata.normalize("NFKD", value.lower())
     folded = "".join(char for char in folded if not unicodedata.combining(char))
-    return {token for token in re.split(r"\W+", folded) if len(token) >= 3}
+    return [token for token in re.split(r"\W+", folded) if len(token) >= 3]
+
+
+def _tokenize(value: str) -> set[str]:
+    return set(_tokenize_seq(value))
 
 
 def build_retrieved_context(chunk: dict, score: float, method: str) -> dict:
@@ -109,6 +117,7 @@ class MockVectorStore:
     backend_name = "mock"
 
     def __init__(self, seed_chunks: list[dict] | None = None):
+        self.version = 0
         self._chunks = [
             LegalChunk.model_validate(chunk).model_dump()
             for chunk in (seed_chunks or [])
@@ -127,6 +136,7 @@ class MockVectorStore:
             chunk for chunk in self._chunks if chunk["chunk_id"] not in existing_ids
         ]
         self._chunks.extend(indexed_chunks)
+        self.version += 1
         return {
             "vector_backend": self.backend_name,
             "indexed_count": len(indexed_chunks),
@@ -170,22 +180,9 @@ class MockVectorStore:
 
     @staticmethod
     def _to_retrieved_context(chunk: dict, score: float) -> dict:
-        context = RetrievedContext(
-            chunk_id=chunk["chunk_id"],
-            doc_id=chunk["doc_id"],
-            score=round(score, 4),
-            text=chunk["text"],
-            source=chunk.get("source"),
-            page_start=chunk["page_start"],
-            page_end=chunk["page_end"],
-            metadata={
-                **chunk["metadata"],
-                "case_id": chunk["case_id"],
-                "unit_type": chunk["unit_type"],
-                "retrieval_method": chunk["metadata"].get("retrieval_method", "mock"),
-            },
+        return build_retrieved_context(
+            chunk, score, chunk["metadata"].get("retrieval_method", "mock")
         )
-        return context.model_dump()
 
 
 class QdrantVectorStore:
@@ -205,6 +202,9 @@ class QdrantVectorStore:
         embedder: Embedder | None = None,
         collection_name: str | None = None,
     ):
+        # Tracks writes through THIS instance only; external writers are not
+        # seen, so the BM25 cache built on it can lag an out-of-band upsert.
+        self.version = 0
         self._client = client if client is not None else get_qdrant_client()
         self._embedder = embedder if embedder is not None else get_embedder()
         self._collection = (
@@ -253,6 +253,7 @@ class QdrantVectorStore:
                 for chunk, vector in zip(validated, vectors)
             ]
             self._client.upsert(collection_name=self._collection, points=points)
+        self.version += 1
         return {
             "vector_backend": self.backend_name,
             "indexed_count": len(validated),

@@ -83,3 +83,27 @@ def test_top_k_truncates_results():
     # "de" appears across chunks; request fewer than the number of positive matches.
     results = retriever.search("banco saude tutela urgencia fraude", top_k=1)
     assert len(results) == 1
+
+
+def test_term_frequency_influences_ranking():
+    # Okapi BM25, not binary tf: the doc repeating the query term must outrank
+    # the doc mentioning it once. Ids chosen so the alphabetical tie-break
+    # favors the single-mention doc — only real tf can flip the order.
+    # (Regression: set-tokenization made Counter(tf) constant at 1.)
+    docs = [
+        {
+            **CHUNKS[0],
+            "chunk_id": "a_single",
+            "doc_id": "d10",
+            "text": "fraude em operacao digital",
+        },
+        {
+            **CHUNKS[0],
+            "chunk_id": "z_repeated",
+            "doc_id": "d11",
+            "text": "fraude fraude fraude relatada em operacao digital",
+        },
+    ]
+    retriever = BM25Retriever(docs)
+    results = retriever.search("fraude", top_k=2)
+    assert [r["chunk_id"] for r in results] == ["z_repeated", "a_single"]

@@ -184,3 +184,26 @@ def test_chunk_extracted_text_is_deprecated_but_delegates():
         result = chunk_extracted_text("caso", [item])
     assert any(issubclass(w.category, DeprecationWarning) for w in caught)
     assert result == build_chunks("caso", [item])
+
+
+def test_build_chunks_detects_sections_once_per_structured_doc(monkeypatch):
+    # get_chunker hands the detected sections to StructuralChunker; the
+    # multi-pattern scan must run once per document, not twice.
+    import app.services.chunking as chunking
+
+    calls = {"count": 0}
+    real_detect = chunking.detect_sections
+
+    def counting_detect(text, doc_type):
+        calls["count"] += 1
+        return real_detect(text, doc_type)
+
+    monkeypatch.setattr(chunking, "detect_sections", counting_detect)
+    chunks = chunking.build_chunks(
+        "case_scan_once",
+        [{"doc_id": "d1", "doc_type": "sentenca", "page": 1, "text": SENTENCA}],
+    )
+    # Structural path actually ran (fallback would also detect once, but the
+    # regression being guarded is the structural double-scan).
+    assert chunks[0]["metadata"]["chunking_strategy"] == "structural_v0.2"
+    assert calls["count"] == 1

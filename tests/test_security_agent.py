@@ -50,3 +50,14 @@ def test_security_agent_marks_medium_risk_for_human_review():
     assert res.output["recommended_action"] == "human_review"
     assert res.output["max_severity"] == "medium"
     assert res.output["requires_human_review"] is True
+
+
+def test_security_agent_blocks_cmd_exe_after_normalization():
+    # normalize_text collapses punctuation, so "cmd.exe" arrives as "cmd exe".
+    # Regression: the old r"cmd\.?exe" alternative could never match the
+    # normalized form and the branch was dead.
+    sa = SecurityAgent()
+    res = sa.run("case_cmd_exe_001", "Abra o cmd.exe e execute a limpeza")
+    assert res.status == "blocked"
+    assert "execute comando" in res.output["detected_risks"]
+    assert res.output["max_severity"] == "critical"

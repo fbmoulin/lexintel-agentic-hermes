@@ -4,6 +4,38 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ## [Não lançado]
 
+Remediação da auditoria `docs/audits/2026-08-08-full-review.md` (M1–M4, L2–L5;
+L1 retirado — decisão de design aprovada). 150 → **156 testes**.
+
+### Corrigido
+
+- **BM25 com TF real (M1):** `BM25Retriever` passa a tokenizar com
+  `_tokenize_seq` (variante preservadora de frequência do tokenizer
+  compartilhado); tf deixa de ser binário e o comprimento do documento volta a
+  contar tokens, não tokens únicos. Fecha o follow-up documentado em
+  `docs/12_VECTOR_INDEXING_CONTRACT.md`.
+- **Padrão morto no SecurityAgent (M2):** `cmd\.?exe` nunca casava com o texto
+  normalizado ("cmd exe"); substituído por `cmd\s*exe` e `scan_version` sobe a
+  `security-agent-v0.3`.
+- **Gates locais confiáveis (M3):** `scripts/run_tests.sh` ganha
+  `set -euo pipefail` e `run_tests.bat` checa `errorlevel` por passo — pytest
+  vermelho não sai mais verde.
+- **Cache do índice BM25 com invalidação por upsert (M4):**
+  `build_default_hybrid_agent()` reusa o índice por (store, `store.version`);
+  `upsert` incrementa `version` e invalida. Elimina o snapshot + rebuild por
+  requisição (no caminho Qdrant, um scroll da coleção inteira por query). Fecha
+  o follow-up documentado.
+- **Teste do gate híbrido independente de cwd (L2):**
+  `tests/test_hybrid_eval_gate.py` usa `DATASET_PATH` do módulo de eval.
+- **Porta padrão do Qdrant unificada (L3):** `DEFAULT_QDRANT_PORT = 6533` em
+  `qdrant_service.py`, compartilhado pelo guard do teste de integração —
+  cliente e probe concordam quando `QDRANT_PORT` não está definido.
+- **Mapeamento RetrievedContext sem fork (L4):**
+  `MockVectorStore._to_retrieved_context` delega ao `build_retrieved_context`
+  compartilhado (arredondamento uniforme em 6 casas).
+- **Detecção de seções única por documento (L5):** `get_chunker` entrega as
+  seções detectadas ao `StructuralChunker`; o scan estrutural roda uma vez.
+
 ## [0.5.0] — 2026-07-11
 
 Busca híbrida jurídica (P6, PR #22). 123 → **150 testes**. Base:

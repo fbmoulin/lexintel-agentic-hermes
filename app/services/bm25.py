@@ -3,7 +3,7 @@ from collections import Counter
 
 from app.services.vector_store import (
     LegalChunk,
-    _tokenize,
+    _tokenize_seq,
     build_retrieved_context,
 )
 
@@ -11,7 +11,8 @@ from app.services.vector_store import (
 class BM25Retriever:
     """Okapi BM25 over LegalChunk text — sparse, deterministic, pure Python.
 
-    Shares _tokenize (accent-fold) with the lexical store so both sides of the
+    Shares the accent-fold token rules with the lexical store (via
+    _tokenize_seq, the frequency-preserving variant) so both sides of the
     offline ensemble see the same terms. Emits the same RetrievedContext shape
     as MockVectorStore / QdrantVectorStore.
     """
@@ -24,7 +25,9 @@ class BM25Retriever:
         self._chunks = [
             LegalChunk.model_validate(chunk).model_dump() for chunk in chunks
         ]
-        self._doc_tokens = [Counter(_tokenize(chunk["text"])) for chunk in self._chunks]
+        self._doc_tokens = [
+            Counter(_tokenize_seq(chunk["text"])) for chunk in self._chunks
+        ]
         self._doc_len = [sum(counter.values()) for counter in self._doc_tokens]
         self._avgdl = (
             (sum(self._doc_len) / len(self._doc_len)) if self._doc_len else 0.0
@@ -66,7 +69,9 @@ class BM25Retriever:
     def search(
         self, query: str, top_k: int = 5, filters: dict | None = None
     ) -> list[dict]:
-        query_tokens = list(_tokenize(query))
+        # Deduplicate query terms (order-stable): a term repeated in the query
+        # should not double-count the same document match.
+        query_tokens = list(dict.fromkeys(_tokenize_seq(query)))
         scored = []
         for index, chunk in enumerate(self._chunks):
             if filters and not self._matches_filters(chunk, filters):
