@@ -107,6 +107,28 @@ class HybridRetrievalAgent:
         )
 
 
+# BM25 cache: (store instance, store.version at build time, built retriever).
+# Keyed on identity + version so an upsert (version bump) or a store swap
+# (singleton reset in tests, mock→qdrant flip) invalidates it — a stale index
+# would break the "search finds freshly indexed chunks" guarantee.
+_bm25_cache: tuple[VectorStore, int, BM25Retriever] | None = None
+
+
+def _bm25_for_store(store: VectorStore) -> BM25Retriever:
+    global _bm25_cache
+    version = getattr(store, "version", None)
+    if version is None:
+        # Store without a write counter: no safe invalidation signal — rebuild.
+        return BM25Retriever(store.snapshot_chunks())
+    if _bm25_cache is not None:
+        cached_store, cached_version, cached_retriever = _bm25_cache
+        if cached_store is store and cached_version == version:
+            return cached_retriever
+    retriever = BM25Retriever(store.snapshot_chunks())
+    _bm25_cache = (store, version, retriever)
+    return retriever
+
+
 def build_default_hybrid_agent(
     store: VectorStore | None = None,
 ) -> HybridRetrievalAgent:
@@ -115,9 +137,14 @@ def build_default_hybrid_agent(
     Offline (default): RRF(BM25, Mock token-overlap) — an ensemble of two
     lexical signals over the same tokenizer. With QDRANT_ENABLED: RRF(dense
     Qdrant, BM25) — a true dense+sparse hybrid.
+
+    The BM25 index (a full store snapshot) is cached per (store, version) and
+    invalidated when the store's write counter bumps on upsert, so /rag/search
+    and the pipeline no longer rebuild it — or, on the Qdrant path, scroll the
+    whole collection — on every call.
     """
     store = store or get_vector_store()
-    bm25 = BM25Retriever(store.snapshot_chunks())
+    bm25 = _bm25_for_store(store)
     if is_qdrant_enabled():
         return HybridRetrievalAgent(retrievers=[store, bm25])
     return HybridRetrievalAgent(retrievers=[bm25, store])

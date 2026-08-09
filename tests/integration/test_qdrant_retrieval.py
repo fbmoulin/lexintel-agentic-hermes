@@ -24,9 +24,13 @@ def _should_run() -> bool:
         import qdrant_client  # noqa: F401
     except ImportError:
         return False
+    from app.services.qdrant_service import DEFAULT_QDRANT_PORT
+
+    # Same default as get_qdrant_client(): the reachability probe and the
+    # client under test must agree on the port when QDRANT_PORT is unset.
     host = os.getenv("QDRANT_HOST", "localhost")
-    port_env = os.getenv("QDRANT_PORT", "6533")
-    port = int(port_env) if port_env.isdigit() else 6533
+    port_env = os.getenv("QDRANT_PORT", str(DEFAULT_QDRANT_PORT))
+    port = int(port_env) if port_env.isdigit() else DEFAULT_QDRANT_PORT
     try:
         with socket.create_connection((host, port), timeout=1):
             return True

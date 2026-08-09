@@ -35,3 +35,13 @@ def test_snapshot_chunks_returns_independent_copy():
     assert len(snap) == len(DEFAULT_MOCK_CHUNKS)
     snap[0]["text"] = "MUTATED"
     assert store.snapshot_chunks()[0]["text"] != "MUTATED"
+
+
+def test_mock_search_scores_via_shared_builder_six_dp():
+    # MockVectorStore must emit exactly what the shared build_retrieved_context
+    # produces (regression: a forked mapping rounded scores to 4 dp instead of
+    # 6 and drifted from the single-source RetrievedContext shape).
+    store = MockVectorStore(seed_chunks=[_chunk()])
+    # Query tokens: {responsabilidade, banco, fraude}; overlap 2 of 3.
+    [ctx] = store.search("responsabilidade banco fraude", top_k=1)
+    assert ctx == build_retrieved_context(_chunk(), 2 / 3, "mock")

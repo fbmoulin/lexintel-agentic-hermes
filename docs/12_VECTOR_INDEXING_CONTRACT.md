@@ -92,10 +92,10 @@ Queries suspeitas de prompt injection não executam busca e retornam `status = b
 
 ## Limitações conhecidas / follow-ups
 
-Descobertos durante a review da busca híbrida (`HybridRetrievalAgent`); pendentes de fase futura:
+Descobertos durante a review da busca híbrida (`HybridRetrievalAgent`); resolvidos em `fix/review-2026-08-08`:
 
-- **BM25 usa frequências de termo binárias.** Como o `_tokenize` compartilhado retorna um **conjunto**, `Counter(_tokenize(text))` produz tf ∈ {0,1} — a saturação de TF do BM25 opera sobre **presença** do termo, não sobre frequência bruta. Aceitável para os chunks jurídicos curtos (1-2 frases) do corpus mockado; revisitar se o índice passar a cobrir documentos longos (exigiria um tokenizer preservador de frequência apenas para o BM25).
-- **`/rag/search` reconstrói o BM25 a cada requisição.** `build_default_hybrid_agent()` tira um snapshot do corpus e reconstrói o índice BM25 em toda requisição. Trivial para o store mockado; no caminho Qdrant, faz `scroll` da coleção inteira por query. Um cache ingênuo é **inseguro**: serviria um índice BM25 defasado após um `upsert` (quebrando a garantia "a busca encontra chunks recém-indexados"). Um cache correto precisa de invalidação por `upsert` ou BM25 incremental. **Deve ser resolvido antes de o caminho Qdrant servir tráfego de produção.**
+- ~~**BM25 usa frequências de termo binárias.**~~ **RESOLVIDO.** O `BM25Retriever` agora tokeniza com `_tokenize_seq` — a variante **preservadora de frequência** do tokenizer compartilhado (mesmas regras de accent-fold e comprimento mínimo; `_tokenize` continua sendo o `set` usado pelo overlap do Mock). `Counter(_tokenize_seq(text))` produz tf reais e o comprimento do documento volta a ser contagem de tokens, não de tokens únicos. Regressão: `test_term_frequency_influences_ranking` (doc que repete o termo deve superar doc que o menciona uma vez).
+- ~~**`/rag/search` reconstrói o BM25 a cada requisição.**~~ **RESOLVIDO.** `build_default_hybrid_agent()` agora usa um cache do índice BM25 chaveado por (instância do store, `store.version`); todo `upsert` incrementa `version` e invalida o cache — a invalidação-por-`upsert` que este follow-up exigia (a garantia "a busca encontra chunks recém-indexados" segue coberta por `test_rag_search_finds_chunks_indexed_by_pipeline` e `test_factory_invalidates_bm25_cache_on_upsert`). Ressalva: `version` só enxerga escritas feitas **pela instância do processo** — escritas externas diretas no Qdrant não invalidam o cache (documentado no código); BM25 incremental permanece como evolução futura se esse cenário passar a existir.
 
 ## Fora do Escopo
 

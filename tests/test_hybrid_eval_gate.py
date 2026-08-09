@@ -6,6 +6,7 @@ from statistics import mean
 
 from app.agents.retrieval_agent import HybridRetrievalAgent
 from app.evals.run_eval import (
+    DATASET_PATH,
     build_eval_store,
     evaluate_item,
     load_corpus,
@@ -28,7 +29,9 @@ def _hybrid_eval_store():
 
 
 def _aggregate(store):
-    dataset = load_dataset("app/evals/golden_dataset.jsonl")
+    # DATASET_PATH (module-anchored) keeps this gate cwd-independent, like the
+    # rest of the eval suite (see test_eval_runs_outside_project_root).
+    dataset = load_dataset(DATASET_PATH)
     results = [evaluate_item(item, store) for item in dataset]
     return {
         "recall_at_1": mean(r["recall_at_1"] for r in results),

@@ -6,7 +6,7 @@ from app.schemas.case import AgentResult
 
 class SecurityAgent:
     name = "SecurityAgent"
-    scan_version = "security-agent-v0.2"
+    scan_version = "security-agent-v0.3"
 
     SEVERITY_RANK = {
         "none": 0,
@@ -46,7 +46,9 @@ class SecurityAgent:
             "recommended_action": "block",
             "patterns": [
                 r"\b(execute|rode|rodar|executar)\s+comandos?\b",
-                r"\b(cmd\.?exe|powershell|rm\s+rf)\b",
+                # Patterns match NORMALIZED text: normalize_text collapses
+                # punctuation to spaces, so "cmd.exe" arrives as "cmd exe".
+                r"\b(cmd\s*exe|powershell|rm\s+rf)\b",
             ],
         },
         {
