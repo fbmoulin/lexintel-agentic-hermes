@@ -7,7 +7,7 @@
 > indexação e FIRAC; FIRAC ainda não é alimentado) e na avaliação (thresholds de
 > não-regressão recall@1≥0.9375, MRR≥1.0). Offline funde dois sinais léxicos
 > (BM25 + token-overlap do Mock); o lado denso (Qdrant) só participa com
-> `QDRANT_ENABLED`. **150 testes** (+2 de integração pulados por padrão). Detalhes
+> `QDRANT_ENABLED`. **156 testes** (+2 de integração pulados por padrão; v0.5.1 remedia a auditoria 2026-08-08 — ver `docs/audits/`). Detalhes
 > em `CHANGELOG.md`, `docs/10_RAG_EVAL_CONTRACT.md` e `docs/08_TRACE_CONTRACT.md`.
 >
 > _Histórico v0.4 (2026-07-10):_ ciclo de revisão + premortem (PRs #18–#20:

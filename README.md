@@ -1,6 +1,6 @@
 # Lex Kratos Agentic Core — v0.5
 
-Este repositório consolida o núcleo jurídico agentico local do Lex Kratos. O núcleo permanece intencionalmente pequeno e auditável — FastAPI, agentes mockados, testes automatizados, dataset de avaliação e documentação de execução — mas já cresceu além do scaffold inicial: recuperação híbrida jurídica (BM25 + fusão RRF, mock-first, Qdrant opcional), recuperação semântica real opcional com Qdrant (desligada por padrão) e chunking estrutural jurídico. A suíte tem **149 testes** (+2 de integração pulados por padrão).
+Este repositório consolida o núcleo jurídico agentico local do Lex Kratos. O núcleo permanece intencionalmente pequeno e auditável — FastAPI, agentes mockados, testes automatizados, dataset de avaliação e documentação de execução — mas já cresceu além do scaffold inicial: recuperação híbrida jurídica (BM25 + fusão RRF, mock-first, Qdrant opcional), recuperação semântica real opcional com Qdrant (desligada por padrão) e chunking estrutural jurídico. A suíte tem **156 testes** (+2 de integração pulados por padrão).
 
 ## Fronteira de escopo
 
@@ -22,7 +22,7 @@ Criar uma esteira jurídica auditável, inicialmente mockada, para:
 - segurança contra prompt injection;
 - avaliação contínua por métricas.
 
-A busca híbrida (BM25 + fusão RRF) já está implementada como `HybridRetrievalAgent`, mock-first, com o lado denso real acionável apenas via Qdrant opcional. Pesquisa jurisprudencial real e geração de minuta ficam para fases posteriores com autorização explícita.
+A busca híbrida (BM25 + fusão RRF) já está implementada como `HybridRetrievalAgent`, mock-first, com o lado denso real acionável apenas via Qdrant opcional. Desde a v0.5.1 o BM25 usa frequências de termo reais (tokenizer preservador de frequência) e o índice é cacheado com invalidação por upsert — nada de rebuild por requisição. Pesquisa jurisprudencial real e geração de minuta ficam para fases posteriores com autorização explícita.
 
 ## Decisão arquitetural central
 
@@ -45,7 +45,7 @@ O `HybridRetrievalAgent` (busca híbrida BM25 + fusão RRF) já está implementa
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate
+source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```

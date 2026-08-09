@@ -4,8 +4,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ## [Não lançado]
 
+## [0.5.1] — 2026-08-09
+
 Remediação da auditoria `docs/audits/2026-08-08-full-review.md` (M1–M4, L2–L5;
-L1 retirado — decisão de design aprovada). 150 → **156 testes**.
+L1 retirado — decisão de design aprovada). Auditoria: PR #23; remediação: PR #24. 150 → **156 testes**.
 
 ### Corrigido
 

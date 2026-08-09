@@ -88,6 +88,14 @@
 - [x] Feature flag para Qdrant real.
 - [x] MockVectorStore para testes sem container.
 
+## Auditorias (docs/audits/)
+
+- [x] Deep review 2026-06-13 — REMEDIADA (PRs #13/#15).
+- [x] Full review 2026-07-09 — REMEDIADA (M1/M3/M4; M2 retirada).
+- [x] Full review 2026-08-08 — REMEDIADA no mesmo dia (PR #23 auditoria + PR #24 fixes: M1 BM25 com tf real, M2 padrão `cmd exe`, M3 scripts fail-fast, M4 cache BM25 com invalidação por upsert, L2–L5; L1 retirada — trace-only é decisão aprovada).
+- [ ] Fiação retrieval→FIRAC quando o FIRACAgent deixar de ser mock (item adiado por design; vira obrigatório na v0.6).
+- [ ] BM25 incremental, se escritas externas ao processo passarem a existir no Qdrant (o cache atual só enxerga upserts da própria instância).
+
 ## P7 — Jurisprudência
 
 - [ ] JurisprudenceAgent.

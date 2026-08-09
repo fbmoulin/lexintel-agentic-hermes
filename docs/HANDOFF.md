@@ -1,14 +1,14 @@
 # HANDOFF — lexintel-agentic-hermes
 
-> Estado autoritativo para retomar o trabalho. Atualizado: **2026-07-11**.
+> Estado autoritativo para retomar o trabalho. Atualizado: **2026-08-09**.
 
 ## Estado atual
 
 | | |
 |---|---|
-| Versão | **v0.5** |
-| `master` | `2309b72` (pushed; `master == origin/master`) |
-| Testes | **150 passed, 2 skipped** (+2 integração Qdrant vivo, pulados por padrão) |
+| Versão | **v0.5.1** (auditoria 2026-08-08 remediada) |
+| `master` | `026a260` (merge do PR #24; auditoria em `docs/audits/2026-08-08-full-review.md` via PR #23) |
+| Testes | **156 passed, 2 skipped** (+2 integração Qdrant vivo, pulados por padrão) |
 | CI | verde (`ruff check` + `ruff format --check` + `mypy app` + drift de schema + `pytest` + `python -m app.evals.run_eval`) |
 | Backlog crítico | **ZERO aberto** (fase P6 fechada) |
 | Repo | público `github.com/fbmoulin/lexintel-agentic-hermes` |
@@ -56,7 +56,7 @@ Busca híbrida real, **mock-first e determinística por padrão** (Qdrant perman
 ```bash
 cd /home/fbmoulin/lexintel-agentic-hermes
 # testes (usar o venv do projeto; miniforge default vaza deps erradas)
-.venv/bin/python -m pytest -q                 # 150 passed, 2 skipped
+.venv/bin/python -m pytest -q                 # 156 passed, 2 skipped
 .venv/bin/python -m app.evals.run_eval        # exit 0; retriever=hybrid; passed=true
 .venv/bin/ruff check app tests scripts integrations
 .venv/bin/ruff format --check app tests scripts integrations
