@@ -110,14 +110,20 @@ class ReviewAgent:
             and retrieval_entry
             and retrieval_entry["status"] == "warning"
         ):
-            issues.append(
-                {
-                    "type": "firac_without_complete_context",
-                    "severity": "low",
-                    "description": "FIRAC gerado mas retrieval teve problemas.",
-                    "agent": "FIRACAgent,HybridRetrievalAgent",
-                }
-            )
+            # Note: FIRAC deliberately does NOT consume retrieved context (trace-only)
+            # per approved architecture (see docs/HANDOFF.md). This inconsistency
+            # flag fires ONLY if retrieval_status == "failed" (not for normal
+            # index-degraded warnings like upsert_failed/shortfall).
+            retrieval_status = retrieval_entry.get("output", {}).get("retrieval_status")
+            if retrieval_status == "failed":
+                issues.append(
+                    {
+                        "type": "firac_without_complete_context",
+                        "severity": "low",
+                        "description": "FIRAC gerado mas retrieval falhou completamente.",
+                        "agent": "FIRACAgent,HybridRetrievalAgent",
+                    }
+                )
 
         return issues
 
@@ -148,7 +154,7 @@ class ReviewAgent:
             )
 
         critical_issues = [
-            issue for issue in consistency_issues if issue["severity"] == "high"
+            issue for issue in consistency_issues if issue["severity"] == "critical"
         ]
         if critical_issues:
             recommendations.append(
@@ -222,6 +228,8 @@ class ReviewAgent:
                     "recommendations": ["Pipeline não produziu trace - investigar."],
                     "trace_coverage": {"agent_count": 0, "completed_agents": []},
                     "review_version": self.review_version,
+                    "requires_human_review": True,
+                    "external_use_allowed": False,
                 },
                 warnings=["Trace vazio - impossível revisar."],
                 requires_human_review=True,

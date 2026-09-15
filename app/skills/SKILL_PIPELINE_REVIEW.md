@@ -35,14 +35,14 @@ Estrutura `AgentResult` contendo:
 {
   "case_id": "string",
   "agent_name": "ReviewAgent",
-  "status": "success | warning | blocked",
+  "status": "success | warning",
   "output": {
     "review_status": "approved | conditional | rejected",
     "confidence_score": 0.0-1.0,
     "consistency_issues": [
       {
         "type": "string",
-        "severity": "low | medium | high | critical",
+        "severity": "low | medium | critical",
         "description": "string",
         "agent": "string"
       }
@@ -178,8 +178,8 @@ Saída:
 1. **Revisão Humana Obrigatória**: `requires_human_review` sempre `True`
 2. **Uso Externo Proibido**: `external_use_allowed` sempre `False`
 3. **Score Determinístico**: Mesma trace → mesmo confidence_score
-4. **Trace Vazio**: Sempre resulta em `blocked` com confidence 0.0
-5. **Monotonia de Bloqueio**: Se qualquer agente bloqueou, review status = "rejected"
+4. **Trace Vazio**: Sempre resulta em `warning` (não blocked) com confidence 0.0 e review_status "rejected"
+5. **Nunca Bloqueia Pipeline**: ReviewAgent sempre retorna `success` ou `warning`, nunca `blocked`
 
 ## Limitações Conhecidas
 
