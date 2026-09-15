@@ -181,7 +181,7 @@ def test_full_mock_pipeline_runs_all_available_agents():
     assert data["pipeline_summary"] == {
         "trace_version": "trace-v0.3",
         "pipeline_name": "case-full-mock-v0.3",
-        "agent_count": 9,
+        "agent_count": 10,
         "completed_agents": [
             "IntakeAgent",
             "SecurityAgent",
@@ -192,6 +192,7 @@ def test_full_mock_pipeline_runs_all_available_agents():
             "HybridRetrievalAgent",
             "FIRACAgent",
             "ValidatorAgent",
+            "ReviewAgent",
         ],
         "blocked_at": None,
         "warning_count": 0,
@@ -211,11 +212,13 @@ def test_full_mock_pipeline_runs_all_available_agents():
         "HybridRetrievalAgent",
         "FIRACAgent",
         "ValidatorAgent",
+        "ReviewAgent",
     ]
 
     indexing_trace = data["trace"][5]["output"]
     firac_trace = data["trace"][7]["output"]
     validator_trace = data["trace"][8]["output"]
+    review_trace = data["trace"][9]["output"]
     assert indexing_trace["vector_backend"] == "mock"
     assert indexing_trace["qdrant_enabled"] is False
     assert indexing_trace["chunk_count"] == 6
@@ -224,9 +227,11 @@ def test_full_mock_pipeline_runs_all_available_agents():
     assert firac_trace["external_use_allowed"] is False
     assert validator_trace["requires_human_review"] is True
     assert validator_trace["external_use_allowed"] is False
+    assert review_trace["requires_human_review"] is True
+    assert review_trace["external_use_allowed"] is False
 
     step_indexes = [entry["trace_metadata"]["step_index"] for entry in data["trace"]]
-    assert step_indexes == [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    assert step_indexes == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
     assert all(
         entry["trace_metadata"]["trace_version"] == "trace-v0.3"
