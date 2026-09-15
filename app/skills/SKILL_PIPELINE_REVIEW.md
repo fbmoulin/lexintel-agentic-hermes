@@ -116,9 +116,10 @@ Recomendações contextuais baseadas em:
 ### 4. Determinação de Status Final
 
 ```python
+# ReviewAgent NUNCA bloqueia o pipeline - sempre retorna warning ou success
 if blocked_count > 0 or confidence_score < 0.3:
     review_status = "rejected"
-    status = "blocked"
+    status = "warning"  # Nunca "blocked" - review é informativo
 elif warning_count > 0 or confidence_score < 0.8:
     review_status = "conditional"
     status = "warning"
@@ -126,6 +127,8 @@ else:
     review_status = "approved"
     status = "success"
 ```
+
+**Nota importante**: O ReviewAgent nunca usa `status="blocked"` porque não interrompe o pipeline. Mesmo quando rejeita (review_status="rejected"), emite apenas `warning` para manter consistência com o contrato do trace onde "blocked" significa interrupção antecipada.
 
 ## Casos de Uso
 
@@ -155,7 +158,7 @@ Saída:
   - review_status: "rejected"
   - confidence_score: 0.0
   - recommendations: ["Pipeline bloqueado em: SecurityAgent"]
-  - status: "blocked"
+  - status: "warning"  # Review nunca bloqueia
 ```
 
 ### 4. Inconsistência Detectada

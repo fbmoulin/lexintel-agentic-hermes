@@ -191,8 +191,8 @@ class ReviewAgent:
 
         Returns:
             AgentResult: Review assessment containing:
-                - status: "blocked" if critical issues found, "warning" if moderate
-                  issues exist, "success" otherwise.
+                - status: "warning" if issues found (review never blocks pipeline),
+                  "success" otherwise.
                 - output: dict with keys:
                     - review_status: "approved", "conditional", or "rejected".
                     - confidence_score: float between 0.0 and 1.0.
@@ -208,7 +208,7 @@ class ReviewAgent:
             return AgentResult(
                 case_id=case_id,
                 agent_name=self.name,
-                status="blocked",
+                status="warning",  # Review never blocks
                 output={
                     "review_status": "rejected",
                     "confidence_score": 0.0,
@@ -223,7 +223,7 @@ class ReviewAgent:
                     "trace_coverage": {"agent_count": 0, "completed_agents": []},
                     "review_version": self.review_version,
                 },
-                errors=["Trace vazio - impossível revisar."],
+                warnings=["Trace vazio - impossível revisar."],
                 requires_human_review=True,
                 external_use_allowed=False,
             )
@@ -238,13 +238,15 @@ class ReviewAgent:
         warning_count = sum(1 for entry in trace if entry["status"] == "warning")
 
         status: Literal["success", "warning", "blocked"]
+        errors: list[str]
+        warnings_list: list[str]
         if blocked_count > 0 or confidence_score < 0.3:
             review_status = "rejected"
-            status = "blocked"
-            errors = [
-                f"Pipeline com {blocked_count} bloqueios e confiança {confidence_score}."
+            status = "warning"  # Review never blocks, only warns
+            errors = []
+            warnings_list = [
+                f"Pipeline com {blocked_count} bloqueios e confiança {confidence_score} - revisão rejeitada."
             ]
-            warnings_list = []
         elif warning_count > 0 or confidence_score < 0.8:
             review_status = "conditional"
             status = "warning"

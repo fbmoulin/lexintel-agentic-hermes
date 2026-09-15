@@ -2,11 +2,11 @@ from app.agents.review_agent import ReviewAgent
 
 
 def test_review_agent_rejects_empty_trace():
-    """ReviewAgent should block when trace is empty."""
+    """ReviewAgent should warn (never block) when trace is empty."""
     ra = ReviewAgent()
     result = ra.run("case_empty_001", trace=[])
 
-    assert result.status == "blocked"
+    assert result.status == "warning"  # Review never blocks
     assert result.output["review_status"] == "rejected"
     assert result.output["confidence_score"] == 0.0
     assert len(result.output["consistency_issues"]) > 0
@@ -92,7 +92,7 @@ def test_review_agent_warns_on_warnings():
 
 
 def test_review_agent_blocks_on_blocked_trace():
-    """ReviewAgent should block when any agent in trace is blocked."""
+    """ReviewAgent should warn (never block) when any agent in trace is blocked."""
     ra = ReviewAgent()
     trace = [
         {
@@ -115,10 +115,10 @@ def test_review_agent_blocks_on_blocked_trace():
 
     result = ra.run("case_blocked_001", trace)
 
-    assert result.status == "blocked"
+    assert result.status == "warning"  # Review never blocks, only warns
     assert result.output["review_status"] == "rejected"
     assert result.output["confidence_score"] == 0.0
-    assert len(result.errors) > 0
+    assert len(result.warnings) > 0  # warnings, not errors
     assert any("bloqueado" in rec for rec in result.output["recommendations"])
 
 
