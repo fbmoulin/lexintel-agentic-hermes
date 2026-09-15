@@ -226,7 +226,12 @@ class ReviewAgent:
                         }
                     ],
                     "recommendations": ["Pipeline não produziu trace - investigar."],
-                    "trace_coverage": {"agent_count": 0, "completed_agents": []},
+                    "trace_coverage": {
+                        "agent_count": 0,
+                        "completed_agents": [],
+                        "blocked_agents": [],
+                        "warning_agents": [],
+                    },
                     "review_version": self.review_version,
                     "requires_human_review": True,
                     "external_use_allowed": False,

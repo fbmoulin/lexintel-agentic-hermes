@@ -98,9 +98,11 @@ Detecta inconsistências lógicas entre agentes:
 - **Impacto**: Contexto jurisprudencial ausente
 
 #### c) FIRAC sem Contexto Completo
-- **Condição**: `FIRACAgent.status == "success"` mas `HybridRetrievalAgent.status == "warning"`
+- **Condição**: `FIRACAgent.status == "success"` mas `HybridRetrievalAgent.status == "warning"` **e** `retrieval_status == "failed"`
 - **Severidade**: low
-- **Impacto**: Análise FIRAC pode ter contexto limitado
+- **Impacto**: Análise FIRAC pode ter contexto limitado (retrieval falhou completamente)
+
+**Nota**: Esta verificação **não** dispara para warnings normais de índice degradado (upsert_failed, shortfall de precedentes), apenas quando o retrieval falha completamente. FIRAC deliberadamente não consome contexto recuperado (trace-only) conforme arquitetura aprovada em `docs/HANDOFF.md`.
 
 ### 3. Geração de Recomendações
 
@@ -226,7 +228,7 @@ self._record_trace(trace, review_result, 10, "review")
 
 Cobertura em `tests/test_review_agent.py`:
 
-1. ✅ `test_review_agent_rejects_empty_trace` - Trace vazio → blocked
+1. ✅ `test_review_agent_rejects_empty_trace` - Trace vazio → warning + rejected
 2. ✅ `test_review_agent_approves_clean_trace` - Pipeline limpo → approved
 3. ✅ `test_review_agent_warns_on_warnings` - Warnings → conditional
 4. ✅ `test_review_agent_blocks_on_blocked_trace` - Bloqueio → rejected
