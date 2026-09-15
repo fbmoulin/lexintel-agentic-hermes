@@ -12,7 +12,7 @@ client = TestClient(app)
 def test_skill_loader_lists_all_versioned_skills():
     skills = list_skills()
 
-    assert len(skills) == 12
+    assert len(skills) == 13
     assert {skill["skill_name"] for skill in skills} == {
         "SKILL_DOCUMENT_INTAKE.md",
         "SKILL_FIRAC_PLUS_CIVIL.md",
@@ -24,6 +24,7 @@ def test_skill_loader_lists_all_versioned_skills():
         "SKILL_LEGAL_NORMALIZATION.md",
         "SKILL_LEGAL_PDF_EXTRACTION.md",
         "SKILL_LLM_SECURITY_GUARDRAILS.md",
+        "SKILL_PIPELINE_REVIEW.md",
         "SKILL_PRECEDENT_VALIDATION.md",
         "SKILL_RAG_EVALUATION.md",
     }
@@ -42,10 +43,10 @@ def test_agent_registry_is_valid_and_links_skills():
 
     assert validation["valid"] is True
     assert validation["issues"] == []
-    assert validation["agent_count"] == 12
-    assert validation["implemented_count"] == 9
+    assert validation["agent_count"] == 13
+    assert validation["implemented_count"] == 10
     assert validation["planned_count"] == 3
-    assert validation["skill_count"] == 12
+    assert validation["skill_count"] == 13
 
     implemented_agents = [agent for agent in agents if agent["implemented"]]
     assert all(agent["class_importable"] is True for agent in implemented_agents)
@@ -123,7 +124,7 @@ def test_catalog_skills_endpoint_lists_skills():
 
     assert response.status_code == 200
     data = response.json()
-    assert data["count"] == 12
+    assert data["count"] == 13
     assert data["skills"][0]["skill_name"].startswith("SKILL_")
 
 
@@ -155,8 +156,8 @@ def test_catalog_agents_endpoint_returns_registry():
     assert response.status_code == 200
     data = response.json()
     assert data["valid"] is True
-    assert data["count"] == 12
-    assert data["implemented_count"] == 9
+    assert data["count"] == 13
+    assert data["implemented_count"] == 10
     assert data["planned_count"] == 3
     assert data["issues"] == []
 

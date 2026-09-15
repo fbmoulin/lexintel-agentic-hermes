@@ -8,6 +8,7 @@ HUMAN_REVIEW_PHASES = {
     "precedent_validation",
     "drafting",
     "validation",
+    "review",
 }
 
 
@@ -129,6 +130,17 @@ AGENT_REGISTRY: list[dict[str, Any]] = [
         "mocked": True,
         "requires_human_review": True,
         "description": "Audita saídas mockadas e bloqueia sinais de precedente inventado.",
+    },
+    {
+        "agent_name": "ReviewAgent",
+        "phase": "review",
+        "module_path": "app.agents.review_agent",
+        "class_name": "ReviewAgent",
+        "skill_name": "SKILL_PIPELINE_REVIEW.md",
+        "status": "implemented",
+        "mocked": True,
+        "requires_human_review": True,
+        "description": "Revisão holística de qualidade e consistência do pipeline completo.",
     },
     {
         "agent_name": "EvaluationAgent",

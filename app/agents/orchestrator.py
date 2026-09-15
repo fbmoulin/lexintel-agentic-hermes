@@ -6,6 +6,7 @@ from app.agents.indexing_agent import IndexingAgent
 from app.agents.intake_agent import IntakeAgent
 from app.agents.metadata_agent import MetadataAgent
 from app.agents.normalizer_agent import LegalNormalizerAgent
+from app.agents.review_agent import ReviewAgent
 from app.agents.security_agent import SecurityAgent
 from app.agents.validator_agent import ValidatorAgent
 from app.schemas.case import AgentResult, CaseInput
@@ -31,6 +32,7 @@ class CaseOrchestrator:
             indexing_agent: Chunks and indexes extracted text in a mock vector store.
             firac_agent: Generates FIRAC-structured analysis from normalized text.
             validator_agent: Validates draft outputs and may mark them blocked or requiring review.
+            review_agent: Performs holistic quality review of the complete pipeline trace.
         """
         self.intake_agent = IntakeAgent()
         self.security_agent = SecurityAgent()
@@ -40,6 +42,7 @@ class CaseOrchestrator:
         self.indexing_agent = IndexingAgent()
         self.firac_agent = FIRACAgent()
         self.validator_agent = ValidatorAgent()
+        self.review_agent = ReviewAgent()
 
     @staticmethod
     def _build_security_text(case: CaseInput, intake_output: dict) -> str:
@@ -229,7 +232,7 @@ class CaseOrchestrator:
 
     def run_full_mock(self, case: CaseInput):
         """
-        Execute the full mock case processing pipeline (intake → security → extraction → normalization → metadata → indexing → FIRAC → mock draft → validation).
+        Execute the full mock case processing pipeline (intake → security → extraction → normalization → metadata → indexing → retrieval → FIRAC → validation → review).
 
         Parameters:
             case (CaseInput): Input case; must include `case.case_id`. If present, `case` may include `detected_documents` used by extraction.
@@ -347,6 +350,9 @@ class CaseOrchestrator:
         self._record_trace(trace, validator_result, 9, "validation")
         if validator_result.status == "blocked":
             return self._blocked_response(case, trace)
+
+        review_result = self.review_agent.run(case.case_id, trace, mock_draft)
+        self._record_trace(trace, review_result, 10, "review")
 
         pipeline_summary = self._summarize_trace(trace, self.FULL_MOCK_PIPELINE)
 

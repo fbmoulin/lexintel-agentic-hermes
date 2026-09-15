@@ -62,7 +62,7 @@ def test_full_mock_completes_when_no_block():
     result = CaseOrchestrator().run_full_mock(_case())
 
     completed = [entry["agent_name"] for entry in result["trace"]]
-    assert completed[-1] == "ValidatorAgent"
+    assert completed[-1] == "ReviewAgent"
     assert result["status"] in {"success", "warning"}
 
 
@@ -150,4 +150,4 @@ def test_failed_indexing_degrades_to_warning_without_halting():
     assert result["status"] == "warning"
     assert result["requires_human_review"] is True
     completed = [entry["agent_name"] for entry in result["trace"]]
-    assert completed[-1] == "ValidatorAgent"
+    assert completed[-1] == "ReviewAgent"
